@@ -54,16 +54,28 @@ final class BookingController extends ControllerBase {
           ];
         }
         else {
-          $edit = Link::fromTextAndUrl('M', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toString();
-          $aznm = $a->aznm ? '<span class="muteti-aznm"></span>' : '';
+          $edit = Link::fromTextAndUrl('M', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
           $doctor = $doctors[$a->doctor_id] ?? NULL;
-          $style = '';
+          $patient_attributes = ['class' => ['muteti-patient']];
           if ($doctor) {
             $background = $doctor->background_color ?: '#eef2f6';
             $text = $doctor->text_color ?: '#111111';
-            $style = ' style="background-color:'.Html::escape($background).';color:'.Html::escape($text).'"';
+            $patient_attributes['style'] = 'background-color:'.$background.';color:'.$text;
           }
-          $row[]=['data'=>['#markup'=>$aznm.$edit.'<div class="muteti-patient"'.$style.'><strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).'</div>']];
+          $cell = [
+            'edit' => $edit,
+            'patient' => [
+              '#type' => 'container',
+              '#attributes' => $patient_attributes,
+              'content' => [
+                '#markup' => '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name),
+              ],
+            ],
+          ];
+          if ($a->aznm) {
+            $cell['aznm'] = ['#markup' => '<span class="muteti-aznm"></span>', '#weight' => -10];
+          }
+          $row[] = ['data' => $cell];
         }
       }
       $rows[]=$row;
