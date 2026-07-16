@@ -13,6 +13,32 @@
           requestAnimationFrame(() => window.scrollTo(0, Number(savedScrollY)));
         }
       }
+      const dayTypeSelects = once('muteti-day-type', '.muteti-day-type-select', context);
+      dayTypeSelects.forEach((select) => {
+        select.addEventListener('change', async () => {
+          const previousValue = select.dataset.previousValue;
+          select.disabled = true;
+          try {
+            const response = await fetch(drupalSettings.mutetiSeb.dayTypeEndpoint, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              credentials: 'same-origin',
+              body: JSON.stringify({date: select.dataset.date, day_type: select.value})
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
+            select.dataset.previousValue = select.value;
+            const badge = select.closest('.muteti-day-card-shell').querySelector('.muteti-day-type');
+            if (badge) badge.textContent = select.value;
+            select.disabled = false;
+          }
+          catch (error) {
+            select.value = previousValue;
+            select.disabled = false;
+            window.alert(error.message || 'A napfajta mentése sikertelen.');
+          }
+        });
+      });
       const cards = once('muteti-drag', '.muteti-drag-card', context);
       const zones = once('muteti-drop', '.muteti-dropzone', context);
       let dragged = null;
