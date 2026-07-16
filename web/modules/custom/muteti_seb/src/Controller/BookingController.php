@@ -98,10 +98,10 @@ final class BookingController extends ControllerBase {
     return [
       '#attached'=>['library'=>['muteti_seb/surgery_board']],
       '#cache'=>['max-age'=>0],
-      'nav'=>['#type'=>'container','#attributes'=>['class'=>['muteti-nav']], 'prev'=>Link::fromTextAndUrl('← Előző hét',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]]))->toRenderable(),'today'=>Link::fromTextAndUrl('Aktuális hét',Url::fromRoute('muteti_seb.booking'))->toRenderable(),'next'=>Link::fromTextAndUrl('Következő hét →',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]]))->toRenderable()],
+      'nav'=>['#type'=>'container','#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']], 'prev'=>Link::fromTextAndUrl('← Előző hét',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]]))->toRenderable(),'today'=>Link::fromTextAndUrl('Aktuális hét',Url::fromRoute('muteti_seb.booking'))->toRenderable(),'next'=>Link::fromTextAndUrl('Következő hét →',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]]))->toRenderable()],
       'table_wrapper'=>[
         '#type'=>'container',
-        '#attributes'=>['class'=>['muteti-table-frame']],
+        '#attributes'=>['class'=>['muteti-table-frame'],'id'=>'muteti-booking-table'],
         'table'=>['#type'=>'table','#header'=>$header,'#rows'=>$rows,'#attributes'=>['class'=>['muteti-booking-table']]],
       ],
     ];
