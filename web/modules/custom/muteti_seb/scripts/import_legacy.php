@@ -175,7 +175,10 @@ foreach ($legacy_doctors as $doctor) {
     'text_color' => $valid_color($doctor->text_color),
     'active' => (int) $doctor->status,
   ];
-  $target->merge('muteti_doctor')->key(['legacy_nid' => (int) $doctor->nid])->fields($fields)->execute();
+  $target->merge('muteti_doctor')
+    ->key('legacy_nid', (int) $doctor->nid)
+    ->fields($fields)
+    ->execute();
   $id = $target->select('muteti_doctor', 'd')->fields('d', ['id'])->condition('legacy_nid', $doctor->nid)->execute()->fetchField();
   $doctor_id_by_name[$normalize_name($doctor->title)] = (int) $id;
   $imported_doctors++;
@@ -258,7 +261,8 @@ while ($appointment = $appointments->fetchObject()) {
     'changed' => $created,
   ];
   $target->merge('muteti_appointment')
-    ->keys(['admission_date' => $admission_date, 'slot_type' => trim($appointment->fajta)])
+    ->key('admission_date', $admission_date)
+    ->key('slot_type', trim($appointment->fajta))
     ->fields($fields)
     ->execute();
   $imported_appointments++;
