@@ -25,11 +25,20 @@
           if (!dragged) return;
           if (event.target === zone || !event.target.closest('.muteti-drag-card')) zone.appendChild(dragged);
           const orderedIds = [...zone.querySelectorAll('.muteti-drag-card')].map((item) => Number(item.dataset.id));
-          await fetch(drupalSettings.mutetiSeb.endpoint, {
-            method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'same-origin',
-            body: JSON.stringify({id: Number(dragged.dataset.id), room: zone.dataset.room || '', date: zone.dataset.date || '', ordered_ids: orderedIds})
-          });
-          dragged = null;
+          try {
+            const response = await fetch(drupalSettings.mutetiSeb.endpoint, {
+              method: 'POST', headers: {'Content-Type': 'application/json'}, credentials: 'same-origin',
+              body: JSON.stringify({id: Number(dragged.dataset.id), room: zone.dataset.room || '', date: zone.dataset.date || '', ordered_ids: orderedIds})
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const result = await response.json();
+            if (!result.ok) throw new Error(result.error || 'Unknown save error');
+            dragged = null;
+          }
+          catch (error) {
+            window.alert('A műtőbeosztás mentése sikertelen. Az oldal újratöltődik.');
+            window.location.reload();
+          }
         });
       });
     }
