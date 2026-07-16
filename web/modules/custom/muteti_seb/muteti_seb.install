@@ -78,8 +78,10 @@ function muteti_seb_install(): void {
     'muteti_orvos3' => ['Orvos3', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
   ];
   foreach ($roles as $id => [$label, $permissions]) {
-    if (!Role::load($id)) {
-      Role::create(['id' => $id, 'label' => $label])->grantPermissions($permissions)->save();
+    $role = Role::load($id) ?? Role::create(['id' => $id, 'label' => $label]);
+    foreach ($permissions as $permission) {
+      $role->grantPermission($permission);
     }
+    $role->save();
   }
 }
