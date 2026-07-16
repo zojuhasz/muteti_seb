@@ -33,14 +33,31 @@ final class SurgeryController extends ControllerBase {
     $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
     $doctor_ids=[];foreach(array_merge($waiting,$assigned) as $a) if($a->doctor_id)$doctor_ids[]=$a->doctor_id;
     $doctors=$doctor_ids?$this->database->select('muteti_doctor','d')->fields('d')->condition('id',array_unique($doctor_ids),'IN')->execute()->fetchAllAssoc('id'):[];
-    $card=function($a)use($doctors){$d=$doctors[$a->doctor_id]??NULL;$style=$d?'background:'.htmlspecialchars($d->background_color?:'#eef2f6').';color:'.htmlspecialchars($d->text_color?:'#111').';':'';return '<div class="muteti-drag-card'.($a->aznm?' is-aznm':'').'" draggable="true" data-id="'.$a->id.'" style="'.$style.'"><strong>'.htmlspecialchars($a->patient_name).'</strong><br>TAJ: '.htmlspecialchars($a->taj??'').'<br>'.htmlspecialchars($a->operation_name).'</div>';};
+    $card = function ($a) use ($doctors): array {
+      $doctor = $doctors[$a->doctor_id] ?? NULL;
+      $attributes = [
+        'class' => array_filter(['muteti-drag-card', $a->aznm ? 'is-aznm' : NULL]),
+        'draggable' => 'true',
+        'data-id' => (string) $a->id,
+      ];
+      if ($doctor) {
+        $attributes['style'] = 'background-color:'.($doctor->background_color ?: '#eef2f6').';color:'.($doctor->text_color ?: '#111111');
+      }
+      return [
+        '#type' => 'container',
+        '#attributes' => $attributes,
+        'content' => [
+          '#markup' => '<strong>'.htmlspecialchars($a->patient_name).'</strong><br>TAJ: '.htmlspecialchars($a->taj ?? '').'<br>'.htmlspecialchars($a->operation_name),
+        ],
+      ];
+    };
     $build=['#attached'=>['library'=>['muteti_seb/surgery_board'],'drupalSettings'=>['mutetiSeb'=>['endpoint'=>Url::fromRoute('muteti_seb.assignment',[],['query'=>['token'=>$this->csrf->get('muteti_seb.assignment')]])->toString()]]], '#cache'=>['max-age'=>0], '#type'=>'container','#attributes'=>['class'=>['muteti-surgery-board']]];
     $build['top']=['#markup'=>'<div class="muteti-nav">'.Link::fromTextAndUrl('← Heti áttekintés',Url::fromRoute('muteti_seb.surgery',[],['query'=>['week'=>$monday->format('Y-m-d')]]))->toString().' '.Link::fromTextAndUrl('Műtéti program PDF',Url::fromRoute('muteti_seb.program_pdf',['date'=>$selected]))->toString().'</div><h2>'.$selected.'</h2>'];
     $build['layout']=['#type'=>'container','#attributes'=>['class'=>['muteti-board-layout']]];
     $build['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>['muteti-dropzone','muteti-waiting'],'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3>Műtétre váró bentfekvők</h3>']];
-    foreach($waiting as $a)$build['layout']['waiting']['p'.$a->id]=['#markup'=>$card($a)];
+    foreach($waiting as $a)$build['layout']['waiting']['p'.$a->id]=$card($a);
     $build['layout']['rooms']=['#type'=>'container','#attributes'=>['class'=>['muteti-rooms']]];
-    foreach(Schedule::ROOMS as $room){$build['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3>Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['layout']['rooms']['r'.$room]['p'.$a->id]=['#markup'=>$card($a)];}
+    foreach(Schedule::ROOMS as $room){$build['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3>Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
     return $build;
   }
 }
