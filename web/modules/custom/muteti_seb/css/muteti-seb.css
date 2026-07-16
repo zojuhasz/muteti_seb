@@ -110,15 +110,17 @@
   box-shadow: 0 3px 14px rgba(24, 54, 84, .12);
 }
 .muteti-panel-title { margin: 0 0 1rem; color: #183b5c; font-size: 1.35rem; }
-.muteti-week-cards { display: grid; grid-template-columns: repeat(7, minmax(135px, 1fr)); gap: .75rem; }
-.muteti-day-card-shell { min-width: 0; }
+.muteti-week-cards { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .55rem; width: 100%; }
+.muteti-day-card-shell { position: relative; min-width: 0; }
 .muteti-day-card {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 112px;
-  padding: 1rem .6rem;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 118px;
+  padding: 1rem .4rem 3.15rem;
   border: 1px solid #b8c7d6;
   border-radius: .55rem;
   background: linear-gradient(#f9fcff, #e9f1f7);
@@ -132,8 +134,25 @@
 .muteti-day-card.is-selected { border: 2px solid #17689f; background: linear-gradient(#edf8ff, #d9ebf8); box-shadow: 0 0 0 3px rgba(23, 104, 159, .14); }
 .muteti-day-card-date { display: block; font-size: .82rem; font-weight: 600; }
 .muteti-day-card-name { display: block; margin: .2rem 0 .55rem; font-size: .98rem; font-weight: 900; text-transform: uppercase; }
-.muteti-day-type { display: inline-block; padding: .2rem .55rem; border-radius: 999px; background: #245f8e; color: #fff; font-size: .76rem; font-weight: 800; }
-.muteti-day-type-select { width: 100%; margin-top: .45rem; padding: .35rem .45rem; border: 1px solid #aebdcd; border-radius: .4rem; background: #fff; color: #183b5c; font-weight: 700; }
+.muteti-day-type-select {
+  position: absolute;
+  left: 50%;
+  bottom: .7rem;
+  z-index: 3;
+  width: calc(100% - 1.2rem);
+  max-width: 92px;
+  margin: 0;
+  padding: .25rem 1.35rem .25rem .55rem;
+  border: 0;
+  border-radius: 999px;
+  background-color: #245f8e;
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 800;
+  text-align: center;
+  transform: translateX(-50%);
+  cursor: pointer;
+}
 .muteti-day-card-shell.is-locked .muteti-day-type-select { cursor: not-allowed; opacity: .65; }
 .muteti-surgery-page > .muteti-surgery-board { margin-top: 1rem; }
 .muteti-daily-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
