@@ -68,7 +68,7 @@ final class BookingController extends ControllerBase {
               '#type' => 'container',
               '#attributes' => $patient_attributes,
               'content' => [
-                '#markup' => '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name),
+                '#markup' => '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($doctor ? '<br><span class="muteti-staff">'.Html::escape($doctor->name).'</span>' : ''),
               ],
             ],
           ];
