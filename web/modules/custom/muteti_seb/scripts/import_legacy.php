@@ -1,0 +1,270 @@
+<?php
+
+declare(strict_types=1);
+
+use Drupal\Core\Database\Database;
+use Drupal\user\Entity\Role;
+use Drupal\user\Entity\User;
+
+/**
+ * Imports the Drupal 7 surgical scheduler from the named "legacy" database.
+ *
+ * Run with:
+ *   drush php:script web/modules/custom/muteti_seb/scripts/import_legacy.php
+ */
+
+$department = 'Sebészet';
+$target = Database::getConnection();
+
+try {
+  $source = Database::getConnection('default', 'legacy');
+}
+catch (Throwable $exception) {
+  throw new RuntimeException('A settings.php fájlban nincs használható legacy adatbázis-kapcsolat.', 0, $exception);
+}
+
+$required_tables = [
+  '_elojegyzes',
+  'node',
+  'users',
+  'users_roles',
+  'role',
+  'field_data_field_oszt_ly',
+  'field_data_field_usern_v',
+  'field_data_field_sz_n',
+  'field_data_field_bet_sz_n',
+];
+foreach ($required_tables as $table) {
+  if (!$source->schema()->tableExists($table)) {
+    throw new RuntimeException("Hiányzó forrástábla: {$table}");
+  }
+}
+
+$normalize_name = static function (?string $name): string {
+  $name = str_replace(['Dr,', 'dr,'], ['Dr.', 'dr.'], trim((string) $name));
+  $name = preg_replace('/\s+/u', ' ', $name) ?? $name;
+  return mb_strtolower($name, 'UTF-8');
+};
+$valid_date = static function (?string $date): ?string {
+  if (!$date || in_array($date, ['0000-00-00', '1111-11-11'], TRUE)) {
+    return NULL;
+  }
+  $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+  return $parsed && $parsed->format('Y-m-d') === $date ? $date : NULL;
+};
+$valid_color = static function (?string $color): ?string {
+  $color = trim((string) $color);
+  return preg_match('/^#[0-9a-f]{3}([0-9a-f]{3})?$/i', $color) ? $color : NULL;
+};
+
+// Find the legacy department node when it is present.
+$department_nids = $source->select('node', 'n')
+  ->fields('n', ['nid'])
+  ->condition('title', $department)
+  ->execute()
+  ->fetchCol();
+
+// Users referenced by surgical appointments or linked surgical doctors.
+$usernames = $source->select('_elojegyzes', 'e')
+  ->distinct()
+  ->fields('e', ['user'])
+  ->condition('osztaly', $department)
+  ->condition('user', '', '<>')
+  ->execute()
+  ->fetchCol();
+$legacy_user_ids = [];
+if ($department_nids) {
+  $query = $source->select('field_data_field_oszt_ly', 'o');
+  $query->join('field_data_field_usern_v', 'u', 'u.entity_id = o.entity_id AND u.deleted = 0');
+  $legacy_user_ids = $query->distinct()
+    ->fields('u', ['field_usern_v_uid'])
+    ->condition('o.deleted', 0)
+    ->condition('o.field_oszt_ly_nid', $department_nids, 'IN')
+    ->execute()
+    ->fetchCol();
+}
+
+$user_query = $source->select('users', 'u')->fields('u');
+$or = $user_query->orConditionGroup();
+if ($usernames) {
+  $or->condition('name', $usernames, 'IN');
+}
+if ($legacy_user_ids) {
+  $or->condition('uid', $legacy_user_ids, 'IN');
+}
+$user_query->condition($or)->condition('uid', 0, '>')->condition('status', 1);
+$legacy_users = $user_query->execute()->fetchAll();
+
+$role_map = [
+  'view' => 'muteti_view',
+  'orvos1' => 'muteti_orvos1',
+  'orvos2' => 'muteti_orvos2',
+  'orvos' => 'muteti_orvos3',
+  'seb' => 'muteti_orvos3',
+  'boss' => 'muteti_orvos3',
+  'adminisztrátor' => 'muteti_orvos3',
+];
+$available_roles = array_fill_keys(array_keys(Role::loadMultiple()), TRUE);
+$new_uid_by_legacy_uid = [];
+$new_uid_by_name = [];
+$imported_users = 0;
+
+foreach ($legacy_users as $legacy_user) {
+  $matches = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $legacy_user->name]);
+  $existing = $matches ? reset($matches) : NULL;
+  $account = $existing ?: User::create([
+    'name' => $legacy_user->name,
+    'status' => 1,
+    'created' => max(1, (int) $legacy_user->created),
+  ]);
+  if (!$existing && !empty($legacy_user->pass)) {
+    // Drupal understands the legacy $S$ password hash and rehashes after login.
+    $account->setPassword($legacy_user->pass);
+  }
+  if (!empty($legacy_user->mail) && filter_var($legacy_user->mail, FILTER_VALIDATE_EMAIL)) {
+    $account->setEmail($legacy_user->mail);
+  }
+  $account->activate();
+
+  $role_query = $source->select('users_roles', 'ur');
+  $role_query->join('role', 'r', 'r.rid = ur.rid');
+  $legacy_roles = $role_query->fields('r', ['name'])
+    ->condition('ur.uid', $legacy_user->uid)
+    ->execute()
+    ->fetchCol();
+  foreach ($legacy_roles as $legacy_role) {
+    $new_role = $role_map[mb_strtolower($legacy_role, 'UTF-8')] ?? NULL;
+    if ($new_role && isset($available_roles[$new_role])) {
+      $account->addRole($new_role);
+    }
+  }
+  // Every imported surgical user must at least be able to view schedules.
+  if (isset($available_roles['muteti_view'])) {
+    $account->addRole('muteti_view');
+  }
+  $account->save();
+  $new_uid_by_legacy_uid[(int) $legacy_user->uid] = (int) $account->id();
+  $new_uid_by_name[mb_strtolower($legacy_user->name, 'UTF-8')] = (int) $account->id();
+  $imported_users++;
+}
+
+// Import surgical doctors with user links and display colors.
+$doctor_query = $source->select('node', 'n');
+$doctor_query->leftJoin('field_data_field_oszt_ly', 'o', 'o.entity_id = n.nid AND o.deleted = 0');
+$doctor_query->leftJoin('field_data_field_usern_v', 'u', 'u.entity_id = n.nid AND u.deleted = 0');
+$doctor_query->leftJoin('field_data_field_sz_n', 'bg', 'bg.entity_id = n.nid AND bg.deleted = 0');
+$doctor_query->leftJoin('field_data_field_bet_sz_n', 'fg', 'fg.entity_id = n.nid AND fg.deleted = 0');
+$doctor_query->fields('n', ['nid', 'title', 'status']);
+$doctor_query->addField('u', 'field_usern_v_uid', 'legacy_uid');
+$doctor_query->addField('bg', 'field_sz_n_value', 'background_color');
+$doctor_query->addField('fg', 'field_bet_sz_n_value', 'text_color');
+$doctor_query->condition('n.type', 'orvosok');
+if ($department_nids) {
+  $doctor_query->condition('o.field_oszt_ly_nid', $department_nids, 'IN');
+}
+$legacy_doctors = $doctor_query->execute()->fetchAll();
+
+$doctor_id_by_name = [];
+$imported_doctors = 0;
+foreach ($legacy_doctors as $doctor) {
+  $fields = [
+    'legacy_nid' => (int) $doctor->nid,
+    'user_id' => $new_uid_by_legacy_uid[(int) $doctor->legacy_uid] ?? NULL,
+    'name' => trim($doctor->title),
+    'background_color' => $valid_color($doctor->background_color),
+    'text_color' => $valid_color($doctor->text_color),
+    'active' => (int) $doctor->status,
+  ];
+  $target->merge('muteti_doctor')->key(['legacy_nid' => (int) $doctor->nid])->fields($fields)->execute();
+  $id = $target->select('muteti_doctor', 'd')->fields('d', ['id'])->condition('legacy_nid', $doctor->nid)->execute()->fetchField();
+  $doctor_id_by_name[$normalize_name($doctor->title)] = (int) $id;
+  $imported_doctors++;
+}
+
+// Add doctors/assistants referenced by surgical appointments but absent in the node list.
+$name_query = $source->select('_elojegyzes', 'e')->condition('osztaly', $department);
+$name_query->addExpression('DISTINCT orvos', 'name');
+$referenced_names = $name_query->execute()->fetchCol();
+foreach (['assz1', 'assz2', 'assz3'] as $assistant_field) {
+  $query = $source->select('_elojegyzes', 'e')->condition('osztaly', $department);
+  $query->addExpression("DISTINCT {$assistant_field}", 'name');
+  $referenced_names = array_merge($referenced_names, $query->execute()->fetchCol());
+}
+foreach (array_unique($referenced_names) as $name) {
+  $normalized = $normalize_name($name);
+  if ($normalized === '' || $normalized === '-' || isset($doctor_id_by_name[$normalized])) {
+    continue;
+  }
+  $id = $target->select('muteti_doctor', 'd')->fields('d', ['id'])->condition('name', trim($name))->execute()->fetchField();
+  if (!$id) {
+    $id = $target->insert('muteti_doctor')->fields([
+      'name' => trim($name),
+      'active' => 1,
+    ])->execute();
+  }
+  $doctor_id_by_name[$normalized] = (int) $id;
+  $imported_doctors++;
+}
+
+$appointments = $source->select('_elojegyzes', 'e')
+  ->fields('e')
+  ->condition('osztaly', $department)
+  ->orderBy('edatum')
+  ->orderBy('fajta')
+  ->execute();
+$today = date('Y-m-d');
+$imported_appointments = 0;
+
+while ($appointment = $appointments->fetchObject()) {
+  $admission_date = $valid_date($appointment->edatum);
+  if (!$admission_date || trim($appointment->fajta) === '') {
+    continue;
+  }
+  $surgery_date = $valid_date($appointment->mut_dat);
+  $operating_room = in_array($appointment->muto, ['5', '6', '7', '8', 'A'], TRUE) ? $appointment->muto : NULL;
+  $notes = trim((string) $appointment->egyeb);
+  if (!empty($appointment->anaesth)) {
+    $notes .= ($notes === '' ? '' : "\n\n") . 'Anesztézia: ' . trim($appointment->anaesth);
+  }
+  $created = strtotime((string) $appointment->stamp) ?: time();
+  $fields = [
+    'legacy_id' => 'elojegyzes:' . sha1($appointment->edatum . '|' . $appointment->fajta . '|' . $department),
+    'admission_date' => $admission_date,
+    'slot_type' => trim($appointment->fajta),
+    'aznm' => (int) !empty($appointment->egynapos),
+    'patient_name' => trim($appointment->nev),
+    'birth_date' => $valid_date($appointment->szuldat),
+    'taj' => trim($appointment->taj),
+    'contact' => trim($appointment->elerhetoseg),
+    'ward_room' => trim($appointment->korterem),
+    'diagnosis' => trim($appointment->diag),
+    'operation_name' => trim($appointment->mutet),
+    'laparoscope' => trim($appointment->laparoscope),
+    'mesh' => trim($appointment->halo),
+    'laterality' => trim($appointment->oldalisag),
+    'blood_type' => trim($appointment->vercsop),
+    'notes' => $notes,
+    'doctor_id' => $doctor_id_by_name[$normalize_name($appointment->orvos)] ?? NULL,
+    'assistant1_id' => $doctor_id_by_name[$normalize_name($appointment->assz1)] ?? NULL,
+    'assistant2_id' => $doctor_id_by_name[$normalize_name($appointment->assz2)] ?? NULL,
+    'assistant3_id' => $doctor_id_by_name[$normalize_name($appointment->assz3)] ?? NULL,
+    'surgery_date' => $surgery_date,
+    'operating_room' => $operating_room,
+    'surgery_order' => max(0, (int) $appointment->mut_sorrend),
+    // Historical rows stay available but cannot flood the active waiting list.
+    'operated' => (int) ($admission_date < $today),
+    'created_by' => $new_uid_by_name[mb_strtolower(trim($appointment->user), 'UTF-8')] ?? 0,
+    'created' => $created,
+    'changed' => $created,
+  ];
+  $target->merge('muteti_appointment')
+    ->keys(['admission_date' => $admission_date, 'slot_type' => trim($appointment->fajta)])
+    ->fields($fields)
+    ->execute();
+  $imported_appointments++;
+}
+
+print "Import kész.\n";
+print "Felhasználók: {$imported_users}\n";
+print "Orvosok és asszisztensek: {$imported_doctors}\n";
+print "Sebészeti előjegyzések: {$imported_appointments}\n";
