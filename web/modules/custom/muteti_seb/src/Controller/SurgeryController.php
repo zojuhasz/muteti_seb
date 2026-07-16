@@ -23,11 +23,28 @@ final class SurgeryController extends ControllerBase {
     for($i=0;$i<7;$i++){ $d=clone $monday;$d->modify("+$i day");$days[]=$d; }
     if (!$selected) {
       $cards=['#type'=>'container','#attributes'=>['class'=>['muteti-week-cards']]];
-      foreach($days as $i=>$d){$date=$d->format('Y-m-d');$stored=$this->database->select('muteti_day_type','t')->fields('t',['day_type'])->condition('date',$date)->execute()->fetchField();$type=$stored?:Schedule::defaultDayType($d);$cards['d'.$i]=Link::fromTextAndUrl($date.' '.$d->format('l').' - '.$type,Url::fromRoute('muteti_seb.surgery',[],['query'=>['week'=>$monday->format('Y-m-d'),'day'=>$date]]))->toRenderable();$cards['d'.$i]['#attributes']['class'][]='muteti-day-card';}
+      foreach($days as $i=>$d){
+        $date=$d->format('Y-m-d');
+        $stored=$this->database->select('muteti_day_type','t')->fields('t',['day_type'])->condition('date',$date)->execute()->fetchField();
+        $type=$stored?:Schedule::defaultDayType($d);
+        $cards['d'.$i]=[
+          '#type'=>'link',
+          '#title'=>[
+            '#markup'=>'<span class="muteti-day-card-date">'.Html::escape($date).'</span><span class="muteti-day-card-name">'.Html::escape((string) $this->t($d->format('l'))).'</span><span class="muteti-day-type">'.Html::escape($type).'</span>',
+          ],
+          '#url'=>Url::fromRoute('muteti_seb.surgery',[],['query'=>['week'=>$monday->format('Y-m-d'),'day'=>$date]]),
+          '#attributes'=>['class'=>['muteti-day-card']],
+        ];
+      }
       return [
         '#attached' => ['library' => ['muteti_seb/surgery_board']],
         '#cache' => ['max-age' => 0],
-        'cards' => $cards,
+        'week_frame' => [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['muteti-surgery-week-frame']],
+          'heading' => ['#markup' => '<h2 class="muteti-panel-title">Heti műtéti beosztás</h2>'],
+          'cards' => $cards,
+        ],
       ];
     }
     $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('admission_date',date('Y-m-d'),'<=')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
@@ -65,12 +82,12 @@ final class SurgeryController extends ControllerBase {
       ];
     };
     $build=['#attached'=>['library'=>['muteti_seb/surgery_board'],'drupalSettings'=>['mutetiSeb'=>['endpoint'=>Url::fromRoute('muteti_seb.assignment',[],['query'=>['token'=>$this->csrf->get('muteti/api/assignment')]])->toString()]]], '#cache'=>['max-age'=>0], '#type'=>'container','#attributes'=>['class'=>['muteti-surgery-board']]];
-    $build['top']=['#markup'=>'<div class="muteti-nav">'.Link::fromTextAndUrl('← Heti áttekintés',Url::fromRoute('muteti_seb.surgery',[],['query'=>['week'=>$monday->format('Y-m-d')]]))->toString().' '.Link::fromTextAndUrl('Műtéti program PDF',Url::fromRoute('muteti_seb.program_pdf',['date'=>$selected]))->toString().'</div><h2>'.$selected.'</h2>'];
+    $build['top']=['#markup'=>'<div class="muteti-nav">'.Link::fromTextAndUrl('← Heti áttekintés',Url::fromRoute('muteti_seb.surgery',[],['query'=>['week'=>$monday->format('Y-m-d')]]))->toString().' '.Link::fromTextAndUrl('Műtéti program PDF',Url::fromRoute('muteti_seb.program_pdf',['date'=>$selected]))->toString().'</div><h2 class="muteti-panel-title">'.Html::escape($selected).' – műtéti beosztás</h2>'];
     $build['layout']=['#type'=>'container','#attributes'=>['class'=>['muteti-board-layout']]];
-    $build['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>['muteti-dropzone','muteti-waiting'],'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3>Műtétre váró bentfekvők</h3>']];
+    $build['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>['muteti-dropzone','muteti-waiting'],'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtétre váró bentfekvők</h3>']];
     foreach($waiting as $a)$build['layout']['waiting']['p'.$a->id]=$card($a);
     $build['layout']['rooms']=['#type'=>'container','#attributes'=>['class'=>['muteti-rooms']]];
-    foreach(Schedule::ROOMS as $room){$build['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3>Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
+    foreach(Schedule::ROOMS as $room){$build['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
     return $build;
   }
 }
