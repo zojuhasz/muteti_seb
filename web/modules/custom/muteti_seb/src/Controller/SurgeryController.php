@@ -64,7 +64,7 @@ final class SurgeryController extends ControllerBase {
         ],
       ];
     };
-    $build=['#attached'=>['library'=>['muteti_seb/surgery_board'],'drupalSettings'=>['mutetiSeb'=>['endpoint'=>Url::fromRoute('muteti_seb.assignment',[],['query'=>['token'=>$this->csrf->get('muteti_seb.assignment')]])->toString()]]], '#cache'=>['max-age'=>0], '#type'=>'container','#attributes'=>['class'=>['muteti-surgery-board']]];
+    $build=['#attached'=>['library'=>['muteti_seb/surgery_board'],'drupalSettings'=>['mutetiSeb'=>['endpoint'=>Url::fromRoute('muteti_seb.assignment',[],['query'=>['token'=>$this->csrf->get('muteti/api/assignment')]])->toString()]]], '#cache'=>['max-age'=>0], '#type'=>'container','#attributes'=>['class'=>['muteti-surgery-board']]];
     $build['top']=['#markup'=>'<div class="muteti-nav">'.Link::fromTextAndUrl('← Heti áttekintés',Url::fromRoute('muteti_seb.surgery',[],['query'=>['week'=>$monday->format('Y-m-d')]]))->toString().' '.Link::fromTextAndUrl('Műtéti program PDF',Url::fromRoute('muteti_seb.program_pdf',['date'=>$selected]))->toString().'</div><h2>'.$selected.'</h2>'];
     $build['layout']=['#type'=>'container','#attributes'=>['class'=>['muteti-board-layout']]];
     $build['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>['muteti-dropzone','muteti-waiting'],'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3>Műtétre váró bentfekvők</h3>']];
