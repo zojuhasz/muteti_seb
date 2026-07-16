@@ -61,7 +61,7 @@ final class SurgeryController extends ControllerBase {
         'link' => [
           '#type' => 'link',
           '#title' => [
-            '#markup' => '<span class="muteti-day-card-date">'.Html::escape($date).'</span><span class="muteti-day-card-name">'.Html::escape((string) $this->t($day->format('l'))).'</span><span class="muteti-day-type">'.Html::escape($type).'</span>',
+            '#markup' => '<span class="muteti-day-card-date">'.Html::escape($date).'</span><span class="muteti-day-card-name">'.Html::escape((string) $this->t($day->format('l'))).'</span>',
           ],
           '#url' => Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $monday->format('Y-m-d'), 'day' => $date]]),
           '#attributes' => ['class' => $classes],
@@ -131,7 +131,7 @@ final class SurgeryController extends ControllerBase {
     ];
     $build['week_frame'] = [
       '#type' => 'container',
-      '#attributes' => ['class' => ['muteti-surgery-week-frame']],
+      '#attributes' => ['class' => ['muteti-surgery-week-frame'], 'id' => 'muteti-surgery-week'],
       'heading' => ['#markup' => '<h2 class="muteti-panel-title">Heti műtéti beosztás</h2>'],
       'nav' => [
         '#type' => 'container',
