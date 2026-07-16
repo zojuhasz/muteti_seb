@@ -18,35 +18,71 @@ final class SurgeryController extends ControllerBase {
   public static function create(ContainerInterface $c): static { return new static($c->get('database'),$c->get('csrf_token')); }
 
   public function week(Request $request): array {
-    $monday=new DrupalDateTime($request->query->get('week','monday this week')); $monday->modify('monday this week');
-    $selected=$request->query->get('day'); $days=[];
-    for($i=0;$i<7;$i++){ $d=clone $monday;$d->modify("+$i day");$days[]=$d; }
-    if (!$selected) {
-      $cards=['#type'=>'container','#attributes'=>['class'=>['muteti-week-cards']]];
-      foreach($days as $i=>$d){
-        $date=$d->format('Y-m-d');
-        $stored=$this->database->select('muteti_day_type','t')->fields('t',['day_type'])->condition('date',$date)->execute()->fetchField();
-        $type=$stored?:Schedule::defaultDayType($d);
-        $cards['d'.$i]=[
-          '#type'=>'link',
-          '#title'=>[
-            '#markup'=>'<span class="muteti-day-card-date">'.Html::escape($date).'</span><span class="muteti-day-card-name">'.Html::escape((string) $this->t($d->format('l'))).'</span><span class="muteti-day-type">'.Html::escape($type).'</span>',
-          ],
-          '#url'=>Url::fromRoute('muteti_seb.surgery',[],['query'=>['week'=>$monday->format('Y-m-d'),'day'=>$date]]),
-          '#attributes'=>['class'=>['muteti-day-card']],
-        ];
+    try {
+      $monday = new DrupalDateTime($request->query->get('week', 'monday this week'));
+    }
+    catch (\Exception) {
+      $monday = new DrupalDateTime('monday this week');
+    }
+    $monday->modify('monday this week');
+    $days = [];
+    $day_dates = [];
+    for ($i = 0; $i < 7; $i++) {
+      $day = clone $monday;
+      $day->modify("+$i day");
+      $days[] = $day;
+      $day_dates[] = $day->format('Y-m-d');
+    }
+    $selected = (string) $request->query->get('day', '');
+    if (!in_array($selected, $day_dates, TRUE)) {
+      $today = date('Y-m-d');
+      $selected = in_array($today, $day_dates, TRUE) ? $today : $day_dates[0];
+    }
+
+    $prev = (clone $monday)->modify('-7 days')->format('Y-m-d');
+    $next = (clone $monday)->modify('+7 days')->format('Y-m-d');
+    $cards = ['#type' => 'container', '#attributes' => ['class' => ['muteti-week-cards']]];
+    foreach ($days as $i => $day) {
+      $date = $day->format('Y-m-d');
+      $stored = $this->database->select('muteti_day_type', 't')->fields('t', ['day_type'])->condition('date', $date)->execute()->fetchField();
+      $type = $stored ?: Schedule::defaultDayType($day);
+      $occupied = (bool) $this->database->select('muteti_appointment', 'a')
+        ->condition('surgery_date', $date)
+        ->countQuery()
+        ->execute()
+        ->fetchField();
+      $classes = ['muteti-day-card'];
+      if ($date === $selected) {
+        $classes[] = 'is-selected';
       }
-      return [
-        '#attached' => ['library' => ['muteti_seb/surgery_board']],
-        '#cache' => ['max-age' => 0],
-        'week_frame' => [
-          '#type' => 'container',
-          '#attributes' => ['class' => ['muteti-surgery-week-frame']],
-          'heading' => ['#markup' => '<h2 class="muteti-panel-title">Heti műtéti beosztás</h2>'],
-          'cards' => $cards,
+      $cards['d'.$i] = [
+        '#type' => 'container',
+        '#attributes' => ['class' => array_filter(['muteti-day-card-shell', $occupied ? 'is-locked' : NULL])],
+        'link' => [
+          '#type' => 'link',
+          '#title' => [
+            '#markup' => '<span class="muteti-day-card-date">'.Html::escape($date).'</span><span class="muteti-day-card-name">'.Html::escape((string) $this->t($day->format('l'))).'</span><span class="muteti-day-type">'.Html::escape($type).'</span>',
+          ],
+          '#url' => Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $monday->format('Y-m-d'), 'day' => $date]]),
+          '#attributes' => ['class' => $classes],
+        ],
+        'day_type' => [
+          '#type' => 'select',
+          '#title' => $this->t('Napfajta'),
+          '#title_display' => 'invisible',
+          '#options' => array_combine(array_keys(Schedule::DAY_TYPES), array_keys(Schedule::DAY_TYPES)),
+          '#default_value' => $type,
+          '#disabled' => $occupied || !$this->currentUser()->hasPermission('assign operating room'),
+          '#attributes' => [
+            'class' => ['muteti-day-type-select'],
+            'data-date' => $date,
+            'data-previous-value' => $type,
+            'title' => $occupied ? $this->t('A napfajta már nem módosítható, mert van műtőbe beosztott beteg.') : $this->t('Napfajta módosítása'),
+          ],
         ],
       ];
     }
+
     $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('admission_date',date('Y-m-d'),'<=')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
     $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
     $doctor_ids=[];
@@ -81,13 +117,46 @@ final class SurgeryController extends ControllerBase {
         ],
       ];
     };
-    $build=['#attached'=>['library'=>['muteti_seb/surgery_board'],'drupalSettings'=>['mutetiSeb'=>['endpoint'=>Url::fromRoute('muteti_seb.assignment',[],['query'=>['token'=>$this->csrf->get('muteti/api/assignment')]])->toString()]]], '#cache'=>['max-age'=>0], '#type'=>'container','#attributes'=>['class'=>['muteti-surgery-board']]];
-    $build['top']=['#markup'=>'<div class="muteti-nav">'.Link::fromTextAndUrl('← Heti áttekintés',Url::fromRoute('muteti_seb.surgery',[],['query'=>['week'=>$monday->format('Y-m-d')]]))->toString().' '.Link::fromTextAndUrl('Műtéti program PDF',Url::fromRoute('muteti_seb.program_pdf',['date'=>$selected]))->toString().'</div><h2 class="muteti-panel-title">'.Html::escape($selected).' – műtéti beosztás</h2>'];
-    $build['layout']=['#type'=>'container','#attributes'=>['class'=>['muteti-board-layout']]];
-    $build['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>['muteti-dropzone','muteti-waiting'],'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtétre váró bentfekvők</h3>']];
-    foreach($waiting as $a)$build['layout']['waiting']['p'.$a->id]=$card($a);
-    $build['layout']['rooms']=['#type'=>'container','#attributes'=>['class'=>['muteti-rooms']]];
-    foreach(Schedule::ROOMS as $room){$build['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
+    $build = [
+      '#attached' => [
+        'library' => ['muteti_seb/surgery_board'],
+        'drupalSettings' => ['mutetiSeb' => [
+          'endpoint' => Url::fromRoute('muteti_seb.assignment', [], ['query' => ['token' => $this->csrf->get('muteti/api/assignment')]])->toString(),
+          'dayTypeEndpoint' => Url::fromRoute('muteti_seb.day_type', [], ['query' => ['token' => $this->csrf->get('muteti/api/day-type')]])->toString(),
+        ]],
+      ],
+      '#cache' => ['max-age' => 0],
+      '#type' => 'container',
+      '#attributes' => ['class' => ['muteti-surgery-page']],
+    ];
+    $build['week_frame'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['muteti-surgery-week-frame']],
+      'heading' => ['#markup' => '<h2 class="muteti-panel-title">Heti műtéti beosztás</h2>'],
+      'nav' => [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['muteti-nav']],
+        'prev' => Link::fromTextAndUrl('← Előző hét', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $prev]]))->toRenderable(),
+        'today' => Link::fromTextAndUrl('Aktuális hét', Url::fromRoute('muteti_seb.surgery'))->toRenderable(),
+        'next' => Link::fromTextAndUrl('Következő hét →', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $next]]))->toRenderable(),
+      ],
+      'cards' => $cards,
+    ];
+    $build['daily'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['muteti-surgery-board']],
+      'top' => [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['muteti-daily-heading']],
+        'title' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($selected).' – műtéti beosztás</h2>'],
+        'pdf' => Link::fromTextAndUrl('Műtéti program PDF', Url::fromRoute('muteti_seb.program_pdf', ['date' => $selected]))->toRenderable(),
+      ],
+      'layout' => ['#type' => 'container', '#attributes' => ['class' => ['muteti-board-layout']]],
+    ];
+    $build['daily']['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>['muteti-dropzone','muteti-waiting'],'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtétre váró bentfekvők</h3>']];
+    foreach($waiting as $a)$build['daily']['layout']['waiting']['p'.$a->id]=$card($a);
+    $build['daily']['layout']['rooms']=['#type'=>'container','#attributes'=>['class'=>['muteti-rooms']]];
+    foreach(Schedule::ROOMS as $room){$build['daily']['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['daily']['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
     return $build;
   }
 }
