@@ -13,6 +13,17 @@
           requestAnimationFrame(() => window.scrollTo(0, Number(savedScrollY)));
         }
       }
+      const surgeryNavigationLinks = once('muteti-surgery-scroll', '.muteti-surgery-week-frame a', context);
+      surgeryNavigationLinks.forEach((link) => {
+        link.addEventListener('click', () => sessionStorage.setItem('mutetiSurgeryScrollY', String(window.scrollY)));
+      });
+      if (context === document) {
+        const savedSurgeryScrollY = sessionStorage.getItem('mutetiSurgeryScrollY');
+        if (savedSurgeryScrollY !== null && document.querySelector('.muteti-surgery-page')) {
+          sessionStorage.removeItem('mutetiSurgeryScrollY');
+          requestAnimationFrame(() => window.scrollTo(0, Number(savedSurgeryScrollY)));
+        }
+      }
       const dayTypeSelects = once('muteti-day-type', '.muteti-day-type-select', context);
       dayTypeSelects.forEach((select) => {
         select.addEventListener('change', async () => {
@@ -28,8 +39,6 @@
             const result = await response.json();
             if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
             select.dataset.previousValue = select.value;
-            const badge = select.closest('.muteti-day-card-shell').querySelector('.muteti-day-type');
-            if (badge) badge.textContent = select.value;
             select.disabled = false;
           }
           catch (error) {
