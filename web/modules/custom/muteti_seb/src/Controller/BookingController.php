@@ -2,6 +2,7 @@
 
 namespace Drupal\muteti_seb\Controller;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
@@ -30,6 +31,10 @@ final class BookingController extends ControllerBase {
     $appointments = $this->database->select('muteti_appointment', 'a')->fields('a')->condition('admission_date', [$start, $end], 'BETWEEN')->execute()->fetchAllAssoc('id');
     $by_cell = [];
     foreach ($appointments as $a) { $by_cell[$a->admission_date][$a->slot_type] = $a; }
+    $doctor_ids = array_values(array_unique(array_filter(array_map(static fn($a) => $a->doctor_id, $appointments))));
+    $doctors = $doctor_ids
+      ? $this->database->select('muteti_doctor', 'd')->fields('d')->condition('id', $doctor_ids, 'IN')->execute()->fetchAllAssoc('id')
+      : [];
     $day_types = [];
     $stored = $this->database->select('muteti_day_type', 'd')->fields('d')->condition('date', [$start, $end], 'BETWEEN')->execute()->fetchAllKeyed();
     foreach ($dates as $d) { $key=$d->format('Y-m-d'); $day_types[$key]=$stored[$key] ?? Schedule::defaultDayType($d); }
@@ -51,7 +56,14 @@ final class BookingController extends ControllerBase {
         else {
           $edit = Link::fromTextAndUrl('M', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toString();
           $aznm = $a->aznm ? '<span class="muteti-aznm"></span>' : '';
-          $row[]=['data'=>['#markup'=>$aznm.$edit.'<div class="muteti-patient"><strong>'.htmlspecialchars($a->patient_name).'</strong><br>TAJ: '.htmlspecialchars($a->taj ?? '').'<br>'.htmlspecialchars($a->operation_name).'</div>']];
+          $doctor = $doctors[$a->doctor_id] ?? NULL;
+          $style = '';
+          if ($doctor) {
+            $background = $doctor->background_color ?: '#eef2f6';
+            $text = $doctor->text_color ?: '#111111';
+            $style = ' style="background-color:'.Html::escape($background).';color:'.Html::escape($text).'"';
+          }
+          $row[]=['data'=>['#markup'=>$aznm.$edit.'<div class="muteti-patient"'.$style.'><strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).'</div>']];
         }
       }
       $rows[]=$row;
