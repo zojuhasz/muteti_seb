@@ -1,1 +1,116 @@
-.muteti-nav{display:flex;gap:1rem;margin:0 0 1rem}.muteti-booking-table{min-width:1100px}.muteti-booking-table td{position:relative;vertical-align:top;min-width:130px}.muteti-patient{padding:.5rem;border-radius:.35rem}.muteti-staff{display:inline-block;margin-top:.25rem;font-size:.85em;font-weight:600}.muteti-aznm{position:absolute;left:0;top:0;bottom:0;width:4px;background:#c00}.muteti-week-cards{display:grid;grid-template-columns:repeat(7,minmax(130px,1fr));gap:1rem}.muteti-day-card{display:block;padding:1.25rem;border:1px solid #ccd3dd;border-radius:.5rem;min-height:100px}.muteti-board-layout{display:grid;grid-template-columns:minmax(240px,1fr) minmax(420px,3fr);gap:1rem}.muteti-rooms{display:grid;gap:1rem}.muteti-room,.muteti-waiting{border:1px dashed #99a3b2;border-radius:.5rem;padding:.75rem;min-height:90px}.muteti-drag-card{padding:.65rem;margin:.5rem 0;border:1px solid #ccd3dd;border-radius:.35rem;cursor:grab}.muteti-drag-card.is-aznm{border-left:4px solid #c00}.muteti-dropzone.is-over{outline:3px solid #3478d4;background:#eef5ff}@media(max-width:800px){.muteti-week-cards{grid-template-columns:repeat(2,1fr)}.muteti-board-layout{grid-template-columns:1fr}.muteti-booking-table{font-size:.8rem}}
+.muteti-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin: 0 0 1rem;
+}
+.muteti-nav a {
+  padding: .55rem .85rem;
+  border: 1px solid #b8c4d3;
+  border-radius: .45rem;
+  background: #fff;
+  color: #174a7e;
+  text-decoration: none;
+  font-weight: 600;
+}
+.muteti-nav a:hover { background: #edf5fc; }
+.muteti-table-frame {
+  overflow-x: auto;
+  border: 1px solid #aebdcd;
+  border-radius: .7rem;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(24, 54, 84, .12);
+}
+.muteti-booking-table {
+  width: 100%;
+  min-width: 1180px;
+  margin: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.muteti-booking-table th {
+  padding: .75rem .55rem;
+  border-right: 1px solid #c7d2de;
+  border-bottom: 2px solid #879bb0;
+  background: linear-gradient(#edf4fa, #dce8f2);
+  color: #183b5c;
+  text-align: center;
+  vertical-align: middle;
+}
+.muteti-booking-table td {
+  position: relative;
+  min-width: 135px;
+  padding: .4rem;
+  border-right: 1px solid #d5dde5;
+  border-bottom: 1px solid #d5dde5;
+  background: #fbfcfd;
+  text-align: center;
+  vertical-align: top;
+}
+.muteti-booking-table tbody tr:nth-child(even) td { background: #f5f8fa; }
+.muteti-booking-table th:last-child,
+.muteti-booking-table td:last-child { border-right: 0; }
+.muteti-heading-date,
+.muteti-heading-day { display: block; }
+.muteti-heading-date { font-size: .83rem; font-weight: 600; }
+.muteti-heading-day { margin-top: .2rem; font-size: .95rem; font-weight: 800; text-transform: uppercase; }
+.muteti-index-heading { width: 70px; }
+.muteti-booking-table td:first-child {
+  min-width: 58px;
+  color: #52677a;
+  font-weight: 700;
+  vertical-align: middle;
+}
+.muteti-slot-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+  border: 1px dashed #9db2c6;
+  border-radius: .45rem;
+  color: #165b91;
+  text-decoration: none;
+  font-weight: 800;
+}
+.muteti-slot-link:hover { background: #e8f4fd; border-color: #397eaf; }
+.muteti-patient {
+  position: relative;
+  min-height: 72px;
+  padding: 1.8rem .55rem .6rem;
+  border: 1px solid rgba(30, 54, 76, .18);
+  border-radius: .45rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
+  text-align: left;
+}
+.muteti-edit-link {
+  position: absolute;
+  top: .35rem;
+  left: .4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border: 1px solid currentColor;
+  border-radius: .3rem;
+  background: rgba(255, 255, 255, .82);
+  color: #173c5f;
+  text-decoration: none;
+  font-size: .75rem;
+  font-weight: 900;
+}
+.muteti-staff { display: inline-block; margin-top: .25rem; font-size: .85em; font-weight: 600; }
+.muteti-aznm { position: absolute; left: 0; top: 0; bottom: 0; z-index: 2; width: 4px; background: #c00; }
+.muteti-week-cards { display: grid; grid-template-columns: repeat(7, minmax(130px, 1fr)); gap: 1rem; }
+.muteti-day-card { display: block; padding: 1.25rem; border: 1px solid #ccd3dd; border-radius: .5rem; min-height: 100px; }
+.muteti-board-layout { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(420px, 3fr); gap: 1rem; }
+.muteti-rooms { display: grid; gap: 1rem; }
+.muteti-room, .muteti-waiting { border: 1px dashed #99a3b2; border-radius: .5rem; padding: .75rem; min-height: 90px; }
+.muteti-drag-card { padding: .65rem; margin: .5rem 0; border: 1px solid #ccd3dd; border-radius: .35rem; cursor: grab; }
+.muteti-drag-card.is-aznm { border-left: 4px solid #c00; }
+.muteti-dropzone.is-over { outline: 3px solid #3478d4; background: #eef5ff; }
+@media (max-width: 800px) {
+  .muteti-week-cards { grid-template-columns: repeat(2, 1fr); }
+  .muteti-board-layout { grid-template-columns: 1fr; }
+  .muteti-booking-table { font-size: .8rem; }
+}
