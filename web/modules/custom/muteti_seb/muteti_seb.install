@@ -1,0 +1,85 @@
+<?php
+
+use Drupal\user\Entity\Role;
+
+/**
+ * Implements hook_schema().
+ */
+function muteti_seb_schema(): array {
+  $schema['muteti_appointment'] = [
+    'description' => 'Műtéti előjegyzések és műtőbeosztások.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE],
+      'legacy_id' => ['type' => 'varchar', 'length' => 100, 'not null' => FALSE],
+      'admission_date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+      'slot_type' => ['type' => 'varchar', 'length' => 20, 'not null' => TRUE],
+      'aznm' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0],
+      'patient_name' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
+      'birth_date' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
+      'taj' => ['type' => 'varchar', 'length' => 12, 'not null' => FALSE],
+      'contact' => ['type' => 'varchar', 'length' => 100, 'not null' => FALSE],
+      'ward_room' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
+      'diagnosis' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'operation_name' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE],
+      'laparoscope' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
+      'mesh' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
+      'laterality' => ['type' => 'varchar', 'length' => 20, 'not null' => FALSE],
+      'blood_type' => ['type' => 'varchar', 'length' => 5, 'not null' => FALSE],
+      'notes' => ['type' => 'text', 'size' => 'big', 'not null' => FALSE],
+      'doctor_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
+      'assistant1_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
+      'assistant2_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
+      'assistant3_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
+      'surgery_date' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
+      'operating_room' => ['type' => 'varchar', 'length' => 1, 'not null' => FALSE],
+      'surgery_order' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'operated' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0],
+      'created_by' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'created' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+      'changed' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => ['date_slot' => ['admission_date', 'slot_type']],
+    'indexes' => ['waiting' => ['admission_date', 'operated'], 'surgery' => ['surgery_date', 'operating_room', 'surgery_order']],
+  ];
+  $schema['muteti_doctor'] = [
+    'description' => 'Orvostörzs és megjelenítési színek.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE],
+      'legacy_nid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
+      'user_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
+      'name' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
+      'background_color' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
+      'text_color' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
+      'active' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => ['legacy_nid' => ['legacy_nid']],
+  ];
+  $schema['muteti_day_type'] = [
+    'description' => 'Naptári napok napfajtája.',
+    'fields' => [
+      'date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+      'day_type' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+    ],
+    'primary key' => ['date'],
+  ];
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function muteti_seb_install(): void {
+  $roles = [
+    'muteti_view' => ['Betekintő', ['view surgery schedule']],
+    'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment']],
+    'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room']],
+    'muteti_orvos3' => ['Orvos3', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
+  ];
+  foreach ($roles as $id => [$label, $permissions]) {
+    if (!Role::load($id)) {
+      Role::create(['id' => $id, 'label' => $label])->grantPermissions($permissions)->save();
+    }
+  }
+}

@@ -1,0 +1,5 @@
+name: Műtéti előjegyzés
+type: module
+description: Heti előjegyzési és műtőbeosztási alkalmazás.
+package: Egyedi
+core_version_requirement: ^11

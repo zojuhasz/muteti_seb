@@ -1,0 +1,42 @@
+muteti_seb.booking:
+  path: '/muteti/elojegyzes'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\BookingController::week'
+    _title: 'Előjegyzés'
+  requirements:
+    _permission: 'view surgery schedule'
+
+muteti_seb.appointment:
+  path: '/muteti/elojegyzes/{date}/{slot}'
+  defaults:
+    _form: '\Drupal\muteti_seb\Form\AppointmentForm'
+    _title: 'Beteg felvitele'
+  requirements:
+    _permission: 'create surgery appointment'
+    date: '\d{4}-\d{2}-\d{2}'
+
+muteti_seb.surgery:
+  path: '/muteti/muteti-beosztas'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\SurgeryController::week'
+    _title: 'Műtéti beosztás'
+  requirements:
+    _permission: 'view surgery schedule'
+
+muteti_seb.assignment:
+  path: '/muteti/api/assignment'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\AssignmentController::update'
+  methods: [POST]
+  requirements:
+    _permission: 'assign operating room'
+    _csrf_token: 'TRUE'
+
+muteti_seb.program_pdf:
+  path: '/muteti/program/{date}/pdf'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\ProgramPdfController::pdf'
+    _title: 'Műtéti program PDF'
+  requirements:
+    _permission: 'view surgery schedule'
+    date: '\d{4}-\d{2}-\d{2}'

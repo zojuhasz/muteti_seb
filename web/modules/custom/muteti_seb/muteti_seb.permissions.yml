@@ -1,0 +1,11 @@
+view surgery schedule:
+  title: 'Műtéti előjegyzések megtekintése'
+create surgery appointment:
+  title: 'Műtéti előjegyzés létrehozása'
+edit surgery appointment:
+  title: 'Műtéti előjegyzés módosítása'
+assign operating room:
+  title: 'Betegek műtőbe osztása és sorrendezése'
+administer surgery system:
+  title: 'Műtéti rendszer adminisztrációja'
+  restrict access: true
