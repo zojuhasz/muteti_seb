@@ -111,6 +111,7 @@
 }
 .muteti-panel-title { margin: 0 0 1rem; color: #183b5c; font-size: 1.35rem; }
 .muteti-week-cards { display: grid; grid-template-columns: repeat(7, minmax(135px, 1fr)); gap: .75rem; }
+.muteti-day-card-shell { min-width: 0; }
 .muteti-day-card {
   display: flex;
   flex-direction: column;
@@ -128,9 +129,16 @@
   transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
 }
 .muteti-day-card:hover { transform: translateY(-2px); border-color: #3478a8; box-shadow: 0 5px 12px rgba(22, 55, 84, .16); }
+.muteti-day-card.is-selected { border: 2px solid #17689f; background: linear-gradient(#edf8ff, #d9ebf8); box-shadow: 0 0 0 3px rgba(23, 104, 159, .14); }
 .muteti-day-card-date { display: block; font-size: .82rem; font-weight: 600; }
 .muteti-day-card-name { display: block; margin: .2rem 0 .55rem; font-size: .98rem; font-weight: 900; text-transform: uppercase; }
 .muteti-day-type { display: inline-block; padding: .2rem .55rem; border-radius: 999px; background: #245f8e; color: #fff; font-size: .76rem; font-weight: 800; }
+.muteti-day-type-select { width: 100%; margin-top: .45rem; padding: .35rem .45rem; border: 1px solid #aebdcd; border-radius: .4rem; background: #fff; color: #183b5c; font-weight: 700; }
+.muteti-day-card-shell.is-locked .muteti-day-type-select { cursor: not-allowed; opacity: .65; }
+.muteti-surgery-page > .muteti-surgery-board { margin-top: 1rem; }
+.muteti-daily-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.muteti-daily-heading .muteti-panel-title { margin: 0; }
+.muteti-daily-heading > a { padding: .55rem .85rem; border: 1px solid #b8c4d3; border-radius: .45rem; background: #fff; color: #174a7e; text-decoration: none; font-weight: 700; }
 .muteti-board-layout { display: grid; grid-template-columns: minmax(270px, 1fr) minmax(460px, 3fr); gap: 1rem; align-items: start; }
 .muteti-rooms { display: grid; gap: 1rem; }
 .muteti-room, .muteti-waiting {
