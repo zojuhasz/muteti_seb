@@ -44,7 +44,9 @@ final class BookingController extends ControllerBase {
         if (!$slot) { $row[]=['data'=>['#markup'=>'—']]; continue; }
         $a=$by_cell[$date][$slot] ?? NULL;
         if (!$a) {
-          $row[] = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
+          $row[] = [
+            'data' => Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable(),
+          ];
         }
         else {
           $edit = Link::fromTextAndUrl('M', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toString();
