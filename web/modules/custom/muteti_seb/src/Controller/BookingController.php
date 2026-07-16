@@ -39,8 +39,17 @@ final class BookingController extends ControllerBase {
     $stored = $this->database->select('muteti_day_type', 'd')->fields('d')->condition('date', [$start, $end], 'BETWEEN')->execute()->fetchAllKeyed();
     foreach ($dates as $d) { $key=$d->format('Y-m-d'); $day_types[$key]=$stored[$key] ?? Schedule::defaultDayType($d); }
     $max = max(array_map(fn($t) => count(Schedule::DAY_TYPES[$t]), $day_types));
-    $header = [$this->t('Sorszám')];
-    foreach ($dates as $d) { $header[] = $d->format('Y-m-d') . '<br>' . $this->t($d->format('l')); }
+    $header = [
+      ['data' => $this->t('Sorszám'), 'class' => ['muteti-index-heading']],
+    ];
+    foreach ($dates as $d) {
+      $header[] = [
+        'data' => [
+          '#markup' => '<span class="muteti-heading-date">'.Html::escape($d->format('Y-m-d')).'</span><span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span>',
+        ],
+        'class' => ['muteti-day-heading'],
+      ];
+    }
     $rows = [];
     for ($r=0; $r<$max; $r++) {
       $row = [$r+1];
@@ -49,12 +58,17 @@ final class BookingController extends ControllerBase {
         if (!$slot) { $row[]=['data'=>['#markup'=>'—']]; continue; }
         $a=$by_cell[$date][$slot] ?? NULL;
         if (!$a) {
+          $slot_link = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
+          $slot_link['#attributes']['class'][] = 'muteti-slot-link';
           $row[] = [
-            'data' => Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable(),
+            'data' => $slot_link,
           ];
         }
         else {
           $edit = Link::fromTextAndUrl('M', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
+          $edit['#attributes']['class'][] = 'muteti-edit-link';
+          $edit['#attributes']['title'] = $this->t('Módosítás');
+          $edit['#attributes']['aria-label'] = $this->t('Módosítás');
           $doctor = $doctors[$a->doctor_id] ?? NULL;
           $patient_attributes = ['class' => ['muteti-patient']];
           if ($doctor) {
@@ -63,10 +77,10 @@ final class BookingController extends ControllerBase {
             $patient_attributes['style'] = 'background-color:'.$background.';color:'.$text;
           }
           $cell = [
-            'edit' => $edit,
             'patient' => [
               '#type' => 'container',
               '#attributes' => $patient_attributes,
+              'edit' => $edit,
               'content' => [
                 '#markup' => '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($doctor ? '<br><span class="muteti-staff">'.Html::escape($doctor->name).'</span>' : ''),
               ],
@@ -85,7 +99,11 @@ final class BookingController extends ControllerBase {
       '#attached'=>['library'=>['muteti_seb/surgery_board']],
       '#cache'=>['max-age'=>0],
       'nav'=>['#type'=>'container','#attributes'=>['class'=>['muteti-nav']], 'prev'=>Link::fromTextAndUrl('← Előző hét',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]]))->toRenderable(),'today'=>Link::fromTextAndUrl('Aktuális hét',Url::fromRoute('muteti_seb.booking'))->toRenderable(),'next'=>Link::fromTextAndUrl('Következő hét →',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]]))->toRenderable()],
-      'table'=>['#type'=>'table','#header'=>$header,'#rows'=>$rows,'#attributes'=>['class'=>['muteti-booking-table']]],
+      'table_wrapper'=>[
+        '#type'=>'container',
+        '#attributes'=>['class'=>['muteti-table-frame']],
+        'table'=>['#type'=>'table','#header'=>$header,'#rows'=>$rows,'#attributes'=>['class'=>['muteti-booking-table']]],
+      ],
     ];
   }
 }
