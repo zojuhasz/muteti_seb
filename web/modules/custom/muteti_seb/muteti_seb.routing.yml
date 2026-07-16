@@ -32,6 +32,15 @@ muteti_seb.assignment:
     _permission: 'assign operating room'
     _csrf_token: 'TRUE'
 
+muteti_seb.day_type:
+  path: '/muteti/api/day-type'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\DayTypeController::update'
+  methods: [POST]
+  requirements:
+    _permission: 'assign operating room'
+    _csrf_token: 'TRUE'
+
 muteti_seb.program_pdf:
   path: '/muteti/program/{date}/pdf'
   defaults:
