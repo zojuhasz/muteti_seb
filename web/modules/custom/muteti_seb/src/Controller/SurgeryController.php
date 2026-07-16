@@ -2,6 +2,7 @@
 
 namespace Drupal\muteti_seb\Controller;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
@@ -31,10 +32,22 @@ final class SurgeryController extends ControllerBase {
     }
     $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('admission_date',date('Y-m-d'),'<=')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
     $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
-    $doctor_ids=[];foreach(array_merge($waiting,$assigned) as $a) if($a->doctor_id)$doctor_ids[]=$a->doctor_id;
+    $doctor_ids=[];
+    foreach(array_merge($waiting,$assigned) as $a) {
+      foreach ([$a->doctor_id, $a->assistant1_id, $a->assistant2_id, $a->assistant3_id] as $staff_id) {
+        if ($staff_id) $doctor_ids[]=$staff_id;
+      }
+    }
     $doctors=$doctor_ids?$this->database->select('muteti_doctor','d')->fields('d')->condition('id',array_unique($doctor_ids),'IN')->execute()->fetchAllAssoc('id'):[];
     $card = function ($a) use ($doctors): array {
       $doctor = $doctors[$a->doctor_id] ?? NULL;
+      $staff = [];
+      foreach ([$a->doctor_id, $a->assistant1_id, $a->assistant2_id, $a->assistant3_id] as $staff_id) {
+        if ($staff_id && isset($doctors[$staff_id])) {
+          $staff[] = $doctors[$staff_id]->name;
+        }
+      }
+      $staff = array_values(array_unique($staff));
       $attributes = [
         'class' => array_filter(['muteti-drag-card', $a->aznm ? 'is-aznm' : NULL]),
         'draggable' => 'true',
@@ -47,7 +60,7 @@ final class SurgeryController extends ControllerBase {
         '#type' => 'container',
         '#attributes' => $attributes,
         'content' => [
-          '#markup' => '<strong>'.htmlspecialchars($a->patient_name).'</strong><br>TAJ: '.htmlspecialchars($a->taj ?? '').'<br>'.htmlspecialchars($a->operation_name),
+          '#markup' => '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($staff ? '<br><span class="muteti-staff">'.implode(', ', array_map([Html::class, 'escape'], $staff)).'</span>' : ''),
         ],
       ];
     };
