@@ -2,6 +2,17 @@
   'use strict';
   Drupal.behaviors.mutetiSurgeryBoard = {
     attach(context) {
+      const bookingNavLinks = once('muteti-booking-scroll', '.muteti-booking-nav a', context);
+      bookingNavLinks.forEach((link) => {
+        link.addEventListener('click', () => sessionStorage.setItem('mutetiBookingScrollY', String(window.scrollY)));
+      });
+      if (context === document) {
+        const savedScrollY = sessionStorage.getItem('mutetiBookingScrollY');
+        if (savedScrollY !== null && document.querySelector('#muteti-booking-table')) {
+          sessionStorage.removeItem('mutetiBookingScrollY');
+          requestAnimationFrame(() => window.scrollTo(0, Number(savedScrollY)));
+        }
+      }
       const cards = once('muteti-drag', '.muteti-drag-card', context);
       const zones = once('muteti-drop', '.muteti-dropzone', context);
       let dragged = null;
