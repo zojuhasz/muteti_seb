@@ -9,6 +9,7 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\muteti_seb\Service\Schedule;
+use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -20,6 +21,7 @@ final class BookingController extends ControllerBase {
   }
 
   public function week(Request $request): array {
+    $department = UserDepartment::get($this->currentUser());
     $week = $request->query->get('week', 'now');
     try { $monday = new DrupalDateTime($week === 'now' ? 'monday this week' : $week); }
     catch (\Exception) { $monday = new DrupalDateTime('monday this week'); }
@@ -28,7 +30,7 @@ final class BookingController extends ControllerBase {
     for ($i = 0; $i < 7; $i++) { $d = clone $monday; $d->modify("+$i day"); $dates[] = $d; }
 
     $start = $dates[0]->format('Y-m-d'); $end = $dates[6]->format('Y-m-d');
-    $appointments = $this->database->select('muteti_appointment', 'a')->fields('a')->condition('department', 'Sebészet')->condition('admission_date', [$start, $end], 'BETWEEN')->execute()->fetchAllAssoc('id');
+    $appointments = $this->database->select('muteti_appointment', 'a')->fields('a')->condition('department', $department)->condition('admission_date', [$start, $end], 'BETWEEN')->execute()->fetchAllAssoc('id');
     $by_cell = [];
     foreach ($appointments as $a) { $by_cell[$a->admission_date][$a->slot_type] = $a; }
     $doctor_ids = array_values(array_unique(array_filter(array_map(static fn($a) => $a->doctor_id, $appointments))));
@@ -38,7 +40,14 @@ final class BookingController extends ControllerBase {
     $day_types = [];
     $stored = $this->database->select('muteti_day_type', 'd')->fields('d')->condition('date', [$start, $end], 'BETWEEN')->execute()->fetchAllKeyed();
     foreach ($dates as $d) { $key=$d->format('Y-m-d'); $day_types[$key]=$stored[$key] ?? Schedule::defaultDayType($d); }
-    $max = max(array_map(fn($t) => count(Schedule::DAY_TYPES[$t]), $day_types));
+    $department_slots = [];
+    if ($department !== 'Sebészet') {
+      $department_slots = array_values(array_unique(array_map(static fn($a) => (string) $a->slot_type, $appointments)));
+      usort($department_slots, 'strnatcasecmp');
+    }
+    $max = $department === 'Sebészet'
+      ? max(array_map(fn($t) => count(Schedule::DAY_TYPES[$t]), $day_types))
+      : count($department_slots);
     $header = [
       ['data' => $this->t('Sorszám'), 'class' => ['muteti-index-heading']],
     ];
@@ -54,7 +63,10 @@ final class BookingController extends ControllerBase {
     for ($r=0; $r<$max; $r++) {
       $row = [$r+1];
       foreach ($dates as $d) {
-        $date=$d->format('Y-m-d'); $slot=Schedule::DAY_TYPES[$day_types[$date]][$r] ?? NULL;
+        $date=$d->format('Y-m-d');
+        $slot = $department === 'Sebészet'
+          ? (Schedule::DAY_TYPES[$day_types[$date]][$r] ?? NULL)
+          : ($department_slots[$r] ?? NULL);
         if (!$slot) { $row[]=['data'=>['#markup'=>'—']]; continue; }
         $a=$by_cell[$date][$slot] ?? NULL;
         if (!$a) {
@@ -98,6 +110,7 @@ final class BookingController extends ControllerBase {
     return [
       '#attached'=>['library'=>['muteti_seb/surgery_board']],
       '#cache'=>['max-age'=>0],
+      'department'=>['#markup'=>'<h2 class="muteti-panel-title">'.Html::escape($department).' – előjegyzés</h2>'],
       'nav'=>['#type'=>'container','#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']], 'prev'=>Link::fromTextAndUrl('← Előző hét',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]]))->toRenderable(),'today'=>Link::fromTextAndUrl('Aktuális hét',Url::fromRoute('muteti_seb.booking'))->toRenderable(),'next'=>Link::fromTextAndUrl('Következő hét →',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]]))->toRenderable()],
       'table_wrapper'=>[
         '#type'=>'container',
