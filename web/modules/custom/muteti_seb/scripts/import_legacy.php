@@ -140,6 +140,7 @@ $available_roles = array_fill_keys(array_keys(Role::loadMultiple()), TRUE);
 $new_uid_by_legacy_uid = [];
 $new_uid_by_name = [];
 $imported_users = 0;
+$synchronized_passwords = 0;
 
 foreach ($legacy_users as $legacy_user) {
   $mapped_uid = $target->select('muteti_legacy_user', 'm')
@@ -159,10 +160,9 @@ foreach ($legacy_users as $legacy_user) {
     'created' => max(1, (int) $legacy_user->created),
   ]);
   $is_protected_admin = !$is_new && (int) $account->id() === 1;
-  if (($is_new || ($source_key === 'd7_live' && !$is_protected_admin)) && !empty($legacy_user->pass)) {
-    // Drupal preserves the legacy $S$ hash and upgrades it after a valid login.
-    $account->setPassword($legacy_user->pass);
-  }
+  $password_hash_to_sync = ($is_new || ($source_key === 'd7_live' && !$is_protected_admin)) && !empty($legacy_user->pass)
+    ? (string) $legacy_user->pass
+    : NULL;
   if (!empty($legacy_user->mail) && filter_var($legacy_user->mail, FILTER_VALIDATE_EMAIL)) {
     $account->setEmail($legacy_user->mail);
   }
@@ -198,6 +198,16 @@ foreach ($legacy_users as $legacy_user) {
     $account->addRole('muteti_view');
   }
   $account->save();
+  if ($password_hash_to_sync !== NULL) {
+    // setPassword() would hash the already hashed D7 value again. Store the
+    // trusted read-only source hash verbatim; Drupal upgrades it after login.
+    $target->update('users_field_data')
+      ->fields(['pass' => $password_hash_to_sync])
+      ->condition('uid', (int) $account->id())
+      ->execute();
+    \Drupal::entityTypeManager()->getStorage('user')->resetCache([(int) $account->id()]);
+    $synchronized_passwords++;
+  }
   $target->merge('muteti_legacy_user')
     ->key('legacy_uid', (int) $legacy_user->uid)
     ->fields([
@@ -380,6 +390,7 @@ print "Import kész.\n";
 print "Forráskapcsolat: {$source_key}\n";
 print "Forrásadatbázis: {$source_database}\n";
 print "Felhasználók: {$imported_users}\n";
+print "D7 jelszó-hash frissítve: {$synchronized_passwords}\n";
 print "Orvosok és asszisztensek: {$imported_doctors}\n";
 print "Összes előjegyzés: {$imported_appointments}\n";
 print "Az éles D7-ben már nem létező importált előjegyzések törölve: {$removed_appointments}\n";
