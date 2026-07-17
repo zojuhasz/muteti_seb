@@ -13,13 +13,11 @@ use Drupal\user\Entity\User;
  *   drush php:script web/modules/custom/muteti_seb/scripts/import_legacy.php
  */
 
-$department = 'Sebészet';
 $legacy_department_map = [
   23 => 'Urológia',
   24 => 'Sebészet',
   120 => 'Onkoradiológia',
 ];
-$surgery_department_nid = 24;
 $target = Database::getConnection();
 
 try {
@@ -66,13 +64,12 @@ $valid_color = static function (?string $color): ?string {
 
 // Department nodes are absent from the partial node dump, so use the original
 // field relation identifiers: 23 Urológia, 24 Sebészet, 120 Onkoradiológia.
-$department_nids = [$surgery_department_nid];
+$department_nids = array_keys($legacy_department_map);
 
-// Users referenced by surgical appointments or linked surgical doctors.
+// Users referenced by any appointment or linked to a doctor on any department.
 $usernames = $source->select('_elojegyzes', 'e')
   ->distinct()
   ->fields('e', ['user'])
-  ->condition('osztaly', $department)
   ->condition('user', '', '<>')
   ->execute()
   ->fetchCol();
@@ -147,7 +144,7 @@ foreach ($legacy_users as $legacy_user) {
       $account->addRole($new_role);
     }
   }
-  // Every imported surgical user must at least be able to view schedules.
+  // Every imported scheduler user must at least be able to view schedules.
   if (isset($available_roles['muteti_view'])) {
     $account->addRole('muteti_view');
   }
@@ -157,7 +154,7 @@ foreach ($legacy_users as $legacy_user) {
   $imported_users++;
 }
 
-// Import surgical doctors with user links and display colors.
+// Import doctors from every known department with user links and colors.
 $doctor_query = $source->select('node', 'n');
 $doctor_query->leftJoin('field_data_field_oszt_ly', 'o', 'o.entity_id = n.nid AND o.deleted = 0');
 $doctor_query->leftJoin('field_data_field_usern_v', 'u', 'u.entity_id = n.nid AND u.deleted = 0');
@@ -183,7 +180,7 @@ foreach ($legacy_doctors as $doctor) {
     'name' => trim($doctor->title),
     'background_color' => $valid_color($doctor->background_color),
     'text_color' => $valid_color($doctor->text_color),
-    'department' => $legacy_department_map[(int) $doctor->department_nid] ?? $department,
+    'department' => $legacy_department_map[(int) $doctor->department_nid] ?? 'Ismeretlen',
     'active' => (int) $doctor->status,
   ];
   $target->merge('muteti_doctor')
@@ -195,12 +192,12 @@ foreach ($legacy_doctors as $doctor) {
   $imported_doctors++;
 }
 
-// Add doctors/assistants referenced by surgical appointments but absent in the node list.
-$name_query = $source->select('_elojegyzes', 'e')->condition('osztaly', $department);
+// Add doctors/assistants referenced by appointments but absent in the node list.
+$name_query = $source->select('_elojegyzes', 'e');
 $name_query->addExpression('DISTINCT orvos', 'name');
 $referenced_names = $name_query->execute()->fetchCol();
 foreach (['assz1', 'assz2', 'assz3'] as $assistant_field) {
-  $query = $source->select('_elojegyzes', 'e')->condition('osztaly', $department);
+  $query = $source->select('_elojegyzes', 'e');
   $query->addExpression("DISTINCT {$assistant_field}", 'name');
   $referenced_names = array_merge($referenced_names, $query->execute()->fetchCol());
 }
@@ -213,7 +210,7 @@ foreach (array_unique($referenced_names) as $name) {
   if (!$id) {
     $id = $target->insert('muteti_doctor')->fields([
       'name' => trim($name),
-      'department' => $department,
+      'department' => 'Ismeretlen',
       'active' => 1,
     ])->execute();
   }
@@ -221,11 +218,10 @@ foreach (array_unique($referenced_names) as $name) {
   $imported_doctors++;
 }
 
-// Deliberately import the complete surgical history. Do not add a date range:
+// Deliberately import the complete history of every department. No date range:
 // past, current and future appointments are all relevant migration data.
 $appointments = $source->select('_elojegyzes', 'e')
   ->fields('e')
-  ->condition('osztaly', $department)
   ->orderBy('edatum')
   ->orderBy('fajta')
   ->execute();
@@ -251,7 +247,8 @@ while ($appointment = $appointments->fetchObject()) {
   }
   $created = strtotime((string) $appointment->stamp) ?: time();
   $fields = [
-    'legacy_id' => 'elojegyzes:' . sha1($appointment->edatum . '|' . $appointment->fajta . '|' . $department),
+    'legacy_id' => 'elojegyzes:' . sha1($appointment->edatum . '|' . $appointment->fajta . '|' . $appointment->osztaly),
+    'department' => trim((string) $appointment->osztaly) ?: 'Ismeretlen',
     'admission_date' => $admission_date,
     'slot_type' => trim($appointment->fajta),
     'aznm' => (int) !empty($appointment->egynapos),
@@ -281,6 +278,7 @@ while ($appointment = $appointments->fetchObject()) {
     'changed' => $created,
   ];
   $target->merge('muteti_appointment')
+    ->key('department', trim((string) $appointment->osztaly) ?: 'Ismeretlen')
     ->key('admission_date', $admission_date)
     ->key('slot_type', trim($appointment->fajta))
     ->fields($fields)
@@ -292,6 +290,6 @@ print "Import kész.\n";
 print "Forrásadatbázis: {$source_database}\n";
 print "Felhasználók: {$imported_users}\n";
 print "Orvosok és asszisztensek: {$imported_doctors}\n";
-print "Sebészeti előjegyzések: {$imported_appointments}\n";
+print "Összes előjegyzés: {$imported_appointments}\n";
 print "Átvett dátumtartomány: ".($earliest_admission ?? 'nincs')." – ".($latest_admission ?? 'nincs')."\n";
 print "Érvénytelen dátum vagy üres műtéttípus miatt kihagyva: {$skipped_appointments}\n";
