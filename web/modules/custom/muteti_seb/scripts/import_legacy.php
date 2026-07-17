@@ -135,7 +135,8 @@ foreach ($legacy_users as $legacy_user) {
     'status' => (int) $legacy_user->status,
     'created' => max(1, (int) $legacy_user->created),
   ]);
-  if (($is_new || $source_key === 'd7_live') && !empty($legacy_user->pass)) {
+  $is_protected_admin = !$is_new && (int) $account->id() === 1;
+  if (($is_new || ($source_key === 'd7_live' && !$is_protected_admin)) && !empty($legacy_user->pass)) {
     // Drupal preserves the legacy $S$ hash and upgrades it after a valid login.
     $account->setPassword($legacy_user->pass);
   }
