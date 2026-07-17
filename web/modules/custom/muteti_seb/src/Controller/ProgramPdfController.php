@@ -12,7 +12,7 @@ final class ProgramPdfController extends ControllerBase {
   public function __construct(private readonly Connection $database) {}
   public static function create(ContainerInterface $c): static { return new static($c->get('database')); }
   public function pdf(string $date): Response {
-    $rows=$this->database->select('muteti_appointment','a')->fields('a')->condition('surgery_date',$date)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
+    $rows=$this->database->select('muteti_appointment','a')->fields('a')->condition('department','Sebészet')->condition('surgery_date',$date)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
     $doctor_ids=[];foreach($rows as $a)foreach(['doctor_id','assistant1_id','assistant2_id','assistant3_id'] as $f)if($a->{$f})$doctor_ids[]=$a->{$f};
     $doctors=$doctor_ids?$this->database->select('muteti_doctor','d')->fields('d',['id','name'])->condition('id',array_unique($doctor_ids),'IN')->execute()->fetchAllKeyed():[];
     $html='<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:18px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}</style><h1>Sebészet</h1><h2>'.htmlspecialchars($date).'</h2>';
