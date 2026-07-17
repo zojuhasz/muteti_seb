@@ -78,6 +78,9 @@ function muteti_seb_install(): void {
     'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment']],
     'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room']],
     'muteti_orvos3' => ['Orvos3', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
+    'muteti_department_seb' => ['Osztály: Sebészet', []],
+    'muteti_department_urol' => ['Osztály: Urológia', []],
+    'muteti_department_onkorad' => ['Osztály: Onkoradiológia', []],
   ];
   foreach ($roles as $id => [$label, $permissions]) {
     $role = Role::load($id) ?? Role::create(['id' => $id, 'label' => $label]);
@@ -123,5 +126,20 @@ function muteti_seb_update_11002(): void {
   }
   if (!$schema->indexExists('muteti_appointment', 'department_date_slot')) {
     $schema->addUniqueKey('muteti_appointment', 'department_date_slot', ['department', 'admission_date', 'slot_type']);
+  }
+}
+
+/**
+ * Adds department roles used to select the application after login.
+ */
+function muteti_seb_update_11003(): void {
+  $roles = [
+    'muteti_department_seb' => 'Osztály: Sebészet',
+    'muteti_department_urol' => 'Osztály: Urológia',
+    'muteti_department_onkorad' => 'Osztály: Onkoradiológia',
+  ];
+  foreach ($roles as $id => $label) {
+    $role = Role::load($id) ?? Role::create(['id' => $id, 'label' => $label]);
+    $role->save();
   }
 }
