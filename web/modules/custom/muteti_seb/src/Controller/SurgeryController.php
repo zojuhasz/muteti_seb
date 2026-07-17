@@ -10,6 +10,7 @@ use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\muteti_seb\Service\Schedule;
+use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -18,6 +19,7 @@ final class SurgeryController extends ControllerBase {
   public static function create(ContainerInterface $c): static { return new static($c->get('database'),$c->get('csrf_token')); }
 
   public function week(Request $request): array {
+    $department = UserDepartment::get($this->currentUser());
     try {
       $monday = new DrupalDateTime($request->query->get('week', 'monday this week'));
     }
@@ -44,10 +46,10 @@ final class SurgeryController extends ControllerBase {
     $cards = ['#type' => 'container', '#attributes' => ['class' => ['muteti-week-cards']]];
     foreach ($days as $i => $day) {
       $date = $day->format('Y-m-d');
-      $stored = $this->database->select('muteti_day_type', 't')->fields('t', ['day_type'])->condition('date', $date)->execute()->fetchField();
-      $type = $stored ?: Schedule::defaultDayType($day);
+      $stored = $this->database->select('muteti_day_type', 't')->fields('t', ['day_type'])->condition('department', $department)->condition('date', $date)->execute()->fetchField();
+      $type = $stored ?: Schedule::departmentDayType($department, $day);
       $occupied = (bool) $this->database->select('muteti_appointment', 'a')
-        ->condition('department', 'Sebészet')
+        ->condition('department', $department)
         ->condition('surgery_date', $date)
         ->countQuery()
         ->execute()
@@ -71,7 +73,7 @@ final class SurgeryController extends ControllerBase {
           '#type' => 'select',
           '#title' => $this->t('Napfajta'),
           '#title_display' => 'invisible',
-          '#options' => array_combine(array_keys(Schedule::DAY_TYPES), array_keys(Schedule::DAY_TYPES)),
+          '#options' => array_combine(Schedule::departmentDayTypes($department), Schedule::departmentDayTypes($department)),
           '#default_value' => $type,
           '#disabled' => $occupied || !$this->currentUser()->hasPermission('assign operating room'),
           '#attributes' => [
@@ -84,8 +86,8 @@ final class SurgeryController extends ControllerBase {
       ];
     }
 
-    $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('department','Sebészet')->condition('admission_date',date('Y-m-d'),'<=')->condition('operation_name','','<>')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
-    $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('department','Sebészet')->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
+    $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('department',$department)->condition('admission_date',date('Y-m-d'),'<=')->condition('operation_name','','<>')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
+    $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('department',$department)->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
     $doctor_ids=[];
     foreach(array_merge($waiting,$assigned) as $a) {
       foreach ([$a->doctor_id, $a->assistant1_id, $a->assistant2_id, $a->assistant3_id] as $staff_id) {
@@ -133,7 +135,7 @@ final class SurgeryController extends ControllerBase {
     $build['week_frame'] = [
       '#type' => 'container',
       '#attributes' => ['class' => ['muteti-surgery-week-frame'], 'id' => 'muteti-surgery-week'],
-      'heading' => ['#markup' => '<h2 class="muteti-panel-title">Heti műtéti beosztás</h2>'],
+      'heading' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($department).' – heti műtéti beosztás</h2>'],
       'nav' => [
         '#type' => 'container',
         '#attributes' => ['class' => ['muteti-nav']],
