@@ -26,7 +26,7 @@ final class DoctorForm extends FormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state, ?int $doctor = NULL): array {
     $record = $doctor
-      ? $this->database->select('muteti_doctor', 'd')->fields('d')->condition('id', $doctor)->execute()->fetchObject()
+      ? $this->database->select('muteti_doctor', 'd')->fields('d')->condition('id', $doctor)->condition('department', 'Sebészet')->execute()->fetchObject()
       : NULL;
     if ($doctor && !$record) {
       throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException();
