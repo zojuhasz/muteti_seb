@@ -84,7 +84,7 @@ final class SurgeryController extends ControllerBase {
       ];
     }
 
-    $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('department','Sebészet')->condition('admission_date',date('Y-m-d'),'<=')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
+    $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('department','Sebészet')->condition('admission_date',date('Y-m-d'),'<=')->condition('operation_name','','<>')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
     $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('department','Sebészet')->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
     $doctor_ids=[];
     foreach(array_merge($waiting,$assigned) as $a) {
