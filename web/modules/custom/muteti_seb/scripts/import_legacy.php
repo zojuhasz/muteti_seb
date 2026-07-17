@@ -88,6 +88,26 @@ if ($department_nids) {
     ->execute()
     ->fetchCol();
 }
+$application_role_names = [
+  'view',
+  'orvos1',
+  'orvos2',
+  'orvos',
+  'boss',
+  'adminisztrátor',
+  'seb',
+  'urol',
+  'urolview',
+  'onkorad',
+];
+$role_user_query = $source->select('users_roles', 'ur');
+$role_user_query->join('role', 'r', 'r.rid = ur.rid');
+$application_user_ids = $role_user_query
+  ->distinct()
+  ->fields('ur', ['uid'])
+  ->condition('r.name', $application_role_names, 'IN')
+  ->execute()
+  ->fetchCol();
 
 $user_query = $source->select('users', 'u')->fields('u');
 $or = $user_query->orConditionGroup();
@@ -96,6 +116,9 @@ if ($usernames) {
 }
 if ($legacy_user_ids) {
   $or->condition('uid', $legacy_user_ids, 'IN');
+}
+if ($application_user_ids) {
+  $or->condition('uid', $application_user_ids, 'IN');
 }
 $user_query->condition($or)->condition('uid', 0, '>');
 $legacy_users = $user_query->execute()->fetchAll();
