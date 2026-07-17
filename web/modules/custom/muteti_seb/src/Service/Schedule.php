@@ -13,6 +13,13 @@ final class Schedule {
   ];
   public const ROOMS = ['5', '6', '7', '8', 'A'];
 
+  public static function departmentRooms(string $department): array {
+    return match ($department) {
+      'Urológia' => ['1', '2'],
+      default => self::ROOMS,
+    };
+  }
+
   public static function defaultDayType(DrupalDateTime|\DateTimeInterface $date): string {
     return match ((int) $date->format('N')) { 1, 2 => 'HK', 3, 4 => 'SZCS', 5 => 'P', default => 'SEMMI' };
   }
