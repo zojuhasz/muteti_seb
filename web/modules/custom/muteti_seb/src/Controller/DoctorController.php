@@ -45,7 +45,9 @@ final class DoctorController extends ControllerBase {
         'username' => $account ? Html::escape($account->getAccountName()) : '—',
         'department' => Html::escape($doctor->department ?: 'Sebészet'),
         'status' => $doctor->active ? $this->t('Aktív') : $this->t('Inaktív'),
-        'operations' => Link::fromTextAndUrl($this->t('Módosítás'), Url::fromRoute('muteti_seb.doctor_edit', ['doctor' => $doctor->id]))->toRenderable(),
+        'operations' => [
+          'data' => Link::fromTextAndUrl($this->t('Módosítás'), Url::fromRoute('muteti_seb.doctor_edit', ['doctor' => $doctor->id]))->toRenderable(),
+        ],
       ];
     }
 
