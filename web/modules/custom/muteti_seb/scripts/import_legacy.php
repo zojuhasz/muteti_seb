@@ -28,6 +28,9 @@ catch (Throwable $exception) {
   throw new RuntimeException("A settings.php fájlban nincs használható {$source_key} adatbázis-kapcsolat.", 0, $exception);
 }
 $source_database = (string) ($source->getConnectionOptions()['database'] ?? 'ismeretlen');
+if (!$target->schema()->tableExists('muteti_legacy_user')) {
+  throw new RuntimeException('Hiányzik a muteti_legacy_user tábla. Előbb futtasd: drush updb -y');
+}
 
 $required_tables = [
   '_elojegyzes',
@@ -116,15 +119,24 @@ $new_uid_by_name = [];
 $imported_users = 0;
 
 foreach ($legacy_users as $legacy_user) {
-  $matches = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $legacy_user->name]);
-  $existing = $matches ? reset($matches) : NULL;
-  $account = $existing ?: User::create([
+  $mapped_uid = $target->select('muteti_legacy_user', 'm')
+    ->fields('m', ['user_id'])
+    ->condition('legacy_uid', (int) $legacy_user->uid)
+    ->execute()
+    ->fetchField();
+  $account = $mapped_uid ? User::load((int) $mapped_uid) : NULL;
+  if (!$account) {
+    $matches = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $legacy_user->name]);
+    $account = $matches ? reset($matches) : NULL;
+  }
+  $is_new = !$account;
+  $account = $account ?: User::create([
     'name' => $legacy_user->name,
     'status' => (int) $legacy_user->status,
     'created' => max(1, (int) $legacy_user->created),
   ]);
-  if (!$existing && !empty($legacy_user->pass)) {
-    // Drupal understands the legacy $S$ password hash and rehashes after login.
+  if (($is_new || $source_key === 'd7_live') && !empty($legacy_user->pass)) {
+    // Drupal preserves the legacy $S$ hash and upgrades it after a valid login.
     $account->setPassword($legacy_user->pass);
   }
   if (!empty($legacy_user->mail) && filter_var($legacy_user->mail, FILTER_VALIDATE_EMAIL)) {
@@ -162,6 +174,14 @@ foreach ($legacy_users as $legacy_user) {
     $account->addRole('muteti_view');
   }
   $account->save();
+  $target->merge('muteti_legacy_user')
+    ->key('legacy_uid', (int) $legacy_user->uid)
+    ->fields([
+      'user_id' => (int) $account->id(),
+      'legacy_name' => (string) $legacy_user->name,
+      'synced' => time(),
+    ])
+    ->execute();
   $new_uid_by_legacy_uid[(int) $legacy_user->uid] = (int) $account->id();
   $new_uid_by_name[mb_strtolower($legacy_user->name, 'UTF-8')] = (int) $account->id();
   $imported_users++;
