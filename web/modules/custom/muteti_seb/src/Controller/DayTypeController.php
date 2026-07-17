@@ -5,6 +5,7 @@ namespace Drupal\muteti_seb\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\muteti_seb\Service\Schedule;
+use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,16 +22,18 @@ final class DayTypeController extends ControllerBase {
     $data = json_decode($request->getContent(), TRUE);
     $date = (string) ($data['date'] ?? '');
     $day_type = (string) ($data['day_type'] ?? '');
+    $department = UserDepartment::get($this->currentUser());
 
     $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
     if (!$parsed || $parsed->format('Y-m-d') !== $date) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'Érvénytelen dátum.'], 400);
     }
-    if (!array_key_exists($day_type, Schedule::DAY_TYPES)) {
+    if (!in_array($day_type, Schedule::departmentDayTypes($department), TRUE)) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'Érvénytelen napfajta.'], 400);
     }
 
     $occupied = (bool) $this->database->select('muteti_appointment', 'a')
+      ->condition('department', $department)
       ->condition('surgery_date', $date)
       ->countQuery()
       ->execute()
@@ -40,6 +43,7 @@ final class DayTypeController extends ControllerBase {
     }
 
     $this->database->merge('muteti_day_type')
+      ->key('department', $department)
       ->key('date', $date)
       ->fields(['day_type' => $day_type])
       ->execute();
