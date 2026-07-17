@@ -19,12 +19,13 @@ $legacy_department_map = [
   120 => 'Onkoradiológia',
 ];
 $target = Database::getConnection();
+$source_key = getenv('MUTETI_SOURCE') ?: 'legacy';
 
 try {
-  $source = Database::getConnection('default', 'legacy');
+  $source = Database::getConnection('default', $source_key);
 }
 catch (Throwable $exception) {
-  throw new RuntimeException('A settings.php fájlban nincs használható legacy adatbázis-kapcsolat.', 0, $exception);
+  throw new RuntimeException("A settings.php fájlban nincs használható {$source_key} adatbázis-kapcsolat.", 0, $exception);
 }
 $source_database = (string) ($source->getConnectionOptions()['database'] ?? 'ismeretlen');
 
@@ -287,6 +288,7 @@ while ($appointment = $appointments->fetchObject()) {
 }
 
 print "Import kész.\n";
+print "Forráskapcsolat: {$source_key}\n";
 print "Forrásadatbázis: {$source_database}\n";
 print "Felhasználók: {$imported_users}\n";
 print "Orvosok és asszisztensek: {$imported_doctors}\n";
