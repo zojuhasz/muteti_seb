@@ -28,7 +28,7 @@ final class BookingController extends ControllerBase {
     for ($i = 0; $i < 7; $i++) { $d = clone $monday; $d->modify("+$i day"); $dates[] = $d; }
 
     $start = $dates[0]->format('Y-m-d'); $end = $dates[6]->format('Y-m-d');
-    $appointments = $this->database->select('muteti_appointment', 'a')->fields('a')->condition('admission_date', [$start, $end], 'BETWEEN')->execute()->fetchAllAssoc('id');
+    $appointments = $this->database->select('muteti_appointment', 'a')->fields('a')->condition('department', 'Sebészet')->condition('admission_date', [$start, $end], 'BETWEEN')->execute()->fetchAllAssoc('id');
     $by_cell = [];
     foreach ($appointments as $a) { $by_cell[$a->admission_date][$a->slot_type] = $a; }
     $doctor_ids = array_values(array_unique(array_filter(array_map(static fn($a) => $a->doctor_id, $appointments))));
