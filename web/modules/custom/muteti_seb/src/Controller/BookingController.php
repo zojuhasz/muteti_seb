@@ -38,7 +38,7 @@ final class BookingController extends ControllerBase {
       ? $this->database->select('muteti_doctor', 'd')->fields('d')->condition('id', $doctor_ids, 'IN')->execute()->fetchAllAssoc('id')
       : [];
     $day_types = [];
-    $stored = $this->database->select('muteti_day_type', 'd')->fields('d')->condition('date', [$start, $end], 'BETWEEN')->execute()->fetchAllKeyed();
+    $stored = $this->database->select('muteti_day_type', 'd')->fields('d', ['date', 'day_type'])->condition('department', $department)->condition('date', [$start, $end], 'BETWEEN')->execute()->fetchAllKeyed();
     $slots_by_date = [];
     foreach ($dates as $d) {
       $key=$d->format('Y-m-d');
