@@ -9,3 +9,14 @@ surgery_board:
     - core/drupal
     - core/once
     - core/drupalSettings
+
+doctor_form:
+  version: 1.x
+  css:
+    theme:
+      css/muteti-seb.css: {}
+  js:
+    js/doctor-form.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
