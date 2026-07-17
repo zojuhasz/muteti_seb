@@ -28,6 +28,7 @@ try {
 catch (Throwable $exception) {
   throw new RuntimeException('A settings.php fájlban nincs használható legacy adatbázis-kapcsolat.', 0, $exception);
 }
+$source_database = (string) ($source->getConnectionOptions()['database'] ?? 'ismeretlen');
 
 $required_tables = [
   '_elojegyzes',
@@ -95,7 +96,7 @@ if ($usernames) {
 if ($legacy_user_ids) {
   $or->condition('uid', $legacy_user_ids, 'IN');
 }
-$user_query->condition($or)->condition('uid', 0, '>')->condition('status', 1);
+$user_query->condition($or)->condition('uid', 0, '>');
 $legacy_users = $user_query->execute()->fetchAll();
 
 $role_map = [
@@ -117,7 +118,7 @@ foreach ($legacy_users as $legacy_user) {
   $existing = $matches ? reset($matches) : NULL;
   $account = $existing ?: User::create([
     'name' => $legacy_user->name,
-    'status' => 1,
+    'status' => (int) $legacy_user->status,
     'created' => max(1, (int) $legacy_user->created),
   ]);
   if (!$existing && !empty($legacy_user->pass)) {
@@ -127,7 +128,12 @@ foreach ($legacy_users as $legacy_user) {
   if (!empty($legacy_user->mail) && filter_var($legacy_user->mail, FILTER_VALIDATE_EMAIL)) {
     $account->setEmail($legacy_user->mail);
   }
-  $account->activate();
+  if ((int) $legacy_user->status === 1) {
+    $account->activate();
+  }
+  else {
+    $account->block();
+  }
 
   $role_query = $source->select('users_roles', 'ur');
   $role_query->join('role', 'r', 'r.rid = ur.rid');
@@ -215,6 +221,8 @@ foreach (array_unique($referenced_names) as $name) {
   $imported_doctors++;
 }
 
+// Deliberately import the complete surgical history. Do not add a date range:
+// past, current and future appointments are all relevant migration data.
 $appointments = $source->select('_elojegyzes', 'e')
   ->fields('e')
   ->condition('osztaly', $department)
@@ -223,12 +231,18 @@ $appointments = $source->select('_elojegyzes', 'e')
   ->execute();
 $today = date('Y-m-d');
 $imported_appointments = 0;
+$skipped_appointments = 0;
+$earliest_admission = NULL;
+$latest_admission = NULL;
 
 while ($appointment = $appointments->fetchObject()) {
   $admission_date = $valid_date($appointment->edatum);
   if (!$admission_date || trim($appointment->fajta) === '') {
+    $skipped_appointments++;
     continue;
   }
+  $earliest_admission = $earliest_admission === NULL || $admission_date < $earliest_admission ? $admission_date : $earliest_admission;
+  $latest_admission = $latest_admission === NULL || $admission_date > $latest_admission ? $admission_date : $latest_admission;
   $surgery_date = $valid_date($appointment->mut_dat);
   $operating_room = in_array($appointment->muto, ['5', '6', '7', '8', 'A'], TRUE) ? $appointment->muto : NULL;
   $notes = trim((string) $appointment->egyeb);
@@ -275,6 +289,9 @@ while ($appointment = $appointments->fetchObject()) {
 }
 
 print "Import kész.\n";
+print "Forrásadatbázis: {$source_database}\n";
 print "Felhasználók: {$imported_users}\n";
 print "Orvosok és asszisztensek: {$imported_doctors}\n";
 print "Sebészeti előjegyzések: {$imported_appointments}\n";
+print "Átvett dátumtartomány: ".($earliest_admission ?? 'nincs')." – ".($latest_admission ?? 'nincs')."\n";
+print "Érvénytelen dátum vagy üres műtéttípus miatt kihagyva: {$skipped_appointments}\n";
