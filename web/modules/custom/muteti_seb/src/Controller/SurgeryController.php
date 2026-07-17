@@ -86,7 +86,11 @@ final class SurgeryController extends ControllerBase {
       ];
     }
 
-    $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('department',$department)->condition('admission_date',date('Y-m-d'),'<=')->condition('operation_name','','<>')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
+    $waiting_query=$this->database->select('muteti_appointment','a')->fields('a')->condition('department',$department)->condition('admission_date',date('Y-m-d'),'<=')->condition('operation_name','','<>')->condition('operated',0);
+    $waiting_status=$waiting_query->orConditionGroup()->isNull('surgery_date');
+    $selected_unassigned=$waiting_query->andConditionGroup()->condition('surgery_date',$selected)->isNull('operating_room');
+    $waiting_query->condition($waiting_query->orConditionGroup()->condition($waiting_status)->condition($selected_unassigned));
+    $waiting=$waiting_query->orderBy('admission_date')->execute()->fetchAll();
     $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('department',$department)->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
     $doctor_ids=[];
     foreach(array_merge($waiting,$assigned) as $a) {
@@ -159,7 +163,9 @@ final class SurgeryController extends ControllerBase {
     $build['daily']['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>['muteti-dropzone','muteti-waiting'],'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtétre váró bentfekvők</h3>']];
     foreach($waiting as $a)$build['daily']['layout']['waiting']['p'.$a->id]=$card($a);
     $build['daily']['layout']['rooms']=['#type'=>'container','#attributes'=>['class'=>['muteti-rooms']]];
-    foreach(Schedule::ROOMS as $room){$build['daily']['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['daily']['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
+    $rooms=Schedule::departmentRooms($department);
+    foreach($assigned as $a)if($a->operating_room&&!in_array($a->operating_room,$rooms,TRUE))$rooms[]=$a->operating_room;
+    foreach($rooms as $room){$build['daily']['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['daily']['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
     return $build;
   }
 }
