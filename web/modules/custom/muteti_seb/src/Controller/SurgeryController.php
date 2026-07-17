@@ -47,6 +47,7 @@ final class SurgeryController extends ControllerBase {
       $stored = $this->database->select('muteti_day_type', 't')->fields('t', ['day_type'])->condition('date', $date)->execute()->fetchField();
       $type = $stored ?: Schedule::defaultDayType($day);
       $occupied = (bool) $this->database->select('muteti_appointment', 'a')
+        ->condition('department', 'Sebészet')
         ->condition('surgery_date', $date)
         ->countQuery()
         ->execute()
@@ -83,8 +84,8 @@ final class SurgeryController extends ControllerBase {
       ];
     }
 
-    $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('admission_date',date('Y-m-d'),'<=')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
-    $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
+    $waiting=$this->database->select('muteti_appointment','a')->fields('a')->condition('department','Sebészet')->condition('admission_date',date('Y-m-d'),'<=')->condition('operated',0)->isNull('surgery_date')->orderBy('admission_date')->execute()->fetchAll();
+    $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('department','Sebészet')->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
     $doctor_ids=[];
     foreach(array_merge($waiting,$assigned) as $a) {
       foreach ([$a->doctor_id, $a->assistant1_id, $a->assistant2_id, $a->assistant3_id] as $staff_id) {
