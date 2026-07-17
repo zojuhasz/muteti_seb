@@ -14,6 +14,12 @@ use Drupal\user\Entity\User;
  */
 
 $department = 'Sebészet';
+$legacy_department_map = [
+  23 => 'Urológia',
+  24 => 'Sebészet',
+  120 => 'Onkoradiológia',
+];
+$surgery_department_nid = 24;
 $target = Database::getConnection();
 
 try {
@@ -57,12 +63,9 @@ $valid_color = static function (?string $color): ?string {
   return preg_match('/^#[0-9a-f]{3}([0-9a-f]{3})?$/i', $color) ? $color : NULL;
 };
 
-// Find the legacy department node when it is present.
-$department_nids = $source->select('node', 'n')
-  ->fields('n', ['nid'])
-  ->condition('title', $department)
-  ->execute()
-  ->fetchCol();
+// Department nodes are absent from the partial node dump, so use the original
+// field relation identifiers: 23 Urológia, 24 Sebészet, 120 Onkoradiológia.
+$department_nids = [$surgery_department_nid];
 
 // Users referenced by surgical appointments or linked surgical doctors.
 $usernames = $source->select('_elojegyzes', 'e')
@@ -158,6 +161,7 @@ $doctor_query->fields('n', ['nid', 'title', 'status']);
 $doctor_query->addField('u', 'field_usern_v_uid', 'legacy_uid');
 $doctor_query->addField('bg', 'field_sz_n_value', 'background_color');
 $doctor_query->addField('fg', 'field_bet_sz_n_value', 'text_color');
+$doctor_query->addField('o', 'field_oszt_ly_nid', 'department_nid');
 $doctor_query->condition('n.type', 'orvosok');
 if ($department_nids) {
   $doctor_query->condition('o.field_oszt_ly_nid', $department_nids, 'IN');
@@ -173,6 +177,7 @@ foreach ($legacy_doctors as $doctor) {
     'name' => trim($doctor->title),
     'background_color' => $valid_color($doctor->background_color),
     'text_color' => $valid_color($doctor->text_color),
+    'department' => $legacy_department_map[(int) $doctor->department_nid] ?? $department,
     'active' => (int) $doctor->status,
   ];
   $target->merge('muteti_doctor')
@@ -202,6 +207,7 @@ foreach (array_unique($referenced_names) as $name) {
   if (!$id) {
     $id = $target->insert('muteti_doctor')->fields([
       'name' => trim($name),
+      'department' => $department,
       'active' => 1,
     ])->execute();
   }
