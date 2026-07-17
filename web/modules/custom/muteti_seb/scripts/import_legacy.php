@@ -329,7 +329,8 @@ while ($appointment = $appointments->fetchObject()) {
   $earliest_admission = $earliest_admission === NULL || $admission_date < $earliest_admission ? $admission_date : $earliest_admission;
   $latest_admission = $latest_admission === NULL || $admission_date > $latest_admission ? $admission_date : $latest_admission;
   $surgery_date = $valid_date($appointment->mut_dat);
-  $operating_room = in_array($appointment->muto, ['5', '6', '7', '8', 'A'], TRUE) ? $appointment->muto : NULL;
+  $legacy_room = trim((string) $appointment->muto);
+  $operating_room = $legacy_room !== '' && $legacy_room !== '0' ? $legacy_room : NULL;
   $notes = trim((string) $appointment->egyeb);
   if (!empty($appointment->anaesth)) {
     $notes .= ($notes === '' ? '' : "\n\n") . 'Anesztézia: ' . trim($appointment->anaesth);
