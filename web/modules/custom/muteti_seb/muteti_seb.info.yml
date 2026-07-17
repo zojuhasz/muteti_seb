@@ -3,3 +3,5 @@ type: module
 description: Heti előjegyzési és műtőbeosztási alkalmazás.
 package: Egyedi
 core_version_requirement: ^11
+dependencies:
+  - drupal:phpass
