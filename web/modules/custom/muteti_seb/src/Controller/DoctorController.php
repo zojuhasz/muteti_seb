@@ -21,6 +21,7 @@ final class DoctorController extends ControllerBase {
   public function listing(): array {
     $doctors = $this->database->select('muteti_doctor', 'd')
       ->fields('d')
+      ->condition('department', 'Sebészet')
       ->orderBy('active', 'DESC')
       ->orderBy('name')
       ->execute()
