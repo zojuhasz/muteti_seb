@@ -61,10 +61,11 @@ function muteti_seb_schema(): array {
   $schema['muteti_day_type'] = [
     'description' => 'Naptári napok napfajtája.',
     'fields' => [
+      'department' => ['type' => 'varchar', 'length' => 50, 'not null' => TRUE, 'default' => 'Sebészet'],
       'date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
       'day_type' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
     ],
-    'primary key' => ['date'],
+    'primary key' => ['department', 'date'],
   ];
   $schema['muteti_legacy_user'] = [
     'description' => 'D7 és Drupal 11 felhasználók biztonságos megfeleltetése.',
@@ -164,4 +165,22 @@ function muteti_seb_update_11004(): void {
     $definition = muteti_seb_schema()['muteti_legacy_user'];
     $schema->createTable('muteti_legacy_user', $definition);
   }
+}
+
+/**
+ * Makes stored surgery day types department-specific.
+ */
+function muteti_seb_update_11005(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('muteti_day_type', 'department')) {
+    $schema->addField('muteti_day_type', 'department', [
+      'type' => 'varchar',
+      'length' => 50,
+      'not null' => TRUE,
+      'default' => 'Sebészet',
+      'description' => 'A napfajta osztálya.',
+    ]);
+  }
+  $schema->dropPrimaryKey('muteti_day_type');
+  $schema->addPrimaryKey('muteti_day_type', ['department', 'date']);
 }
