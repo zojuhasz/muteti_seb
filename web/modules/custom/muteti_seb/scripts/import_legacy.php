@@ -229,14 +229,36 @@ $appointments = $source->select('_elojegyzes', 'e')
 $today = date('Y-m-d');
 $imported_appointments = 0;
 $skipped_appointments = 0;
+$removed_appointments = 0;
 $earliest_admission = NULL;
 $latest_admission = NULL;
+$stale_imported_ids = [];
+$target_legacy_by_slot = [];
+if ($source_key === 'd7_live') {
+  $imported_rows = $target->select('muteti_appointment', 'a')
+    ->fields('a', ['id', 'legacy_id', 'department', 'admission_date', 'slot_type'])
+    ->condition('legacy_id', 'elojegyzes:%', 'LIKE')
+    ->execute();
+  while ($imported_row = $imported_rows->fetchObject()) {
+    $stale_imported_ids[(string) $imported_row->legacy_id] = (int) $imported_row->id;
+    $target_legacy_by_slot[$imported_row->department."\0".$imported_row->admission_date."\0".$imported_row->slot_type] = (string) $imported_row->legacy_id;
+  }
+}
 
 while ($appointment = $appointments->fetchObject()) {
   $admission_date = $valid_date($appointment->edatum);
   if (!$admission_date || trim($appointment->fajta) === '') {
     $skipped_appointments++;
     continue;
+  }
+  $legacy_id = 'elojegyzes:' . sha1($appointment->edatum . '|' . $appointment->fajta . '|' . $appointment->osztaly);
+  $department = trim((string) $appointment->osztaly) ?: 'Ismeretlen';
+  $slot_type = trim((string) $appointment->fajta);
+  $slot_key = $department."\0".$admission_date."\0".$slot_type;
+  unset($stale_imported_ids[$legacy_id]);
+  if (isset($target_legacy_by_slot[$slot_key])) {
+    // The same slot may have been reused in D7 for another patient.
+    unset($stale_imported_ids[$target_legacy_by_slot[$slot_key]]);
   }
   $earliest_admission = $earliest_admission === NULL || $admission_date < $earliest_admission ? $admission_date : $earliest_admission;
   $latest_admission = $latest_admission === NULL || $admission_date > $latest_admission ? $admission_date : $latest_admission;
@@ -248,10 +270,10 @@ while ($appointment = $appointments->fetchObject()) {
   }
   $created = strtotime((string) $appointment->stamp) ?: time();
   $fields = [
-    'legacy_id' => 'elojegyzes:' . sha1($appointment->edatum . '|' . $appointment->fajta . '|' . $appointment->osztaly),
-    'department' => trim((string) $appointment->osztaly) ?: 'Ismeretlen',
+    'legacy_id' => $legacy_id,
+    'department' => $department,
     'admission_date' => $admission_date,
-    'slot_type' => trim($appointment->fajta),
+    'slot_type' => $slot_type,
     'aznm' => (int) !empty($appointment->egynapos),
     'patient_name' => trim($appointment->nev),
     'birth_date' => $valid_date($appointment->szuldat),
@@ -279,12 +301,23 @@ while ($appointment = $appointments->fetchObject()) {
     'changed' => $created,
   ];
   $target->merge('muteti_appointment')
-    ->key('department', trim((string) $appointment->osztaly) ?: 'Ismeretlen')
+    ->key('department', $department)
     ->key('admission_date', $admission_date)
-    ->key('slot_type', trim($appointment->fajta))
+    ->key('slot_type', $slot_type)
     ->fields($fields)
     ->execute();
   $imported_appointments++;
+}
+
+// A live synchronization is authoritative. Remove only rows that originally
+// came from D7 and no longer exist there. Native Drupal 11 rows have no such
+// legacy_id and are therefore never deleted here.
+if ($source_key === 'd7_live' && $stale_imported_ids) {
+  foreach (array_chunk(array_values($stale_imported_ids), 500) as $ids) {
+    $removed_appointments += $target->delete('muteti_appointment')
+      ->condition('id', $ids, 'IN')
+      ->execute();
+  }
 }
 
 print "Import kész.\n";
@@ -293,5 +326,6 @@ print "Forrásadatbázis: {$source_database}\n";
 print "Felhasználók: {$imported_users}\n";
 print "Orvosok és asszisztensek: {$imported_doctors}\n";
 print "Összes előjegyzés: {$imported_appointments}\n";
+print "Az éles D7-ben már nem létező importált előjegyzések törölve: {$removed_appointments}\n";
 print "Átvett dátumtartomány: ".($earliest_admission ?? 'nincs')." – ".($latest_admission ?? 'nincs')."\n";
 print "Érvénytelen dátum vagy üres műtéttípus miatt kihagyva: {$skipped_appointments}\n";
