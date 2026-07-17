@@ -98,14 +98,18 @@ $user_query->condition($or)->condition('uid', 0, '>');
 $legacy_users = $user_query->execute()->fetchAll();
 
 $role_map = [
-  'view' => 'muteti_view',
-  'orvos1' => 'muteti_orvos1',
-  'orvos2' => 'muteti_orvos2',
-  'orvos' => 'muteti_orvos3',
-  'seb' => 'muteti_orvos3',
-  'boss' => 'muteti_orvos3',
-  'adminisztrátor' => 'muteti_orvos3',
+  'view' => ['muteti_view'],
+  'orvos1' => ['muteti_orvos1'],
+  'orvos2' => ['muteti_orvos2'],
+  'orvos' => ['muteti_orvos3'],
+  'boss' => ['muteti_orvos3'],
+  'adminisztrátor' => ['muteti_orvos3'],
+  'seb' => ['muteti_department_seb'],
+  'urol' => ['muteti_department_urol'],
+  'urolview' => ['muteti_department_urol', 'muteti_view'],
+  'onkorad' => ['muteti_department_onkorad'],
 ];
+$managed_roles = array_values(array_unique(array_merge(...array_values($role_map))));
 $available_roles = array_fill_keys(array_keys(Role::loadMultiple()), TRUE);
 $new_uid_by_legacy_uid = [];
 $new_uid_by_name = [];
@@ -139,10 +143,18 @@ foreach ($legacy_users as $legacy_user) {
     ->condition('ur.uid', $legacy_user->uid)
     ->execute()
     ->fetchCol();
+  // The live D7 assignments are authoritative for imported application roles.
+  foreach ($managed_roles as $managed_role) {
+    if ($account->hasRole($managed_role)) {
+      $account->removeRole($managed_role);
+    }
+  }
   foreach ($legacy_roles as $legacy_role) {
-    $new_role = $role_map[mb_strtolower($legacy_role, 'UTF-8')] ?? NULL;
-    if ($new_role && isset($available_roles[$new_role])) {
-      $account->addRole($new_role);
+    $new_roles = $role_map[mb_strtolower($legacy_role, 'UTF-8')] ?? [];
+    foreach ($new_roles as $new_role) {
+      if (isset($available_roles[$new_role])) {
+        $account->addRole($new_role);
+      }
     }
   }
   // Every imported scheduler user must at least be able to view schedules.
