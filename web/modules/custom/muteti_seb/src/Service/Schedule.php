@@ -84,6 +84,14 @@ final class Schedule {
     return [];
   }
 
+  public static function departmentDayTypes(string $department): array {
+    return match ($department) {
+      'Urológia' => ['HKSZCS', 'P', 'SZ', 'V', 'SEMMI'],
+      'Onkoradiológia' => ['HKSZCSP', 'SZV', 'SEMMI'],
+      default => array_keys(self::DAY_TYPES),
+    };
+  }
+
   private static function numberedSlots(string $prefix, int $from, int $to, string $separator = ' - '): array {
     $slots = [];
     for ($number = $from; $number <= $to; $number++) {
