@@ -66,6 +66,17 @@ function muteti_seb_schema(): array {
     ],
     'primary key' => ['date'],
   ];
+  $schema['muteti_legacy_user'] = [
+    'description' => 'D7 és Drupal 11 felhasználók biztonságos megfeleltetése.',
+    'fields' => [
+      'legacy_uid' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'user_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'legacy_name' => ['type' => 'varchar', 'length' => 60, 'not null' => TRUE],
+      'synced' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+    ],
+    'primary key' => ['legacy_uid'],
+    'unique keys' => ['user_id' => ['user_id']],
+  ];
   return $schema;
 }
 
@@ -141,5 +152,16 @@ function muteti_seb_update_11003(): void {
   foreach ($roles as $id => $label) {
     $role = Role::load($id) ?? Role::create(['id' => $id, 'label' => $label]);
     $role->save();
+  }
+}
+
+/**
+ * Adds the D7-to-D11 user mapping used for authoritative password sync.
+ */
+function muteti_seb_update_11004(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('muteti_legacy_user')) {
+    $definition = muteti_seb_schema()['muteti_legacy_user'];
+    $schema->createTable('muteti_legacy_user', $definition);
   }
 }
