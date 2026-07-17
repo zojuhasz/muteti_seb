@@ -39,22 +39,29 @@ final class BookingController extends ControllerBase {
       : [];
     $day_types = [];
     $stored = $this->database->select('muteti_day_type', 'd')->fields('d')->condition('date', [$start, $end], 'BETWEEN')->execute()->fetchAllKeyed();
-    foreach ($dates as $d) { $key=$d->format('Y-m-d'); $day_types[$key]=$stored[$key] ?? Schedule::defaultDayType($d); }
-    $department_slots = [];
-    if ($department !== 'Sebészet') {
-      $department_slots = array_values(array_unique(array_map(static fn($a) => (string) $a->slot_type, $appointments)));
-      usort($department_slots, 'strnatcasecmp');
+    $slots_by_date = [];
+    foreach ($dates as $d) {
+      $key=$d->format('Y-m-d');
+      $day_types[$key] = $department === 'Sebészet'
+        ? ($stored[$key] ?? Schedule::defaultDayType($d))
+        : Schedule::departmentDayType($department, $d);
+      $slots_by_date[$key] = Schedule::departmentSlots($department, $d, $day_types[$key]);
+      // Never hide an imported legacy appointment whose historical slot name
+      // is not part of the currently configured day template.
+      foreach (array_keys($by_cell[$key] ?? []) as $existing_slot) {
+        if (!in_array($existing_slot, $slots_by_date[$key], TRUE)) {
+          $slots_by_date[$key][] = $existing_slot;
+        }
+      }
     }
-    $max = $department === 'Sebészet'
-      ? max(array_map(fn($t) => count(Schedule::DAY_TYPES[$t]), $day_types))
-      : count($department_slots);
+    $max = max(array_map('count', $slots_by_date));
     $header = [
       ['data' => $this->t('Sorszám'), 'class' => ['muteti-index-heading']],
     ];
     foreach ($dates as $d) {
       $header[] = [
         'data' => [
-          '#markup' => '<span class="muteti-heading-date">'.Html::escape($d->format('Y-m-d')).'</span><span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span>',
+          '#markup' => '<span class="muteti-heading-date">'.Html::escape($d->format('Y-m-d')).'</span><span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span><span class="muteti-heading-type">'.Html::escape($day_types[$d->format('Y-m-d')]).'</span>',
         ],
         'class' => ['muteti-day-heading'],
       ];
@@ -64,9 +71,7 @@ final class BookingController extends ControllerBase {
       $row = [$r+1];
       foreach ($dates as $d) {
         $date=$d->format('Y-m-d');
-        $slot = $department === 'Sebészet'
-          ? (Schedule::DAY_TYPES[$day_types[$date]][$r] ?? NULL)
-          : ($department_slots[$r] ?? NULL);
+        $slot = $slots_by_date[$date][$r] ?? NULL;
         if (!$slot) { $row[]=['data'=>['#markup'=>'—']]; continue; }
         $a=$by_cell[$date][$slot] ?? NULL;
         if (!$a) {
