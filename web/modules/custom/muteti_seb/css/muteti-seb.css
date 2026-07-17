@@ -190,6 +190,14 @@
 .muteti-drag-card:active { cursor: grabbing; }
 .muteti-drag-card.is-aznm { border-left: 4px solid #c00; }
 .muteti-dropzone.is-over { outline: 3px solid #3478d4; background: #eef5ff; }
+.muteti-doctor-table { width: 100%; margin: 0; }
+.muteti-doctor-table th { background: linear-gradient(#edf4fa, #dce8f2); color: #183b5c; }
+.muteti-doctor-table th, .muteti-doctor-table td { padding: .65rem; border-bottom: 1px solid #d5dde5; vertical-align: middle; }
+.muteti-doctor-color-preview { min-width: 145px; padding: .45rem .65rem; border: 1px solid rgba(30, 54, 76, .2); border-radius: .4rem; font-weight: 700; }
+#muteti-seb-doctor-form { max-width: 720px; padding: 1.2rem; border: 1px solid #aebdcd; border-radius: .7rem; background: #fff; box-shadow: 0 3px 14px rgba(24, 54, 84, .12); }
+#muteti-seb-doctor-form .form-item { margin-bottom: 1rem; }
+.muteti-doctor-form-preview { margin: 1rem 0; }
+.muteti-doctor-live-preview { margin-top: .4rem; padding: .8rem; border: 1px solid rgba(30, 54, 76, .2); border-radius: .45rem; font-weight: 700; }
 @media (max-width: 800px) {
   .muteti-week-cards { grid-template-columns: repeat(2, 1fr); }
   .muteti-board-layout { grid-template-columns: 1fr; }
