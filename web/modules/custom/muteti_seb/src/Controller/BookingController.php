@@ -231,6 +231,25 @@ final class BookingController extends ControllerBase {
       }
       $rows[]=$row;
     }
+    // Render each day as an independent, top-aligned vertical list. A taller
+    // appointment in one day must not create empty vertical space in the
+    // other day columns as regular table rows would do.
+    $column_row = [];
+    foreach (array_keys($dates) as $column_index) {
+      $column = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['muteti-booking-column']],
+      ];
+      foreach ($rows as $row_index => $booking_row) {
+        $column['slot_'.$row_index] = [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['muteti-booking-column-cell']],
+          'content' => $booking_row[$column_index]['data'],
+        ];
+      }
+      $column_row[] = ['data' => $column];
+    }
+    $rows = [$column_row];
     $prev=(clone $monday)->modify('-7 days')->format('Y-m-d'); $next=(clone $monday)->modify('+7 days')->format('Y-m-d');
     $prev_month=(clone $monday)->modify('first day of previous month')->modify('monday this week')->format('Y-m-d');
     $next_month=(clone $monday)->modify('first day of next month')->modify('monday this week')->format('Y-m-d');
