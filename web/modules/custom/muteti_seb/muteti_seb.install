@@ -94,6 +94,22 @@ function muteti_seb_schema(): array {
       'role_id' => ['role_id'],
     ],
   ];
+  $schema['muteti_audit_log'] = [
+    'description' => 'Az előjegyzéseken végzett felhasználói műveletek naplója.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE],
+      'user_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0],
+      'username' => ['type' => 'varchar', 'length' => 60, 'not null' => TRUE],
+      'department' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
+      'appointment_date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+      'slot_type' => ['type' => 'varchar', 'length' => 30, 'not null' => TRUE],
+      'patient_reference' => ['type' => 'varchar', 'length' => 50, 'not null' => FALSE],
+      'action' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
+      'created' => ['type' => 'int', 'not null' => TRUE],
+    ],
+    'primary key' => ['id'],
+    'indexes' => ['created' => ['created'], 'user_id' => ['user_id']],
+  ];
   return $schema;
 }
 
@@ -259,5 +275,15 @@ function muteti_seb_update_11008(): void {
       ->key('machine_name', $machine_name)
       ->fields(compact('name', 'mode', 'role_id'))
       ->execute();
+  }
+}
+
+/**
+ * Adds the printable appointment audit log.
+ */
+function muteti_seb_update_11009(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('muteti_audit_log')) {
+    $schema->createTable('muteti_audit_log', muteti_seb_schema()['muteti_audit_log']);
   }
 }
