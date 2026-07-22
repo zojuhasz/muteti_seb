@@ -78,11 +78,19 @@
 .muteti-patient {
   position: relative;
   min-height: 72px;
-  padding: 1.8rem .55rem .6rem;
+  padding: .35rem .55rem .6rem;
   border: 1px solid rgba(30, 54, 76, .18);
   border-radius: .45rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
   text-align: left;
+}
+.muteti-patient-slot {
+  min-height: 1.45rem;
+  margin: 0 1.7rem .35rem;
+  text-align: center;
+  font-size: .82rem;
+  font-weight: 900;
+  line-height: 1.35;
 }
 .muteti-edit-link {
   position: absolute;
