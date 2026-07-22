@@ -89,11 +89,12 @@
 }
 .muteti-patient-slot {
   min-height: 1.45rem;
-  margin: 0 4.1rem .35rem 1.75rem;
+  margin: 0 0 .35rem 1.75rem;
   text-align: left;
-  font-size: .82rem;
+  font-size: .68rem;
   font-weight: 900;
   line-height: 1.35;
+  white-space: nowrap;
 }
 .muteti-move-link {
   position: absolute;
