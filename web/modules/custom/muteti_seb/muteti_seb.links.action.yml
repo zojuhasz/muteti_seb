@@ -1,0 +1,5 @@
+muteti_seb.doctor_add_action:
+  route_name: entity.muteti_doctor.add_form
+  title: 'Új orvos felvitele'
+  appears_on:
+    - entity.muteti_doctor.collection
