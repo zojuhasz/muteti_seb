@@ -137,7 +137,8 @@
             const result = await response.json();
             if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
             select.dataset.previousValue = select.value;
-            select.disabled = false;
+            sessionStorage.setItem('mutetiBookingScrollY', String(window.scrollY));
+            window.location.reload();
           }
           catch (error) {
             select.value = previousValue;
