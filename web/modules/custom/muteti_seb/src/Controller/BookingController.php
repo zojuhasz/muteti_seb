@@ -173,8 +173,11 @@ final class BookingController extends ControllerBase {
           $doctor = $doctors[$a->doctor_id] ?? NULL;
           $patient_attributes = ['class' => ['muteti-patient']];
           if ($doctor) {
-            $background = $doctor->background_color ?: '#eef2f6';
-            $text = $doctor->text_color ?: '#111111';
+            $has_background = trim((string) $doctor->background_color) !== '';
+            $background = $has_background ? $doctor->background_color : '#eef2f6';
+            // A legacy record may contain white text without a background
+            // color. On the light fallback background that would be invisible.
+            $text = $has_background ? ($doctor->text_color ?: '#111111') : '#111111';
             $patient_attributes['style'] = 'background-color:'.$background.';color:'.$text;
           }
           $cell = [
