@@ -5,6 +5,7 @@ namespace Drupal\muteti_seb\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\muteti_seb\Service\UserDepartment;
+use Drupal\muteti_seb\Service\AuditLog;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -58,6 +59,8 @@ final class AppointmentMoveController extends ControllerBase {
     }
 
     try {
+      $patient_reference = (string) ($source->ward_room ?: $source->taj);
+      AuditLog::write('áthelyezés felvesz', $department, $source->admission_date, $source->slot_type, $patient_reference);
       $destination_fields = [
           'admission_date' => $date,
           'slot_type' => $slot,
@@ -83,6 +86,7 @@ final class AppointmentMoveController extends ControllerBase {
           ->condition('department', $department)
           ->execute();
       }
+      AuditLog::write($mode === 'duplicate' ? 'áthelyezés duplikálással lerak' : 'áthelyezés lerak', $department, $date, $slot, $patient_reference);
     }
     catch (\Throwable) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'A célhely már foglalt, az áthelyezés nem történt meg.'], 409);
@@ -102,13 +106,24 @@ final class AppointmentMoveController extends ControllerBase {
       return new JsonResponse(['ok' => FALSE, 'error' => 'Érvénytelen betegazonosító.'], 400);
     }
 
+    $department = UserDepartment::get($this->currentUser());
+    $appointment = $this->database->select('muteti_appointment', 'a')
+      ->fields('a', ['id', 'admission_date', 'slot_type', 'ward_room', 'taj'])
+      ->condition('id', $appointment_id)
+      ->condition('department', $department)
+      ->execute()
+      ->fetchObject();
+    if (!$appointment) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'A beteg nem található ezen az osztályon.'], 404);
+    }
     $deleted = $this->database->delete('muteti_appointment')
       ->condition('id', $appointment_id)
-      ->condition('department', UserDepartment::get($this->currentUser()))
+      ->condition('department', $department)
       ->execute();
     if (!$deleted) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'A beteg nem található ezen az osztályon.'], 404);
     }
+    AuditLog::write('törlés', $department, $appointment->admission_date, $appointment->slot_type, (string) ($appointment->ward_room ?: $appointment->taj));
 
     return new JsonResponse(['ok' => TRUE]);
   }
