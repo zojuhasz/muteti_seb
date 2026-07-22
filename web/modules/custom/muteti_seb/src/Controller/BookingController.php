@@ -24,6 +24,7 @@ final class BookingController extends ControllerBase {
 
   public function week(Request $request): array {
     $department = UserDepartment::get($this->currentUser());
+    $mode = DepartmentMode::get($department);
     $is_boss = in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE);
     $week = $request->query->get('week', 'now');
     try { $monday = new DrupalDateTime($week === 'now' ? 'monday this week' : $week); }
@@ -33,6 +34,9 @@ final class BookingController extends ControllerBase {
     for ($i = 0; $i < 7; $i++) { $d = clone $monday; $d->modify("+$i day"); $dates[] = $d; }
 
     $start = $dates[0]->format('Y-m-d'); $end = $dates[6]->format('Y-m-d');
+    $on_call = in_array($mode, ['seb', 'urol'], TRUE)
+      ? $this->database->select('muteti_on_call', 'u')->fields('u', ['date', 'doctor_name'])->condition('mode', $mode)->condition('date', [$start, $end], 'BETWEEN')->execute()->fetchAllKeyed()
+      : [];
     $appointments = $this->database->select('muteti_appointment', 'a')->fields('a')->condition('department', $department)->condition('admission_date', [$start, $end], 'BETWEEN')->execute()->fetchAllAssoc('id');
     $by_cell = [];
     foreach ($appointments as $a) { $by_cell[$a->admission_date][$a->slot_type] = $a; }
@@ -72,7 +76,7 @@ final class BookingController extends ControllerBase {
             'day' => [
               '#markup' => '<span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span>',
             ],
-            'pdf' => DepartmentMode::get($department) === 'onko' ? [
+            'pdf' => $mode === 'onko' ? [
               '#type' => 'link',
               '#title' => [
                 '#theme' => 'image',
@@ -89,6 +93,9 @@ final class BookingController extends ControllerBase {
               ],
             ] : [],
           ],
+          'on_call' => in_array($mode, ['seb', 'urol'], TRUE) ? [
+            '#markup' => '<span class="muteti-heading-on-call" title="Ügyeletes orvos">'.Html::escape($on_call[$date] ?? '—').'</span>',
+          ] : [],
           'day_type' => [
             '#type' => 'select',
             '#title' => $this->t('Napfajta'),
