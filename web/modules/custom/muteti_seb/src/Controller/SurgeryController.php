@@ -104,7 +104,13 @@ final class SurgeryController extends ControllerBase {
         'data-id' => (string) $a->id,
       ];
       if ($doctor) {
-        $attributes['style'] = 'background-color:'.($doctor->background_color ?: '#eef2f6').';color:'.($doctor->text_color ?: '#111111');
+        $has_background = trim((string) $doctor->background_color) !== '';
+        $style = 'background-color:'.($has_background ? $doctor->background_color : '#eef2f6').';color:'.($has_background ? ($doctor->text_color ?: '#111111') : '#111111').';';
+        if (!empty($doctor->background_gif)) {
+          $gif_url = \Drupal::service('file_url_generator')->generateString($doctor->background_gif);
+          $style .= 'background-image:url("'.str_replace('"', '%22', $gif_url).'");background-size:cover;background-position:center;background-repeat:no-repeat;';
+        }
+        $attributes['style'] = $style;
       }
       return [
         '#type' => 'container',
