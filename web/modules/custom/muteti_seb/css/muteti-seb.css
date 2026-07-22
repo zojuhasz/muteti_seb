@@ -92,6 +92,33 @@
   font-weight: 900;
   line-height: 1.35;
 }
+.muteti-move-link {
+  position: absolute;
+  top: .35rem;
+  right: .4rem;
+  z-index: 3;
+  padding: .12rem .3rem;
+  border: 1px solid currentColor;
+  border-radius: .3rem;
+  background: rgba(255, 255, 255, .88);
+  color: #6b3d00;
+  cursor: pointer;
+  font-size: .68rem;
+  font-weight: 900;
+  line-height: 1.2;
+  text-decoration: none;
+}
+.muteti-move-link.is-target { top: auto; right: .65rem; bottom: .65rem; }
+.muteti-move-link.is-selected { background: #8a4d00; color: #fff; }
+.muteti-booking-table .muteti-patient:has(.muteti-move-link.is-selected) {
+  outline: 3px solid #e39125;
+  outline-offset: -2px;
+}
+.muteti-table-frame.is-moving-patient .muteti-move-link.is-target {
+  background: #fff2cc;
+  color: #704000;
+  box-shadow: 0 0 0 2px rgba(227, 145, 37, .28);
+}
 .muteti-edit-link {
   position: absolute;
   top: .35rem;
