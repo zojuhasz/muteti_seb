@@ -4,3 +4,10 @@ muteti_seb.doctors:
   route_name: muteti_seb.doctors
   parent: system.admin_content
   weight: 20
+
+muteti_seb.departments:
+  title: 'Műtéti osztályok'
+  description: 'Osztályok és működési módok hozzárendelése.'
+  route_name: muteti_seb.departments
+  parent: system.admin_content
+  weight: 21
