@@ -34,9 +34,16 @@ final class BookingController extends ControllerBase {
     for ($i = 0; $i < 7; $i++) { $d = clone $monday; $d->modify("+$i day"); $dates[] = $d; }
 
     $start = $dates[0]->format('Y-m-d'); $end = $dates[6]->format('Y-m-d');
-    $on_call = in_array($mode, ['seb', 'urol'], TRUE)
-      ? $this->database->select('muteti_on_call', 'u')->fields('u', ['date', 'doctor_name'])->condition('mode', $mode)->condition('date', [$start, $end], 'BETWEEN')->execute()->fetchAllKeyed()
-      : [];
+    $on_call = [];
+    if (in_array($mode, ['seb', 'urol'], TRUE)) {
+      $on_call_rows = $this->database->select('muteti_on_call', 'u')->fields('u', ['date', 'doctor_name', 'doctor_name_2'])->condition('mode', $mode)->condition('date', [$start, $end], 'BETWEEN')->execute();
+      foreach ($on_call_rows as $on_call_row) {
+        $on_call[$on_call_row->date] = array_values(array_filter([
+          $on_call_row->doctor_name,
+          $mode === 'seb' ? $on_call_row->doctor_name_2 : '',
+        ]));
+      }
+    }
     $appointments = $this->database->select('muteti_appointment', 'a')->fields('a')->condition('department', $department)->condition('admission_date', [$start, $end], 'BETWEEN')->execute()->fetchAllAssoc('id');
     $by_cell = [];
     foreach ($appointments as $a) { $by_cell[$a->admission_date][$a->slot_type] = $a; }
@@ -94,7 +101,7 @@ final class BookingController extends ControllerBase {
             ] : [],
           ],
           'on_call' => in_array($mode, ['seb', 'urol'], TRUE) ? [
-            '#markup' => '<span class="muteti-heading-on-call" title="Ügyeletes orvos">'.Html::escape($on_call[$date] ?? '—').'</span>',
+            '#markup' => '<span class="muteti-heading-on-call" title="Ügyeletes orvos">'.(!empty($on_call[$date]) ? implode('<br>', array_map([Html::class, 'escape'], $on_call[$date])) : '—').'</span>',
           ] : [],
           'day_type' => [
             '#type' => 'select',
