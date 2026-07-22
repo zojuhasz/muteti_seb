@@ -5,6 +5,7 @@ namespace Drupal\muteti_seb\Controller;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
@@ -14,10 +15,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 final class BookingController extends ControllerBase {
-  public function __construct(private readonly Connection $database) {}
+  public function __construct(private readonly Connection $database, private readonly CsrfTokenGenerator $csrf) {}
 
   public static function create(ContainerInterface $container): static {
-    return new static($container->get('database'));
+    return new static($container->get('database'), $container->get('csrf_token'));
   }
 
   public function week(Request $request): array {
@@ -77,9 +78,22 @@ final class BookingController extends ControllerBase {
         if (!$a) {
           $slot_link = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
           $slot_link['#attributes']['class'][] = 'muteti-slot-link';
-          $row[] = [
-            'data' => $slot_link,
-          ];
+          $empty_cell = ['slot' => $slot_link];
+          if ($this->currentUser()->hasPermission('edit surgery appointment')) {
+            $empty_cell['move'] = [
+              '#type' => 'html_tag',
+              '#tag' => 'button',
+              '#value' => 'áth',
+              '#attributes' => [
+                'type' => 'button',
+                'class' => ['muteti-move-link', 'is-target'],
+                'data-move-date' => $date,
+                'data-move-slot' => $slot,
+                'title' => 'Áthelyezés ide',
+              ],
+            ];
+          }
+          $row[] = ['data' => $empty_cell];
         }
         else {
           $edit = Link::fromTextAndUrl('M', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
@@ -101,6 +115,18 @@ final class BookingController extends ControllerBase {
               'slot' => [
                 '#markup' => '<div class="muteti-patient-slot">'.Html::escape($slot).'</div>',
               ],
+              'move' => $this->currentUser()->hasPermission('edit surgery appointment') ? [
+                '#type' => 'html_tag',
+                '#tag' => 'button',
+                '#value' => 'áth',
+                '#attributes' => [
+                  'type' => 'button',
+                  'class' => ['muteti-move-link', 'is-source'],
+                  'data-move-id' => (string) $a->id,
+                  'data-move-patient' => $a->patient_name,
+                  'title' => 'Áthelyezés',
+                ],
+              ] : [],
               'content' => [
                 '#markup' => '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($doctor ? '<br><span class="muteti-staff">'.Html::escape($doctor->name).'</span>' : ''),
               ],
@@ -116,7 +142,12 @@ final class BookingController extends ControllerBase {
     }
     $prev=(clone $monday)->modify('-7 days')->format('Y-m-d'); $next=(clone $monday)->modify('+7 days')->format('Y-m-d');
     return [
-      '#attached'=>['library'=>['muteti_seb/surgery_board']],
+      '#attached'=>[
+        'library'=>['muteti_seb/surgery_board'],
+        'drupalSettings'=>['mutetiSeb'=>[
+          'appointmentMoveEndpoint'=>Url::fromRoute('muteti_seb.appointment_move',[],['query'=>['token'=>$this->csrf->get('muteti/api/appointment-move')]])->toString(),
+        ]],
+      ],
       '#cache'=>['max-age'=>0],
       'department'=>['#markup'=>'<h2 class="muteti-panel-title">'.Html::escape($department).' – előjegyzés</h2>'],
       'nav'=>['#type'=>'container','#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']], 'prev'=>Link::fromTextAndUrl('← Előző hét',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]]))->toRenderable(),'today'=>Link::fromTextAndUrl('Aktuális hét',Url::fromRoute('muteti_seb.booking'))->toRenderable(),'next'=>Link::fromTextAndUrl('Következő hét →',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]]))->toRenderable()],
