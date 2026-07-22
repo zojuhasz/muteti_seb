@@ -147,29 +147,34 @@ final class BookingController extends ControllerBase {
               'slot' => [
                 '#markup' => '<div class="muteti-patient-slot">'.Html::escape($slot).'</div>',
               ],
-              'move' => $is_boss ? [
-                '#type' => 'html_tag',
-                '#tag' => 'button',
-                '#value' => 'áth',
-                '#attributes' => [
-                  'type' => 'button',
-                  'class' => ['muteti-move-link', 'is-source'],
-                  'data-move-id' => (string) $a->id,
-                  'data-move-patient' => $a->patient_name,
-                  'title' => 'Áthelyezés',
+              'actions' => $is_boss ? [
+                '#type' => 'container',
+                '#attributes' => ['class' => ['muteti-patient-actions']],
+                'move' => [
+                  '#type' => 'html_tag',
+                  '#tag' => 'button',
+                  '#value' => 'áth',
+                  '#attributes' => [
+                    'type' => 'button',
+                    'class' => ['muteti-move-link', 'is-source'],
+                    'data-move-id' => (string) $a->id,
+                    'data-move-patient' => $a->patient_name,
+                    'title' => 'Áthelyezés',
+                  ],
                 ],
-              ] : [],
-              'delete' => $is_boss ? [
-                '#type' => 'html_tag',
-                '#tag' => 'button',
-                '#value' => '0',
-                '#attributes' => [
-                  'type' => 'button',
-                  'class' => ['muteti-delete-link'],
-                  'data-delete-id' => (string) $a->id,
-                  'data-delete-patient' => $a->patient_name,
-                  'title' => 'Beteg törlése',
-                  'aria-label' => 'Beteg törlése',
+                'separator' => ['#markup' => '<span class="muteti-action-separator">|</span>'],
+                'delete' => [
+                  '#type' => 'html_tag',
+                  '#tag' => 'button',
+                  '#value' => '0',
+                  '#attributes' => [
+                    'type' => 'button',
+                    'class' => ['muteti-delete-link'],
+                    'data-delete-id' => (string) $a->id,
+                    'data-delete-patient' => $a->patient_name,
+                    'title' => 'Beteg törlése',
+                    'aria-label' => 'Beteg törlése',
+                  ],
                 ],
               ] : [],
               'content' => [
