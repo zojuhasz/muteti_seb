@@ -1,6 +1,8 @@
 <?php
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\node\NodeInterface;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Drupal\muteti_seb\Service\DepartmentMode;
 
@@ -49,4 +51,75 @@ function muteti_seb_login_redirect_submit(array &$form, FormStateInterface $form
   if (!\Drupal::request()->query->has('destination')) {
     $form_state->setRedirect('muteti_seb.booking');
   }
+}
+
+/**
+ * Implements hook_entity_presave().
+ *
+ * Keeps the application registry compatible while Orvos nodes become the
+ * Drupal administration source of truth.
+ */
+function muteti_seb_entity_presave(EntityInterface $entity): void {
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'muteti_doctor') {
+    return;
+  }
+  $database = \Drupal::database();
+  $registry_id = (int) ($entity->get('field_muteti_registry_id')->value ?? 0);
+  $fields = [
+    'legacy_nid' => $entity->get('field_muteti_legacy_nid')->value ?: NULL,
+    'user_id' => $entity->get('field_muteti_user')->target_id ?: NULL,
+    'name' => trim((string) $entity->label()),
+    'background_color' => $entity->get('field_muteti_background')->value ?: '#eef2f6',
+    'text_color' => $entity->get('field_muteti_text_color')->value ?: '#111111',
+    'department' => $entity->get('field_muteti_department')->value ?: 'Sebészet',
+    'active' => (int) (bool) $entity->get('field_muteti_active')->value,
+  ];
+  if ($registry_id && $database->select('muteti_doctor', 'd')->condition('id', $registry_id)->countQuery()->execute()->fetchField()) {
+    $database->update('muteti_doctor')->fields($fields)->condition('id', $registry_id)->execute();
+  }
+  else {
+    $registry_id = (int) $database->insert('muteti_doctor')->fields($fields)->execute();
+    $entity->set('field_muteti_registry_id', $registry_id);
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function muteti_seb_entity_delete(EntityInterface $entity): void {
+  if ($entity instanceof NodeInterface && $entity->bundle() === 'muteti_doctor') {
+    $registry_id = (int) ($entity->get('field_muteti_registry_id')->value ?? 0);
+    if ($registry_id) {
+      // Keep historical appointment references valid.
+      \Drupal::database()->update('muteti_doctor')->fields(['active' => 0])->condition('id', $registry_id)->execute();
+    }
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function muteti_seb_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void {
+  $form_object = $form_state->getFormObject();
+  if (!method_exists($form_object, 'getEntity')) {
+    return;
+  }
+  $entity = $form_object->getEntity();
+  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'muteti_doctor') {
+    return;
+  }
+
+  foreach (['field_muteti_background' => '#eef2f6', 'field_muteti_text_color' => '#111111'] as $field => $fallback) {
+    if (isset($form[$field]['widget'][0]['value'])) {
+      $form[$field]['widget'][0]['value']['#type'] = 'color';
+      $form[$field]['widget'][0]['value']['#default_value'] = $entity->get($field)->value ?: $fallback;
+    }
+  }
+  if (isset($form['field_muteti_department']['widget'][0]['value'])) {
+    $names = \Drupal::database()->select('muteti_department_config', 'd')->fields('d', ['name'])->orderBy('name')->execute()->fetchCol();
+    $form['field_muteti_department']['widget'][0]['value']['#type'] = 'select';
+    $form['field_muteti_department']['widget'][0]['value']['#options'] = array_combine($names, $names);
+  }
+  $form['field_muteti_registry_id']['#access'] = FALSE;
+  $form['field_muteti_legacy_nid']['#access'] = FALSE;
 }
