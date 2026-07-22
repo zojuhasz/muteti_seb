@@ -145,7 +145,7 @@ final class BookingController extends ControllerBase {
               'delete' => $is_boss ? [
                 '#type' => 'html_tag',
                 '#tag' => 'button',
-                '#value' => 'DEL',
+                '#value' => '0',
                 '#attributes' => [
                   'type' => 'button',
                   'class' => ['muteti-delete-link'],
