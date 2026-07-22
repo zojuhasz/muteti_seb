@@ -78,6 +78,32 @@
         });
       });
       if (moveButtons.length || context === document) refreshMoveState();
+      const deleteButtons = once('muteti-booking-delete', '.muteti-delete-link', context);
+      deleteButtons.forEach((button) => {
+        button.addEventListener('click', async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const patient = button.dataset.deletePatient || 'a kiválasztott beteg';
+          if (!window.confirm(`Biztosan törlöd az előjegyzésből: ${patient}?`)) return;
+          button.disabled = true;
+          try {
+            const response = await fetch(drupalSettings.mutetiSeb.appointmentDeleteEndpoint, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              credentials: 'same-origin',
+              body: JSON.stringify({appointment_id: Number(button.dataset.deleteId)})
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
+            sessionStorage.removeItem(moveStorageKey);
+            window.location.reload();
+          }
+          catch (error) {
+            button.disabled = false;
+            window.alert(error.message || 'A beteg törlése sikertelen.');
+          }
+        });
+      });
       const surgeryNavigationLinks = once('muteti-surgery-scroll', '.muteti-surgery-week-frame a', context);
       surgeryNavigationLinks.forEach((link) => {
         link.addEventListener('click', () => sessionStorage.setItem('mutetiSurgeryScrollY', String(window.scrollY)));
