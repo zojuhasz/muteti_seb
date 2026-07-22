@@ -55,9 +55,7 @@ final class BookingController extends ControllerBase {
       }
     }
     $max = max(array_map('count', $slots_by_date));
-    $header = [
-      ['data' => $this->t('Sorszám'), 'class' => ['muteti-index-heading']],
-    ];
+    $header = [];
     foreach ($dates as $d) {
       $date = $d->format('Y-m-d');
       $occupied = !empty($by_cell[$date]);
@@ -110,7 +108,7 @@ final class BookingController extends ControllerBase {
     }
     $rows = [];
     for ($r=0; $r<$max; $r++) {
-      $row = [$r+1];
+      $row = [];
       foreach ($dates as $d) {
         $date=$d->format('Y-m-d');
         $slot = $slots_by_date[$date][$r] ?? NULL;
