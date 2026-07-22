@@ -108,7 +108,8 @@
   line-height: 1.2;
   text-decoration: none;
 }
-.muteti-move-link.is-target { top: auto; right: .65rem; bottom: .65rem; }
+.muteti-move-link.is-target { top: auto; right: 2.65rem; bottom: .65rem; }
+.muteti-move-link.is-target.is-duplicate { right: .65rem; color: #305f22; }
 .muteti-move-link.is-selected { background: #8a4d00; color: #fff; }
 .muteti-booking-table .muteti-patient:has(.muteti-move-link.is-selected) {
   outline: 3px solid #e39125;
@@ -118,6 +119,11 @@
   background: #fff2cc;
   color: #704000;
   box-shadow: 0 0 0 2px rgba(227, 145, 37, .28);
+}
+.muteti-table-frame.is-moving-patient .muteti-move-link.is-target.is-duplicate {
+  background: #e8f6df;
+  color: #244f19;
+  box-shadow: 0 0 0 2px rgba(76, 133, 52, .25);
 }
 .muteti-edit-link {
   position: absolute;
