@@ -68,6 +68,10 @@ final class Doctor extends ContentEntityBase {
       ->setLabel(new TranslatableMarkup('Háttérszín'))
       ->setSetting('max_length', 10)
       ->setDisplayOptions('form', ['type' => 'string_textfield', 'weight' => 20]);
+    $fields['background_gif'] = BaseFieldDefinition::create('string')
+      ->setLabel(new TranslatableMarkup('Háttér-GIF URI'))
+      ->setSetting('max_length', 255)
+      ->setReadOnly(TRUE);
     $fields['text_color'] = BaseFieldDefinition::create('string')
       ->setLabel(new TranslatableMarkup('Betűszín'))
       ->setSetting('max_length', 10)
