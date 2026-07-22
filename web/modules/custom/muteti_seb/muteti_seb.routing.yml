@@ -69,6 +69,16 @@ muteti_seb.program_pdf:
     _permission: 'view surgery schedule'
     date: '\d{4}-\d{2}-\d{2}'
 
+muteti_seb.oncology_booking_pdf:
+  path: '/muteti/onkologia/elojegyzes/{date}/pdf'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\ProgramPdfController::oncologyBookingPdf'
+    _title: 'Onkológiai kezelési lista PDF'
+  requirements:
+    _permission: 'view surgery schedule'
+    _custom_access: '\Drupal\muteti_seb\Controller\ProgramPdfController::oncologyAccess'
+    date: '\d{4}-\d{2}-\d{2}'
+
 muteti_seb.doctors:
   path: '/muteti/orvosok'
   defaults:
