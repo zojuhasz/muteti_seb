@@ -23,10 +23,12 @@
 }
 .muteti-booking-table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 0;
   margin: 0;
   border-collapse: separate;
   border-spacing: 0;
+  table-layout: fixed;
+  font-size: .78rem;
 }
 .muteti-booking-table th {
   padding: .75rem .55rem;
@@ -39,8 +41,8 @@
 }
 .muteti-booking-table td {
   position: relative;
-  min-width: 135px;
-  padding: .4rem;
+  min-width: 0;
+  padding: .28rem;
   border-right: 1px solid #d5dde5;
   border-bottom: 1px solid #d5dde5;
   background: #fbfcfd;
@@ -55,9 +57,10 @@
 .muteti-heading-type { display: block; }
 .muteti-heading-date { font-size: .83rem; font-weight: 600; }
 .muteti-heading-day { margin-top: .2rem; font-size: .95rem; font-weight: 800; text-transform: uppercase; }
-.muteti-index-heading { width: 70px; }
+.muteti-index-heading { width: 46px; }
 .muteti-booking-table td:first-child {
-  min-width: 58px;
+  width: 46px;
+  min-width: 46px;
   color: #52677a;
   font-weight: 700;
   vertical-align: middle;
@@ -66,7 +69,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 72px;
+  min-height: 64px;
   border: 1px dashed #9db2c6;
   border-radius: .45rem;
   color: #165b91;
@@ -76,12 +79,13 @@
 .muteti-slot-link:hover { background: #e8f4fd; border-color: #397eaf; }
 .muteti-patient {
   position: relative;
-  min-height: 72px;
-  padding: .35rem .55rem .6rem;
+  min-height: 64px;
+  padding: .3rem .4rem .5rem;
   border: 1px solid rgba(30, 54, 76, .18);
   border-radius: .45rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
   text-align: left;
+  overflow-wrap: anywhere;
 }
 .muteti-patient-slot {
   min-height: 1.45rem;
@@ -255,5 +259,5 @@
 @media (max-width: 800px) {
   .muteti-week-cards { grid-template-columns: repeat(2, 1fr); }
   .muteti-board-layout { grid-template-columns: 1fr; }
-  .muteti-booking-table { font-size: .8rem; }
+  .muteti-booking-table { min-width: 760px; font-size: .72rem; }
 }
