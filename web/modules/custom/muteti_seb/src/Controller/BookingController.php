@@ -95,6 +95,7 @@ final class BookingController extends ControllerBase {
             '#title_display' => 'invisible',
             '#options' => array_combine(Schedule::departmentDayTypes($department), Schedule::departmentDayTypes($department)),
             '#default_value' => $type,
+            '#value' => $type,
             '#disabled' => $occupied || !$this->currentUser()->hasPermission('assign operating room'),
             '#attributes' => [
               'class' => ['muteti-day-type-select'],
