@@ -62,7 +62,8 @@
               body: JSON.stringify({
                 appointment_id: Number(selected.id),
                 date: button.dataset.moveDate,
-                slot: button.dataset.moveSlot
+                slot: button.dataset.moveSlot,
+                mode: button.dataset.moveMode || 'move'
               })
             });
             const result = await response.json();
