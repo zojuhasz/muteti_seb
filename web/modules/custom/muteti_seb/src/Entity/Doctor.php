@@ -34,10 +34,10 @@ use Drupal\muteti_seb\Form\DoctorForm;
     'label' => 'name',
   ],
   links: [
-    'collection' => '/admin/content/muteti-orvosok',
-    'add-form' => '/admin/content/muteti-orvosok/add',
-    'edit-form' => '/admin/content/muteti-orvosok/{muteti_doctor}/edit',
-    'delete-form' => '/admin/content/muteti-orvosok/{muteti_doctor}/delete',
+    'collection' => '/admin/content/muteti-orvos-registry',
+    'add-form' => '/admin/content/muteti-orvos-registry/add',
+    'edit-form' => '/admin/content/muteti-orvos-registry/{muteti_doctor}/edit',
+    'delete-form' => '/admin/content/muteti-orvos-registry/{muteti_doctor}/delete',
   ],
 )]
 final class Doctor extends ContentEntityBase {
