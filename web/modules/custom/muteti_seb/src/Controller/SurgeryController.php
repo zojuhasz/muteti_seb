@@ -12,6 +12,7 @@ use Drupal\Core\Url;
 use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\muteti_seb\Service\Schedule;
+use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,7 +22,7 @@ final class SurgeryController extends ControllerBase {
   public static function create(ContainerInterface $c): static { return new static($c->get('database'),$c->get('csrf_token')); }
 
   public function access(AccountInterface $account): AccessResult {
-    return AccessResult::allowedIf(UserDepartment::get($account) !== 'Onkoradiológia')
+    return AccessResult::allowedIf(DepartmentMode::get(UserDepartment::get($account)) !== 'onko')
       ->addCacheContexts(['user.roles']);
   }
 
