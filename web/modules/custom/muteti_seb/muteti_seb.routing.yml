@@ -22,6 +22,7 @@ muteti_seb.surgery:
     _title: 'Műtéti beosztás'
   requirements:
     _permission: 'view surgery schedule'
+    _custom_access: '\Drupal\muteti_seb\Controller\SurgeryController::access'
 
 muteti_seb.assignment:
   path: '/muteti/api/assignment'
