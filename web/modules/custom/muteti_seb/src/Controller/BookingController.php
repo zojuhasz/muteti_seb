@@ -65,7 +65,30 @@ final class BookingController extends ControllerBase {
       $header[] = [
         'data' => [
           'label' => [
-            '#markup' => '<span class="muteti-heading-date">'.Html::escape($date).'</span><span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span>',
+            '#markup' => '<span class="muteti-heading-date">'.Html::escape($date).'</span>',
+          ],
+          'day_row' => [
+            '#type' => 'container',
+            '#attributes' => ['class' => ['muteti-heading-day-row']],
+            'day' => [
+              '#markup' => '<span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span>',
+            ],
+            'pdf' => $department === 'Onkoradiológia' ? [
+              '#type' => 'link',
+              '#title' => [
+                '#theme' => 'image',
+                '#uri' => base_path().'modules/custom/muteti_seb/images/pdf-icon.svg',
+                '#alt' => 'PDF',
+                '#attributes' => ['class' => ['muteti-day-pdf-icon']],
+              ],
+              '#url' => Url::fromRoute('muteti_seb.oncology_booking_pdf', ['date' => $date]),
+              '#attributes' => [
+                'class' => ['muteti-day-pdf-link'],
+                'title' => $this->t('@date kezelési listája PDF-ben', ['@date' => $date]),
+                'aria-label' => $this->t('@date kezelési listája PDF-ben', ['@date' => $date]),
+                'target' => '_blank',
+              ],
+            ] : [],
           ],
           'day_type' => [
             '#type' => 'select',
@@ -81,17 +104,6 @@ final class BookingController extends ControllerBase {
               'title' => $occupied ? $this->t('A napfajta már nem módosítható, mert van előjegyzett beteg.') : $this->t('Napfajta módosítása'),
             ],
           ],
-          'pdf' => $department === 'Onkoradiológia' ? [
-            '#type' => 'link',
-            '#title' => 'PDF',
-            '#url' => Url::fromRoute('muteti_seb.oncology_booking_pdf', ['date' => $date]),
-            '#attributes' => [
-              'class' => ['muteti-day-pdf-link'],
-              'title' => $this->t('@date kezelési listája PDF-ben', ['@date' => $date]),
-              'aria-label' => $this->t('@date kezelési listája PDF-ben', ['@date' => $date]),
-              'target' => '_blank',
-            ],
-          ] : [],
         ],
         'class' => array_filter(['muteti-day-heading', $occupied ? 'is-locked' : NULL]),
       ];
