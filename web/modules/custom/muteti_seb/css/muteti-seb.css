@@ -65,14 +65,6 @@
 .muteti-heading-date { font-size: .83rem; font-weight: 600; }
 .muteti-heading-day { margin-top: .2rem; font-size: .78rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
 .muteti-heading-day-row { display: flex; align-items: center; justify-content: center; gap: .32rem; }
-.muteti-index-heading { width: 46px; }
-.muteti-booking-table td:first-child {
-  width: 46px;
-  min-width: 46px;
-  color: #52677a;
-  font-weight: 700;
-  vertical-align: middle;
-}
 .muteti-slot-link {
   display: flex;
   align-items: center;
