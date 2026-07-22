@@ -110,6 +110,15 @@ function muteti_seb_schema(): array {
     'primary key' => ['id'],
     'indexes' => ['created' => ['created'], 'user_id' => ['user_id']],
   ];
+  $schema['muteti_on_call'] = [
+    'description' => 'Működési módonként és naponként az első ügyeletes orvos.',
+    'fields' => [
+      'mode' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+      'date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+      'doctor_name' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
+    ],
+    'primary key' => ['mode', 'date'],
+  ];
   return $schema;
 }
 
@@ -285,5 +294,15 @@ function muteti_seb_update_11009(): void {
   $schema = \Drupal::database()->schema();
   if (!$schema->tableExists('muteti_audit_log')) {
     $schema->createTable('muteti_audit_log', muteti_seb_schema()['muteti_audit_log']);
+  }
+}
+
+/**
+ * Adds the imported daily on-call doctor registry.
+ */
+function muteti_seb_update_11010(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('muteti_on_call')) {
+    $schema->createTable('muteti_on_call', muteti_seb_schema()['muteti_on_call']);
   }
 }
