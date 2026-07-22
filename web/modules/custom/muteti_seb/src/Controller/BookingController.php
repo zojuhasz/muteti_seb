@@ -213,6 +213,8 @@ final class BookingController extends ControllerBase {
       $rows[]=$row;
     }
     $prev=(clone $monday)->modify('-7 days')->format('Y-m-d'); $next=(clone $monday)->modify('+7 days')->format('Y-m-d');
+    $prev_month=(clone $monday)->modify('first day of previous month')->modify('monday this week')->format('Y-m-d');
+    $next_month=(clone $monday)->modify('first day of next month')->modify('monday this week')->format('Y-m-d');
     return [
       '#attached'=>[
         'library'=>['muteti_seb/surgery_board'],
@@ -224,7 +226,15 @@ final class BookingController extends ControllerBase {
       ],
       '#cache'=>['max-age'=>0],
       'department'=>['#markup'=>'<h2 class="muteti-panel-title">'.Html::escape($department).' – előjegyzés</h2>'],
-      'nav'=>['#type'=>'container','#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']], 'prev'=>Link::fromTextAndUrl('← Előző hét',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]]))->toRenderable(),'today'=>Link::fromTextAndUrl('Aktuális hét',Url::fromRoute('muteti_seb.booking'))->toRenderable(),'next'=>Link::fromTextAndUrl('Következő hét →',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]]))->toRenderable()],
+      'nav'=>[
+        '#type'=>'container',
+        '#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']],
+        'prev_month'=>Link::fromTextAndUrl('⇤ Előző hónap',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev_month]]))->toRenderable(),
+        'prev'=>Link::fromTextAndUrl('← Előző hét',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]]))->toRenderable(),
+        'today'=>Link::fromTextAndUrl('Aktuális hét',Url::fromRoute('muteti_seb.booking'))->toRenderable(),
+        'next'=>Link::fromTextAndUrl('Következő hét →',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]]))->toRenderable(),
+        'next_month'=>Link::fromTextAndUrl('Következő hónap ⇥',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next_month]]))->toRenderable(),
+      ],
       'table_wrapper'=>[
         '#type'=>'container',
         '#attributes'=>['class'=>['muteti-table-frame'],'id'=>'muteti-booking-table'],
