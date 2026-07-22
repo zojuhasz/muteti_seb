@@ -2,11 +2,14 @@
   'use strict';
   Drupal.behaviors.mutetiDoctorForm = {
     attach(context) {
-      once('muteti-doctor-preview', '#muteti-seb-doctor-form', context).forEach((form) => {
-        const name = form.querySelector('[name="name"]');
-        const background = form.querySelector('[name="background_color"]');
-        const text = form.querySelector('[name="text_color"]');
+      once('muteti-doctor-preview', '.muteti-doctor-entity-form', context).forEach((form) => {
+        const name = form.querySelector('[name^="name["]');
+        const background = form.querySelector('[name^="background_color["]');
+        const text = form.querySelector('[name^="text_color["]');
         const preview = form.querySelector('.muteti-doctor-live-preview');
+        if (!name || !background || !text || !preview) {
+          return;
+        }
         const update = () => {
           preview.textContent = name.value || Drupal.t('Orvos neve');
           preview.style.backgroundColor = background.value;
