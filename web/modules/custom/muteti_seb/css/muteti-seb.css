@@ -24,8 +24,8 @@
 #muteti-booking-table {
   position: relative;
   left: 50%;
-  width: calc(100vw - 2rem);
-  max-width: 1680px;
+  width: 94vw;
+  max-width: 1600px;
   transform: translateX(-50%);
 }
 .muteti-booking-table {
