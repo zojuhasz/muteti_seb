@@ -51,6 +51,10 @@ final class SurgeryController extends ControllerBase {
 
     $prev = (clone $monday)->modify('-7 days')->format('Y-m-d');
     $next = (clone $monday)->modify('+7 days')->format('Y-m-d');
+    $prev_month_day = (clone $monday)->modify('first day of previous month');
+    $next_month_day = (clone $monday)->modify('first day of next month');
+    $prev_month = (clone $prev_month_day)->modify('monday this week')->format('Y-m-d');
+    $next_month = (clone $next_month_day)->modify('monday this week')->format('Y-m-d');
     $cards = ['#type' => 'container', '#attributes' => ['class' => ['muteti-week-cards']]];
     foreach ($days as $i => $day) {
       $date = $day->format('Y-m-d');
@@ -128,9 +132,11 @@ final class SurgeryController extends ControllerBase {
       'nav' => [
         '#type' => 'container',
         '#attributes' => ['class' => ['muteti-nav']],
+        'prev_month' => Link::fromTextAndUrl('⇤ Előző hónap', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $prev_month, 'day' => $prev_month_day->format('Y-m-d')]]))->toRenderable(),
         'prev' => Link::fromTextAndUrl('← Előző hét', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $prev]]))->toRenderable(),
         'today' => Link::fromTextAndUrl('Aktuális hét', Url::fromRoute('muteti_seb.surgery'))->toRenderable(),
         'next' => Link::fromTextAndUrl('Következő hét →', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $next]]))->toRenderable(),
+        'next_month' => Link::fromTextAndUrl('Következő hónap ⇥', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $next_month, 'day' => $next_month_day->format('Y-m-d')]]))->toRenderable(),
       ],
       'cards' => $cards,
     ];
