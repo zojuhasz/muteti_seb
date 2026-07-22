@@ -74,6 +74,12 @@ function muteti_seb_entity_presave(EntityInterface $entity): void {
     'department' => $entity->get('field_muteti_department')->value ?: 'Sebészet',
     'active' => (int) (bool) $entity->get('field_muteti_active')->value,
   ];
+  if ($database->schema()->fieldExists('muteti_doctor', 'background_gif')) {
+    $gif = $entity->hasField('field_muteti_background_gif')
+      ? $entity->get('field_muteti_background_gif')->entity
+      : NULL;
+    $fields['background_gif'] = $gif ? $gif->getFileUri() : NULL;
+  }
   if ($registry_id && $database->select('muteti_doctor', 'd')->condition('id', $registry_id)->countQuery()->execute()->fetchField()) {
     $database->update('muteti_doctor')->fields($fields)->condition('id', $registry_id)->execute();
   }
