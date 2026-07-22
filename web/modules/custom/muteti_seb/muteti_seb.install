@@ -116,6 +116,7 @@ function muteti_seb_schema(): array {
       'mode' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
       'date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
       'doctor_name' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
+      'doctor_name_2' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE, 'default' => ''],
     ],
     'primary key' => ['mode', 'date'],
   ];
@@ -304,5 +305,20 @@ function muteti_seb_update_11010(): void {
   $schema = \Drupal::database()->schema();
   if (!$schema->tableExists('muteti_on_call')) {
     $schema->createTable('muteti_on_call', muteti_seb_schema()['muteti_on_call']);
+  }
+}
+
+/**
+ * Adds the second surgical on-call doctor imported from U2.
+ */
+function muteti_seb_update_11011(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('muteti_on_call', 'doctor_name_2')) {
+    $schema->addField('muteti_on_call', 'doctor_name_2', [
+      'type' => 'varchar',
+      'length' => 100,
+      'not null' => TRUE,
+      'default' => '',
+    ]);
   }
 }
