@@ -137,6 +137,7 @@ function muteti_seb_install(): void {
   foreach ($departments as [$name, $machine_name, $mode, $role_id]) {
     \Drupal::database()->insert('muteti_department_config')->fields(compact('name', 'machine_name', 'mode', 'role_id'))->execute();
   }
+  muteti_seb_ensure_doctor_content_type();
 }
 
 /**
@@ -327,4 +328,111 @@ function muteti_seb_update_11012(): void {
   foreach ($field_definitions as $field_definition) {
     $repository->setLastInstalledFieldStorageDefinition($field_definition);
   }
+}
+
+/**
+ * Creates the real Drupal Orvos content type and migrates the registry.
+ */
+function muteti_seb_update_11013(): void {
+  muteti_seb_ensure_doctor_content_type();
+
+  $database = \Drupal::database();
+  $doctors = $database->select('muteti_doctor', 'd')->fields('d')->execute();
+  $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+  foreach ($doctors as $doctor) {
+    $existing = $node_storage->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('type', 'muteti_doctor')
+      ->condition('field_muteti_registry_id', (int) $doctor->id)
+      ->range(0, 1)
+      ->execute();
+    if ($existing) {
+      continue;
+    }
+    $node = $node_storage->create([
+      'type' => 'muteti_doctor',
+      'title' => $doctor->name,
+      'status' => 1,
+      'uid' => 1,
+      'field_muteti_registry_id' => (int) $doctor->id,
+      'field_muteti_legacy_nid' => $doctor->legacy_nid ?: NULL,
+      'field_muteti_user' => $doctor->user_id ?: NULL,
+      'field_muteti_department' => $doctor->department,
+      'field_muteti_background' => $doctor->background_color ?: '#eef2f6',
+      'field_muteti_text_color' => $doctor->text_color ?: '#111111',
+      'field_muteti_active' => (bool) $doctor->active,
+    ]);
+    $node->save();
+  }
+}
+
+/**
+ * Ensures the Drupal node type and its base application fields exist.
+ */
+function muteti_seb_ensure_doctor_content_type(): void {
+  $type = \Drupal\node\Entity\NodeType::load('muteti_doctor');
+  if (!$type) {
+    $type = \Drupal\node\Entity\NodeType::create([
+      'type' => 'muteti_doctor',
+      'name' => 'Orvos',
+      'description' => 'Orvosok, felhasználói kapcsolatok, osztályok és megjelenítési színek.',
+      'new_revision' => FALSE,
+      'display_submitted' => FALSE,
+    ]);
+    $type->save();
+  }
+
+  $fields = [
+    'field_muteti_registry_id' => ['integer', 'Alkalmazás-azonosító', []],
+    'field_muteti_legacy_nid' => ['integer', 'Drupal 7 azonosító', []],
+    'field_muteti_user' => ['entity_reference', 'Felhasználónév', ['target_type' => 'user']],
+    'field_muteti_department' => ['string', 'Osztály', ['max_length' => 50]],
+    'field_muteti_background' => ['string', 'Háttérszín', ['max_length' => 10]],
+    'field_muteti_text_color' => ['string', 'Betűszín', ['max_length' => 10]],
+    'field_muteti_active' => ['boolean', 'Aktív', []],
+  ];
+  foreach ($fields as $field_name => [$field_type, $label, $settings]) {
+    $storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', $field_name);
+    if (!$storage) {
+      $storage = \Drupal\field\Entity\FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $field_type,
+        'cardinality' => 1,
+        'settings' => $settings,
+      ]);
+      $storage->save();
+    }
+    $field = \Drupal\field\Entity\FieldConfig::loadByName('node', 'muteti_doctor', $field_name);
+    if (!$field) {
+      $field = \Drupal\field\Entity\FieldConfig::create([
+        'field_storage' => $storage,
+        'bundle' => 'muteti_doctor',
+        'label' => $label,
+        'required' => in_array($field_name, ['field_muteti_department', 'field_muteti_background', 'field_muteti_text_color'], TRUE),
+      ]);
+      $field->save();
+    }
+  }
+
+  $title_override = \Drupal\Core\Field\Entity\BaseFieldOverride::loadByName('node', 'muteti_doctor', 'title');
+  if (!$title_override) {
+    $title_override = \Drupal\Core\Field\Entity\BaseFieldOverride::createFromBaseFieldDefinition(
+      \Drupal::service('entity_field.manager')->getBaseFieldDefinitions('node')['title'],
+      'muteti_doctor'
+    );
+  }
+  $title_override->setLabel('Orvos neve')->save();
+
+  $form_display = \Drupal::service('entity_display.repository')->getFormDisplay('node', 'muteti_doctor', 'default');
+  $form_display
+    ->setComponent('title', ['type' => 'string_textfield', 'weight' => 0])
+    ->setComponent('field_muteti_user', ['type' => 'entity_reference_autocomplete', 'weight' => 10])
+    ->setComponent('field_muteti_department', ['type' => 'string_textfield', 'weight' => 20])
+    ->setComponent('field_muteti_background', ['type' => 'string_textfield', 'weight' => 30])
+    ->setComponent('field_muteti_text_color', ['type' => 'string_textfield', 'weight' => 40])
+    ->setComponent('field_muteti_active', ['type' => 'boolean_checkbox', 'weight' => 50])
+    ->setComponent('field_muteti_registry_id', ['type' => 'number', 'weight' => 90])
+    ->setComponent('field_muteti_legacy_nid', ['type' => 'number', 'weight' => 91])
+    ->save();
 }
