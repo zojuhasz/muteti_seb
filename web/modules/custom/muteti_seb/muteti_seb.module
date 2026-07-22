@@ -2,12 +2,13 @@
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\muteti_seb\Service\UserDepartment;
+use Drupal\muteti_seb\Service\DepartmentMode;
 
 /**
  * Implements hook_preprocess_menu().
  */
 function muteti_seb_preprocess_menu(array &$variables): void {
-  if (UserDepartment::get(\Drupal::currentUser()) !== 'Onkoradiológia') {
+  if (DepartmentMode::get(UserDepartment::get(\Drupal::currentUser())) !== 'onko') {
     return;
   }
 
