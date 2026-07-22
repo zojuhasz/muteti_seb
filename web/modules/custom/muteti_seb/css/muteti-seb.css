@@ -255,6 +255,8 @@
 .muteti-daily-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .muteti-daily-heading .muteti-panel-title { margin: 0; }
 .muteti-daily-heading > a { padding: .55rem .85rem; border: 1px solid #b8c4d3; border-radius: .45rem; background: #fff; color: #174a7e; text-decoration: none; font-weight: 700; }
+.muteti-daily-heading > a.muteti-program-pdf-link { display: inline-flex; padding: .2rem; line-height: 0; }
+.muteti-program-pdf-icon { display: block; width: 28px; height: 28px; }
 .muteti-board-layout { display: grid; grid-template-columns: minmax(270px, 1fr) minmax(460px, 3fr); gap: 1rem; align-items: start; }
 .muteti-rooms { display: grid; gap: 1rem; }
 .muteti-room, .muteti-waiting {
