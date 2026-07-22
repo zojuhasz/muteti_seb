@@ -22,11 +22,10 @@
   box-shadow: 0 3px 14px rgba(24, 54, 84, .12);
 }
 #muteti-booking-table {
-  position: relative;
-  left: 52%;
-  width: 92vw;
-  max-width: 1600px;
-  transform: translateX(-50%);
+  position: static;
+  width: 100%;
+  max-width: none;
+  transform: none;
 }
 .muteti-booking-table {
   width: 100%;
