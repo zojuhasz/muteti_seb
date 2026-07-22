@@ -89,8 +89,8 @@
 }
 .muteti-patient-slot {
   min-height: 1.45rem;
-  margin: 0 1.7rem .35rem;
-  text-align: center;
+  margin: 0 4.1rem .35rem 1.75rem;
+  text-align: left;
   font-size: .82rem;
   font-weight: 900;
   line-height: 1.35;
@@ -114,6 +114,32 @@
 .muteti-move-link.is-target { top: auto; right: 2.65rem; bottom: .65rem; }
 .muteti-move-link.is-target.is-duplicate { right: .65rem; color: #305f22; }
 .muteti-move-link.is-selected { background: #8a4d00; color: #fff; }
+.muteti-patient-actions {
+  position: absolute;
+  top: .35rem;
+  right: .4rem;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+  padding: .1rem .25rem;
+  border: 1px solid rgba(107, 61, 0, .65);
+  border-radius: .3rem;
+  background: rgba(255, 255, 255, .9);
+  font-size: .68rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.muteti-patient-actions .muteti-move-link,
+.muteti-patient-actions .muteti-delete-link {
+  position: static;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font: inherit;
+}
+.muteti-action-separator { color: #6f7479; }
 .muteti-delete-link {
   position: absolute;
   top: .35rem;
