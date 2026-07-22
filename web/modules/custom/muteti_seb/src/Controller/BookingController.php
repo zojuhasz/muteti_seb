@@ -81,6 +81,17 @@ final class BookingController extends ControllerBase {
               'title' => $occupied ? $this->t('A napfajta már nem módosítható, mert van előjegyzett beteg.') : $this->t('Napfajta módosítása'),
             ],
           ],
+          'pdf' => $department === 'Onkoradiológia' ? [
+            '#type' => 'link',
+            '#title' => 'PDF',
+            '#url' => Url::fromRoute('muteti_seb.oncology_booking_pdf', ['date' => $date]),
+            '#attributes' => [
+              'class' => ['muteti-day-pdf-link'],
+              'title' => $this->t('@date kezelési listája PDF-ben', ['@date' => $date]),
+              'aria-label' => $this->t('@date kezelési listája PDF-ben', ['@date' => $date]),
+              'target' => '_blank',
+            ],
+          ] : [],
         ],
         'class' => array_filter(['muteti-day-heading', $occupied ? 'is-locked' : NULL]),
       ];
