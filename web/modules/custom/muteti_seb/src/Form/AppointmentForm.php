@@ -6,6 +6,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\muteti_seb\Service\DepartmentMode;
+use Drupal\muteti_seb\Service\AuditLog;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -85,8 +86,10 @@ final class AppointmentForm extends FormBase {
       $fields['aznm'] = (int) ($v['aznm'] ?? 0);
     }
     $fields['changed']=\Drupal::time()->getRequestTime();
+    $is_new = !$this->appointment;
     if ($this->appointment) $this->database->update('muteti_appointment')->fields($fields)->condition('id',$this->appointment->id)->execute();
     else { $fields += ['department'=>$department,'admission_date'=>$v['date'],'slot_type'=>$v['slot'],'created_by'=>(int)$this->currentUser()->id(),'created'=>$fields['changed']]; $this->database->insert('muteti_appointment')->fields($fields)->execute(); }
+    AuditLog::write($is_new ? 'új felvitel' : 'módosítás', $department, (string) $v['date'], (string) $v['slot'], (string) ($v['ward_room'] ?: ($v['taj'] ?? '')));
     $this->messenger()->addStatus($this->t('Az előjegyzés mentve.')); $form_state->setRedirect('muteti_seb.booking',[],['query'=>['week'=>$v['date']]]);
   }
 }
