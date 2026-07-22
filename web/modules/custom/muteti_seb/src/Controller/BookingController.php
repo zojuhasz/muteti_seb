@@ -44,9 +44,7 @@ final class BookingController extends ControllerBase {
     $slots_by_date = [];
     foreach ($dates as $d) {
       $key=$d->format('Y-m-d');
-      $day_types[$key] = $department === 'Sebészet'
-        ? ($stored[$key] ?? Schedule::defaultDayType($d))
-        : Schedule::departmentDayType($department, $d);
+      $day_types[$key] = $stored[$key] ?? Schedule::departmentDayType($department, $d);
       $slots_by_date[$key] = Schedule::departmentSlots($department, $d, $day_types[$key]);
       // Never hide an imported legacy appointment whose historical slot name
       // is not part of the currently configured day template.
@@ -61,11 +59,30 @@ final class BookingController extends ControllerBase {
       ['data' => $this->t('Sorszám'), 'class' => ['muteti-index-heading']],
     ];
     foreach ($dates as $d) {
+      $date = $d->format('Y-m-d');
+      $occupied = !empty($by_cell[$date]);
+      $type = $day_types[$date];
       $header[] = [
         'data' => [
-          '#markup' => '<span class="muteti-heading-date">'.Html::escape($d->format('Y-m-d')).'</span><span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span><span class="muteti-heading-type">'.Html::escape($day_types[$d->format('Y-m-d')]).'</span>',
+          'label' => [
+            '#markup' => '<span class="muteti-heading-date">'.Html::escape($date).'</span><span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span>',
+          ],
+          'day_type' => [
+            '#type' => 'select',
+            '#title' => $this->t('Napfajta'),
+            '#title_display' => 'invisible',
+            '#options' => array_combine(Schedule::departmentDayTypes($department), Schedule::departmentDayTypes($department)),
+            '#default_value' => $type,
+            '#disabled' => $occupied || !$this->currentUser()->hasPermission('assign operating room'),
+            '#attributes' => [
+              'class' => ['muteti-day-type-select'],
+              'data-date' => $date,
+              'data-previous-value' => $type,
+              'title' => $occupied ? $this->t('A napfajta már nem módosítható, mert van előjegyzett beteg.') : $this->t('Napfajta módosítása'),
+            ],
+          ],
         ],
-        'class' => ['muteti-day-heading'],
+        'class' => array_filter(['muteti-day-heading', $occupied ? 'is-locked' : NULL]),
       ];
     }
     $rows = [];
@@ -175,6 +192,7 @@ final class BookingController extends ControllerBase {
         'drupalSettings'=>['mutetiSeb'=>[
           'appointmentMoveEndpoint'=>Url::fromRoute('muteti_seb.appointment_move',[],['query'=>['token'=>$this->csrf->get('muteti/api/appointment-move')]])->toString(),
           'appointmentDeleteEndpoint'=>Url::fromRoute('muteti_seb.appointment_delete',[],['query'=>['token'=>$this->csrf->get('muteti/api/appointment-delete')]])->toString(),
+          'dayTypeEndpoint'=>Url::fromRoute('muteti_seb.day_type',[],['query'=>['token'=>$this->csrf->get('muteti/api/day-type')]])->toString(),
         ]],
       ],
       '#cache'=>['max-age'=>0],
