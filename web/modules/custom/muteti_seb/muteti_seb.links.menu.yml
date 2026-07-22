@@ -11,3 +11,10 @@ muteti_seb.departments:
   route_name: muteti_seb.departments
   parent: system.admin_content
   weight: 21
+
+muteti_seb.audit_log:
+  title: 'Műtéti napló'
+  description: 'Az előjegyzéseken végzett műveletek nyomtatható naplója.'
+  route_name: muteti_seb.audit_log
+  parent: system.admin_reports
+  weight: 20
