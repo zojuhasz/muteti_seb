@@ -78,6 +78,22 @@ function muteti_seb_schema(): array {
     'primary key' => ['legacy_uid'],
     'unique keys' => ['user_id' => ['user_id']],
   ];
+  $schema['muteti_department_config'] = [
+    'description' => 'Osztályok és a hozzájuk rendelt működési módok.',
+    'fields' => [
+      'id' => ['type' => 'serial', 'unsigned' => TRUE, 'not null' => TRUE],
+      'name' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
+      'machine_name' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+      'mode' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+      'role_id' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'name' => ['name'],
+      'machine_name' => ['machine_name'],
+      'role_id' => ['role_id'],
+    ],
+  ];
   return $schema;
 }
 
@@ -101,6 +117,14 @@ function muteti_seb_install(): void {
       $role->grantPermission($permission);
     }
     $role->save();
+  }
+  $departments = [
+    ['Sebészet', 'sebeszet', 'seb', 'muteti_department_seb'],
+    ['Urológia', 'urologia', 'urol', 'muteti_department_urol'],
+    ['Onkoradiológia', 'onkoradiologia', 'onko', 'muteti_department_onkorad'],
+  ];
+  foreach ($departments as [$name, $machine_name, $mode, $role_id]) {
+    \Drupal::database()->insert('muteti_department_config')->fields(compact('name', 'machine_name', 'mode', 'role_id'))->execute();
   }
 }
 
@@ -215,4 +239,25 @@ function muteti_seb_update_11007(): void {
     $role->grantPermission($permission);
   }
   $role->save();
+}
+
+/**
+ * Adds the configurable department-to-operating-mode registry.
+ */
+function muteti_seb_update_11008(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('muteti_department_config')) {
+    $schema->createTable('muteti_department_config', muteti_seb_schema()['muteti_department_config']);
+  }
+  $departments = [
+    ['Sebészet', 'sebeszet', 'seb', 'muteti_department_seb'],
+    ['Urológia', 'urologia', 'urol', 'muteti_department_urol'],
+    ['Onkoradiológia', 'onkoradiologia', 'onko', 'muteti_department_onkorad'],
+  ];
+  foreach ($departments as [$name, $machine_name, $mode, $role_id]) {
+    \Drupal::database()->merge('muteti_department_config')
+      ->key('machine_name', $machine_name)
+      ->fields(compact('name', 'mode', 'role_id'))
+      ->execute();
+  }
 }
