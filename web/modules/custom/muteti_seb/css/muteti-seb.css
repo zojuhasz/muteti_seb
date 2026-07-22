@@ -58,6 +58,19 @@
 .muteti-booking-table tbody tr:nth-child(even) td { background: #f5f8fa; }
 .muteti-booking-table th:last-child,
 .muteti-booking-table td:last-child { border-right: 0; }
+.muteti-booking-table tbody > tr > td { padding: 0; }
+.muteti-booking-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 100%;
+}
+.muteti-booking-column-cell {
+  position: relative;
+  padding: .28rem;
+  border-bottom: 1px solid #d5dde5;
+}
+.muteti-booking-column-cell:last-child { border-bottom: 0; }
 .muteti-heading-date,
 .muteti-heading-day,
 .muteti-heading-type { display: block; }
