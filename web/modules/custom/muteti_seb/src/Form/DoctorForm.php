@@ -10,10 +10,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 final class DoctorForm extends FormBase {
 
-  private const DEPARTMENTS = [
-    'Sebészet' => 'Sebészet',
-  ];
-
   public function __construct(private readonly Connection $database) {}
 
   public static function create(ContainerInterface $container): static {
@@ -26,7 +22,7 @@ final class DoctorForm extends FormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state, ?int $doctor = NULL): array {
     $record = $doctor
-      ? $this->database->select('muteti_doctor', 'd')->fields('d')->condition('id', $doctor)->condition('department', 'Sebészet')->execute()->fetchObject()
+      ? $this->database->select('muteti_doctor', 'd')->fields('d')->condition('id', $doctor)->execute()->fetchObject()
       : NULL;
     if ($doctor && !$record) {
       throw new \Symfony\Component\HttpKernel\Exception\NotFoundHttpException();
@@ -59,13 +55,19 @@ final class DoctorForm extends FormBase {
       '#default_value' => !empty($record->user_id) ? User::load($record->user_id) : NULL,
       '#description' => $this->t('A kapcsolt Drupal-felhasználó. Nem kötelező.'),
     ];
+    $department_names = $this->database->select('muteti_department_config', 'd')
+      ->fields('d', ['name'])
+      ->orderBy('name')
+      ->execute()
+      ->fetchCol();
+    $departments = array_combine($department_names, $department_names);
     $form['department'] = [
       '#type' => 'select',
       '#title' => $this->t('Osztály'),
       '#required' => TRUE,
-      '#options' => self::DEPARTMENTS,
-      '#default_value' => $record->department ?? 'Sebészet',
-      '#description' => $this->t('Jelenleg csak a Sebészet választható. Később Urológia és Onkoradiológia is hozzáadható.'),
+      '#options' => $departments,
+      '#default_value' => $record->department ?? array_key_first($departments),
+      '#description' => $this->t('Az Osztályok beállításánál felvett osztályok választhatók.'),
     ];
     $form['active'] = [
       '#type' => 'checkbox',
