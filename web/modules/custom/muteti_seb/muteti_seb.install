@@ -89,7 +89,7 @@ function muteti_seb_install(): void {
     'muteti_view' => ['Betekintő', ['view surgery schedule']],
     'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment']],
     'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room']],
-    'muteti_orvos3' => ['Orvos3', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
+    'muteti_orvos3' => ['Orvos', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
     'muteti_department_seb' => ['Osztály: Sebészet', []],
     'muteti_department_urol' => ['Osztály: Urológia', []],
     'muteti_department_onkorad' => ['Osztály: Onkoradiológia', []],
@@ -183,4 +183,15 @@ function muteti_seb_update_11005(): void {
   }
   $schema->dropPrimaryKey('muteti_day_type');
   $schema->addPrimaryKey('muteti_day_type', ['department', 'date']);
+}
+
+/**
+ * Renames the highest doctor role from Orvos3 to Orvos.
+ */
+function muteti_seb_update_11006(): void {
+  $role = Role::load('muteti_orvos3');
+  if ($role) {
+    $role->set('label', 'Orvos');
+    $role->save();
+  }
 }
