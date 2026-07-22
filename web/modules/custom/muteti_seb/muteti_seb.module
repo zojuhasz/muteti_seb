@@ -1,6 +1,38 @@
 <?php
 
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\muteti_seb\Service\UserDepartment;
+
+/**
+ * Implements hook_preprocess_menu().
+ */
+function muteti_seb_preprocess_menu(array &$variables): void {
+  if (UserDepartment::get(\Drupal::currentUser()) !== 'Onkoradiológia') {
+    return;
+  }
+
+  $variables['#cache']['contexts'][] = 'user.roles';
+  muteti_seb_remove_oncology_surgery_links($variables['items']);
+}
+
+/**
+ * Removes surgery-allocation links from a rendered menu tree.
+ */
+function muteti_seb_remove_oncology_surgery_links(array &$items): void {
+  foreach ($items as $key => &$item) {
+    $title = trim((string) ($item['title'] ?? ''));
+    $route = isset($item['url']) && $item['url']->isRouted()
+      ? $item['url']->getRouteName()
+      : '';
+    if ($title === 'Műtéti beosztás' || $title === 'Műtők beosztása' || $route === 'muteti_seb.surgery') {
+      unset($items[$key]);
+      continue;
+    }
+    if (!empty($item['below'])) {
+      muteti_seb_remove_oncology_surgery_links($item['below']);
+    }
+  }
+}
 
 /**
  * Implements hook_form_FORM_ID_alter().
