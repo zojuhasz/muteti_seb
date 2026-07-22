@@ -178,7 +178,12 @@ final class BookingController extends ControllerBase {
             // A legacy record may contain white text without a background
             // color. On the light fallback background that would be invisible.
             $text = $has_background ? ($doctor->text_color ?: '#111111') : '#111111';
-            $patient_attributes['style'] = 'background-color:'.$background.';color:'.$text;
+            $style = 'background-color:'.$background.';color:'.$text.';';
+            if (!empty($doctor->background_gif)) {
+              $gif_url = \Drupal::service('file_url_generator')->generateString($doctor->background_gif);
+              $style .= 'background-image:url("'.str_replace('"', '%22', $gif_url).'");background-size:cover;background-position:center;background-repeat:no-repeat;';
+            }
+            $patient_attributes['style'] = $style;
           }
           $cell = [
             'patient' => [
