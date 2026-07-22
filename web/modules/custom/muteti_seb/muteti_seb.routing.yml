@@ -87,6 +87,31 @@ muteti_seb.doctors:
   requirements:
     _permission: 'administer surgery system'
 
+muteti_seb.departments:
+  path: '/admin/content/muteti-osztalyok'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\DepartmentController::listing'
+    _title: 'Műtéti osztályok'
+  requirements:
+    _custom_access: '\Drupal\muteti_seb\Controller\DepartmentController::adminAccess'
+
+muteti_seb.department_add:
+  path: '/admin/content/muteti-osztalyok/uj'
+  defaults:
+    _form: '\Drupal\muteti_seb\Form\DepartmentForm'
+    _title: 'Új osztály'
+  requirements:
+    _custom_access: '\Drupal\muteti_seb\Controller\DepartmentController::adminAccess'
+
+muteti_seb.department_edit:
+  path: '/admin/content/muteti-osztalyok/{department}'
+  defaults:
+    _form: '\Drupal\muteti_seb\Form\DepartmentForm'
+    _title: 'Osztály módosítása'
+  requirements:
+    _custom_access: '\Drupal\muteti_seb\Controller\DepartmentController::adminAccess'
+    department: '\d+'
+
 muteti_seb.doctor_add:
   path: '/muteti/orvosok/uj'
   defaults:
