@@ -79,14 +79,6 @@ muteti_seb.oncology_booking_pdf:
     _custom_access: '\Drupal\muteti_seb\Controller\ProgramPdfController::oncologyAccess'
     date: '\d{4}-\d{2}-\d{2}'
 
-muteti_seb.doctors:
-  path: '/muteti/orvosok'
-  defaults:
-    _controller: '\Drupal\muteti_seb\Controller\DoctorController::listing'
-    _title: 'Orvosok'
-  requirements:
-    _permission: 'administer surgery system'
-
 muteti_seb.departments:
   path: '/admin/content/muteti-osztalyok'
   defaults:
@@ -119,20 +111,3 @@ muteti_seb.audit_log:
     _title: 'Műtéti előjegyzési napló'
   requirements:
     _custom_access: '\Drupal\muteti_seb\Controller\AuditLogController::access'
-
-muteti_seb.doctor_add:
-  path: '/muteti/orvosok/uj'
-  defaults:
-    _form: '\Drupal\muteti_seb\Form\DoctorForm'
-    _title: 'Új orvos felvitele'
-  requirements:
-    _permission: 'administer surgery system'
-
-muteti_seb.doctor_edit:
-  path: '/muteti/orvosok/{doctor}/modositas'
-  defaults:
-    _form: '\Drupal\muteti_seb\Form\DoctorForm'
-    _title: 'Orvos módosítása'
-  requirements:
-    _permission: 'administer surgery system'
-    doctor: '\d+'
