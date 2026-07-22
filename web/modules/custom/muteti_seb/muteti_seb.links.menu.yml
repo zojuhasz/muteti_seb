@@ -1,7 +1,7 @@
 muteti_seb.doctors:
   title: 'Műtéti orvosok'
   description: 'Orvosok, színek, felhasználók és osztályok kezelése.'
-  route_name: entity.muteti_doctor.collection
+  route_name: muteti_seb.doctor_content
   parent: system.admin_content
   weight: 20
 
