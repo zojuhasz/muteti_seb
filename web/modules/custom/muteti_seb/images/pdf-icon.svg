@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 148 148" role="img" aria-labelledby="title">
+  <title id="title">PDF</title>
+  <path fill="#df2b26" d="M0 0h98l50 50v98H0z"/>
+  <path fill="none" stroke="#fff" stroke-width="6" d="M80 0v50h68"/>
+  <text x="25" y="119" fill="#fff" font-family="Arial, sans-serif" font-size="48" font-weight="700">PDF</text>
+</svg>
