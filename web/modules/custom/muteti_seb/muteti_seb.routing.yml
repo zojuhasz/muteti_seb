@@ -111,3 +111,11 @@ muteti_seb.audit_log:
     _title: 'Műtéti előjegyzési napló'
   requirements:
     _custom_access: '\Drupal\muteti_seb\Controller\AuditLogController::access'
+
+muteti_seb.doctor_content:
+  path: '/admin/content/muteti-orvosok'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\DoctorNodeController::listing'
+    _title: 'Orvosok'
+  requirements:
+    _permission: 'administer surgery system'
