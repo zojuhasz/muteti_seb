@@ -8,6 +8,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\muteti_seb\Service\Schedule;
+use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +18,7 @@ final class ProgramPdfController extends ControllerBase {
   public static function create(ContainerInterface $c): static { return new static($c->get('database')); }
 
   public function oncologyAccess(AccountInterface $account): AccessResult {
-    return AccessResult::allowedIf(UserDepartment::get($account) === 'Onkoradiológia')
+    return AccessResult::allowedIf(DepartmentMode::get(UserDepartment::get($account)) === 'onko')
       ->addCacheContexts(['user.roles']);
   }
 
@@ -27,9 +28,10 @@ final class ProgramPdfController extends ControllerBase {
       return new Response('Érvénytelen dátum.', 400);
     }
 
+    $department = UserDepartment::get($this->currentUser());
     $rows = $this->database->select('muteti_appointment', 'a')
       ->fields('a')
-      ->condition('department', 'Onkoradiológia')
+      ->condition('department', $department)
       ->condition('admission_date', $date)
       ->execute()
       ->fetchAll();
@@ -40,12 +42,12 @@ final class ProgramPdfController extends ControllerBase {
 
     $stored_type = $this->database->select('muteti_day_type', 'd')
       ->fields('d', ['day_type'])
-      ->condition('department', 'Onkoradiológia')
+      ->condition('department', $department)
       ->condition('date', $date)
       ->execute()
       ->fetchField();
-    $day_type = $stored_type ?: Schedule::departmentDayType('Onkoradiológia', $parsed);
-    $ordered_slots = Schedule::departmentSlots('Onkoradiológia', $parsed, $day_type);
+    $day_type = $stored_type ?: Schedule::departmentDayType($department, $parsed);
+    $ordered_slots = Schedule::departmentSlots($department, $parsed, $day_type);
     $by_slot = [];
     foreach ($rows as $row) {
       $by_slot[$row->slot_type] = $row;
