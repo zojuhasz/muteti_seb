@@ -3,12 +3,14 @@
 namespace Drupal\muteti_seb\Controller;
 
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\Core\Access\CsrfTokenGenerator;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\muteti_seb\Service\Schedule;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -17,6 +19,11 @@ use Symfony\Component\HttpFoundation\Request;
 final class SurgeryController extends ControllerBase {
   public function __construct(private readonly Connection $database, private readonly CsrfTokenGenerator $csrf) {}
   public static function create(ContainerInterface $c): static { return new static($c->get('database'),$c->get('csrf_token')); }
+
+  public function access(AccountInterface $account): AccessResult {
+    return AccessResult::allowedIf(UserDepartment::get($account) !== 'Onkoradiológia')
+      ->addCacheContexts(['user.roles']);
+  }
 
   public function week(Request $request): array {
     $department = UserDepartment::get($this->currentUser());
