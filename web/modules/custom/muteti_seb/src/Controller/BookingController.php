@@ -70,7 +70,7 @@ final class BookingController extends ControllerBase {
     $header = [];
     foreach ($dates as $d) {
       $date = $d->format('Y-m-d');
-      $occupied = !empty(array_filter($by_cell[$date] ?? [], static fn(object $appointment): bool => trim((string) $appointment->patient_name) !== '' || trim((string) $appointment->operation_name) !== ''));
+      $occupied = !empty(array_filter($by_cell[$date] ?? [], static fn(object $appointment): bool => trim((string) $appointment->patient_name) !== '' || trim((string) $appointment->operation_name) !== '' || !empty($appointment->doctor_id)));
       $type = $day_types[$date];
       $header[] = [
         'data' => [
@@ -130,7 +130,7 @@ final class BookingController extends ControllerBase {
         $slot = $slots_by_date[$date][$r] ?? NULL;
         if (!$slot) { $row[]=['data'=>['#markup'=>'—']]; continue; }
         $a=$by_cell[$date][$slot] ?? NULL;
-        $placeholder = $a && trim((string) $a->patient_name) === '' && trim((string) $a->operation_name) === '';
+        $placeholder = $a && trim((string) $a->patient_name) === '' && trim((string) $a->operation_name) === '' && empty($a->doctor_id);
         if (!$a || $placeholder) {
           $slot_link = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
           $slot_link['#attributes']['class'][] = 'muteti-slot-link';
