@@ -34,12 +34,12 @@ final class DayTypeController extends ControllerBase {
 
     $occupied = (bool) $this->database->select('muteti_appointment', 'a')
       ->condition('department', $department)
-      ->condition('surgery_date', $date)
+      ->condition('admission_date', $date)
       ->countQuery()
       ->execute()
       ->fetchField();
     if ($occupied) {
-      return new JsonResponse(['ok' => FALSE, 'error' => 'A napfajta már nem módosítható, mert van műtőbe beosztott beteg.'], 409);
+      return new JsonResponse(['ok' => FALSE, 'error' => 'A napfajta már nem módosítható, mert van előjegyzett beteg.'], 409);
     }
 
     $this->database->merge('muteti_day_type')
