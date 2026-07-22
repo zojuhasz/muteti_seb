@@ -140,7 +140,22 @@ final class SurgeryController extends ControllerBase {
         '#type' => 'container',
         '#attributes' => ['class' => ['muteti-daily-heading']],
         'title' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($selected).' – műtéti beosztás</h2>'],
-        'pdf' => Link::fromTextAndUrl('Műtéti program PDF', Url::fromRoute('muteti_seb.program_pdf', ['date' => $selected]))->toRenderable(),
+        'pdf' => [
+          '#type' => 'link',
+          '#title' => [
+            '#theme' => 'image',
+            '#uri' => base_path().'modules/custom/muteti_seb/images/pdf-icon.svg',
+            '#alt' => 'PDF',
+            '#attributes' => ['class' => ['muteti-program-pdf-icon']],
+          ],
+          '#url' => Url::fromRoute('muteti_seb.program_pdf', ['date' => $selected]),
+          '#attributes' => [
+            'class' => ['muteti-program-pdf-link'],
+            'title' => 'Műtéti program PDF',
+            'aria-label' => 'Műtéti program PDF',
+            'target' => '_blank',
+          ],
+        ],
       ],
       'layout' => ['#type' => 'container', '#attributes' => ['class' => ['muteti-board-layout']]],
     ];
