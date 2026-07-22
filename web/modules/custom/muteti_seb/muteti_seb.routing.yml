@@ -112,6 +112,14 @@ muteti_seb.department_edit:
     _custom_access: '\Drupal\muteti_seb\Controller\DepartmentController::adminAccess'
     department: '\d+'
 
+muteti_seb.audit_log:
+  path: '/admin/reports/muteti-naplo'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\AuditLogController::listing'
+    _title: 'Műtéti előjegyzési napló'
+  requirements:
+    _custom_access: '\Drupal\muteti_seb\Controller\AuditLogController::access'
+
 muteti_seb.doctor_add:
   path: '/muteti/orvosok/uj'
   defaults:
