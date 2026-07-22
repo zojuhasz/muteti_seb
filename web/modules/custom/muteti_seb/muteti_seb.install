@@ -359,6 +359,7 @@ function muteti_seb_update_11013(): void {
       'field_muteti_user' => $doctor->user_id ?: NULL,
       'field_muteti_department' => $doctor->department,
       'field_muteti_background' => $doctor->background_color ?: '#eef2f6',
+      'field_muteti_background_gif' => [],
       'field_muteti_text_color' => $doctor->text_color ?: '#111111',
       'field_muteti_active' => (bool) $doctor->active,
     ]);
@@ -388,6 +389,7 @@ function muteti_seb_ensure_doctor_content_type(): void {
     'field_muteti_user' => ['entity_reference', 'Felhasználónév', ['target_type' => 'user']],
     'field_muteti_department' => ['string', 'Osztály', ['max_length' => 50]],
     'field_muteti_background' => ['string', 'Háttérszín', ['max_length' => 10]],
+    'field_muteti_background_gif' => ['image', 'Háttér-GIF', ['uri_scheme' => 'public', 'default_image' => []]],
     'field_muteti_text_color' => ['string', 'Betűszín', ['max_length' => 10]],
     'field_muteti_active' => ['boolean', 'Aktív', []],
   ];
@@ -411,6 +413,20 @@ function muteti_seb_ensure_doctor_content_type(): void {
         'label' => $label,
         'required' => in_array($field_name, ['field_muteti_department', 'field_muteti_background', 'field_muteti_text_color'], TRUE),
       ]);
+      if ($field_name === 'field_muteti_background_gif') {
+        $field->setSettings([
+          'file_directory' => 'muteti-orvos-hatterek',
+          'file_extensions' => 'gif',
+          'max_filesize' => '5 MB',
+          'max_resolution' => '',
+          'min_resolution' => '',
+          'alt_field' => FALSE,
+          'alt_field_required' => FALSE,
+          'title_field' => FALSE,
+          'title_field_required' => FALSE,
+          'default_image' => [],
+        ]);
+      }
       $field->save();
     }
   }
@@ -430,9 +446,27 @@ function muteti_seb_ensure_doctor_content_type(): void {
     ->setComponent('field_muteti_user', ['type' => 'entity_reference_autocomplete', 'weight' => 10])
     ->setComponent('field_muteti_department', ['type' => 'string_textfield', 'weight' => 20])
     ->setComponent('field_muteti_background', ['type' => 'string_textfield', 'weight' => 30])
+    ->setComponent('field_muteti_background_gif', ['type' => 'image_image', 'weight' => 35])
     ->setComponent('field_muteti_text_color', ['type' => 'string_textfield', 'weight' => 40])
     ->setComponent('field_muteti_active', ['type' => 'boolean_checkbox', 'weight' => 50])
     ->setComponent('field_muteti_registry_id', ['type' => 'number', 'weight' => 90])
     ->setComponent('field_muteti_legacy_nid', ['type' => 'number', 'weight' => 91])
     ->save();
+}
+
+/**
+ * Adds optional animated GIF backgrounds to doctor content.
+ */
+function muteti_seb_update_11014(): void {
+  $field_definitions = \Drupal::service('entity_field.manager')->getFieldStorageDefinitions('muteti_doctor');
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('muteti_doctor', 'background_gif')) {
+    \Drupal::entityDefinitionUpdateManager()->installFieldStorageDefinition(
+      'background_gif',
+      'muteti_doctor',
+      'muteti_seb',
+      $field_definitions['background_gif']
+    );
+  }
+  muteti_seb_ensure_doctor_content_type();
 }
