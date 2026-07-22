@@ -14,8 +14,8 @@ final class Schedule {
   public const ROOMS = ['5', '6', '7', '8', 'A'];
 
   public static function departmentRooms(string $department): array {
-    return match ($department) {
-      'Urológia' => ['1', '2'],
+    return match (DepartmentMode::get($department)) {
+      'urol' => ['1', '2'],
       default => self::ROOMS,
     };
   }
@@ -26,24 +26,25 @@ final class Schedule {
 
   public static function departmentDayType(string $department, DrupalDateTime|\DateTimeInterface $date): string {
     $day = (int) $date->format('N');
-    return match ($department) {
-      'Urológia' => match (TRUE) {
+    return match (DepartmentMode::get($department)) {
+      'urol' => match (TRUE) {
         $day <= 4 => 'HKSZCS',
         $day === 5 => 'P',
         $day === 6 => 'SZ',
         default => 'V',
       },
-      'Onkoradiológia' => $day <= 5 ? 'HKSZCSP' : 'SZV',
+      'onko' => $day <= 5 ? 'HKSZCSP' : 'SZV',
       default => self::defaultDayType($date),
     };
   }
 
   public static function departmentSlots(string $department, DrupalDateTime|\DateTimeInterface $date, ?string $day_type = NULL): array {
     $day_type ??= self::departmentDayType($department, $date);
-    if ($department === 'Sebészet') {
+    $mode = DepartmentMode::get($department);
+    if ($mode === 'seb') {
       return self::DAY_TYPES[$day_type] ?? [];
     }
-    if ($department === 'Urológia') {
+    if ($mode === 'urol') {
       return match ($day_type) {
         'HKSZCS' => ['Ffi-1', 'Ffi-2', 'Ffi-3', 'N1', 'N2', 'TRUS-1', 'TRUS-2', 'Amb-Egyn-1', 'Amb-Egyn-2', 'Plusz-1', 'Plusz-2'],
         'P' => [NULL, NULL, NULL, NULL, NULL, 'Amb-Egyn-1', 'Amb-Egyn-2', 'Amb-3', 'Amb-4', 'Plusz-1', 'Plusz-2'],
@@ -52,7 +53,7 @@ final class Schedule {
         default => [],
       };
     }
-    if ($department === 'Onkoradiológia') {
+    if ($mode === 'onko') {
       if ($day_type === 'SZV') {
         return self::numberedSlots('Fekv.', 1, 15);
       }
@@ -92,9 +93,9 @@ final class Schedule {
   }
 
   public static function departmentDayTypes(string $department): array {
-    return match ($department) {
-      'Urológia' => ['HKSZCS', 'P', 'SZ', 'V', 'SEMMI'],
-      'Onkoradiológia' => ['HKSZCSP', 'SZV', 'SEMMI'],
+    return match (DepartmentMode::get($department)) {
+      'urol' => ['HKSZCS', 'P', 'SZ', 'V', 'SEMMI'],
+      'onko' => ['HKSZCSP', 'SZV', 'SEMMI'],
       default => array_keys(self::DAY_TYPES),
     };
   }
