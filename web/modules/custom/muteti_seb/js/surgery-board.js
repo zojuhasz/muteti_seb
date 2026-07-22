@@ -13,6 +13,70 @@
           requestAnimationFrame(() => window.scrollTo(0, Number(savedScrollY)));
         }
       }
+      const moveButtons = once('muteti-booking-move', '.muteti-move-link', context);
+      const moveStorageKey = 'mutetiBookingMoveSource';
+      const readMoveSource = () => {
+        try { return JSON.parse(sessionStorage.getItem(moveStorageKey) || 'null'); }
+        catch (error) { return null; }
+      };
+      const refreshMoveState = () => {
+        const selected = readMoveSource();
+        const table = document.querySelector('#muteti-booking-table');
+        if (table) table.classList.toggle('is-moving-patient', Boolean(selected));
+        document.querySelectorAll('.muteti-move-link.is-source').forEach((button) => {
+          const active = selected && Number(button.dataset.moveId) === Number(selected.id);
+          button.classList.toggle('is-selected', Boolean(active));
+          button.textContent = active ? 'felvéve' : 'áth';
+          button.title = active ? 'Áthelyezés megszakítása' : 'Áthelyezés';
+        });
+      };
+      moveButtons.forEach((button) => {
+        button.addEventListener('click', async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          if (button.classList.contains('is-source')) {
+            const selected = readMoveSource();
+            if (selected && Number(selected.id) === Number(button.dataset.moveId)) {
+              sessionStorage.removeItem(moveStorageKey);
+            }
+            else {
+              sessionStorage.setItem(moveStorageKey, JSON.stringify({
+                id: Number(button.dataset.moveId),
+                patient: button.dataset.movePatient || ''
+              }));
+            }
+            refreshMoveState();
+            return;
+          }
+          const selected = readMoveSource();
+          if (!selected) {
+            window.alert('Előbb egy foglalt betegcellában kattints az „áth” ikonra.');
+            return;
+          }
+          button.disabled = true;
+          try {
+            const response = await fetch(drupalSettings.mutetiSeb.appointmentMoveEndpoint, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              credentials: 'same-origin',
+              body: JSON.stringify({
+                appointment_id: Number(selected.id),
+                date: button.dataset.moveDate,
+                slot: button.dataset.moveSlot
+              })
+            });
+            const result = await response.json();
+            if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
+            sessionStorage.removeItem(moveStorageKey);
+            window.location.reload();
+          }
+          catch (error) {
+            button.disabled = false;
+            window.alert(error.message || 'Az áthelyezés sikertelen.');
+          }
+        });
+      });
+      if (moveButtons.length || context === document) refreshMoveState();
       const surgeryNavigationLinks = once('muteti-surgery-scroll', '.muteti-surgery-week-frame a', context);
       surgeryNavigationLinks.forEach((link) => {
         link.addEventListener('click', () => sessionStorage.setItem('mutetiSurgeryScrollY', String(window.scrollY)));
