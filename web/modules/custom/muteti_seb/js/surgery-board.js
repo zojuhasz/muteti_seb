@@ -29,6 +29,13 @@
           button.textContent = active ? 'felvéve' : 'áth';
           button.title = active ? 'Áthelyezés megszakítása' : 'Áthelyezés';
         });
+        document.querySelectorAll('.muteti-move-link.is-target').forEach((button) => {
+          const duplicate = button.dataset.moveMode === 'duplicate';
+          const action = duplicate ? 'Duplikálás ide' : 'Áthelyezés ide';
+          const label = selected && selected.patient ? `${action}: ${selected.patient}` : action;
+          button.title = label;
+          button.setAttribute('aria-label', label);
+        });
       };
       moveButtons.forEach((button) => {
         button.addEventListener('click', async (event) => {
