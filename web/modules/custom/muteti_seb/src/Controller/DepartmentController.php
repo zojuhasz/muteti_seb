@@ -36,7 +36,9 @@ final class DepartmentController extends ControllerBase {
         $department->machine_name,
         $department->mode,
         $department->role_id,
-        Link::fromTextAndUrl('Módosítás', Url::fromRoute('muteti_seb.department_edit', ['department' => $department->id]))->toRenderable(),
+        [
+          'data' => Link::fromTextAndUrl('Módosítás', Url::fromRoute('muteti_seb.department_edit', ['department' => $department->id]))->toRenderable(),
+        ],
       ];
     }
     return [
