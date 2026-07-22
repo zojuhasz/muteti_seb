@@ -22,21 +22,25 @@ final class AppointmentMoveController extends ControllerBase {
     $appointment_id = (int) ($data['appointment_id'] ?? 0);
     $date = (string) ($data['date'] ?? '');
     $slot = trim((string) ($data['slot'] ?? ''));
+    $mode = (string) ($data['mode'] ?? 'move');
     $department = UserDepartment::get($this->currentUser());
 
     $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
-    if (!$appointment_id || !$parsed || $parsed->format('Y-m-d') !== $date || $slot === '' || mb_strlen($slot) > 20) {
+    if (!$appointment_id || !$parsed || $parsed->format('Y-m-d') !== $date || $slot === '' || mb_strlen($slot) > 20 || !in_array($mode, ['move', 'duplicate'], TRUE)) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'Érvénytelen célhely.'], 400);
     }
 
     $source = $this->database->select('muteti_appointment', 'a')
-      ->fields('a', ['id', 'admission_date', 'slot_type'])
+      ->fields('a')
       ->condition('id', $appointment_id)
       ->condition('department', $department)
       ->execute()
       ->fetchObject();
     if (!$source) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'A beteg nem található ezen az osztályon.'], 404);
+    }
+    if ($mode === 'duplicate' && !$this->currentUser()->hasPermission('create surgery appointment')) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'Nincs jogosultságod az előjegyzés duplikálásához.'], 403);
     }
     if ($source->admission_date === $date && $source->slot_type === $slot) {
       return new JsonResponse(['ok' => TRUE]);
@@ -54,8 +58,7 @@ final class AppointmentMoveController extends ControllerBase {
     }
 
     try {
-      $this->database->update('muteti_appointment')
-        ->fields([
+      $destination_fields = [
           'admission_date' => $date,
           'slot_type' => $slot,
           'surgery_date' => NULL,
@@ -63,16 +66,29 @@ final class AppointmentMoveController extends ControllerBase {
           'surgery_order' => 0,
           'operated' => 0,
           'changed' => \Drupal::time()->getRequestTime(),
-        ])
-        ->condition('id', $appointment_id)
-        ->condition('department', $department)
-        ->execute();
+      ];
+      if ($mode === 'duplicate') {
+        $duplicate = get_object_vars($source);
+        unset($duplicate['id']);
+        $duplicate['legacy_id'] = NULL;
+        $duplicate['created_by'] = (int) $this->currentUser()->id();
+        $duplicate['created'] = \Drupal::time()->getRequestTime();
+        $duplicate = array_merge($duplicate, $destination_fields);
+        $this->database->insert('muteti_appointment')->fields($duplicate)->execute();
+      }
+      else {
+        $this->database->update('muteti_appointment')
+          ->fields($destination_fields)
+          ->condition('id', $appointment_id)
+          ->condition('department', $department)
+          ->execute();
+      }
     }
     catch (\Throwable) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'A célhely már foglalt, az áthelyezés nem történt meg.'], 409);
     }
 
-    return new JsonResponse(['ok' => TRUE, 'date' => $date, 'slot' => $slot]);
+    return new JsonResponse(['ok' => TRUE, 'mode' => $mode, 'date' => $date, 'slot' => $slot]);
   }
 
 }
