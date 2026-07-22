@@ -64,6 +64,18 @@
 .muteti-heading-date { font-size: .83rem; font-weight: 600; }
 .muteti-heading-day { margin-top: .2rem; font-size: .78rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
 .muteti-heading-day-row { display: flex; align-items: center; justify-content: center; gap: .32rem; }
+.muteti-heading-on-call {
+  display: block;
+  min-height: 1rem;
+  margin-top: .12rem;
+  overflow: hidden;
+  color: #354f67;
+  font-size: .64rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .muteti-slot-link {
   display: flex;
   align-items: center;
