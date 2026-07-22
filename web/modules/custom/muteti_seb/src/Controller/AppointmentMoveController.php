@@ -18,6 +18,9 @@ final class AppointmentMoveController extends ControllerBase {
   }
 
   public function move(Request $request): JsonResponse {
+    if (!in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE)) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'Az áthelyezéshez Boss jogosultság szükséges.'], 403);
+    }
     $data = json_decode($request->getContent(), TRUE);
     $appointment_id = (int) ($data['appointment_id'] ?? 0);
     $date = (string) ($data['date'] ?? '');
@@ -38,9 +41,6 @@ final class AppointmentMoveController extends ControllerBase {
       ->fetchObject();
     if (!$source) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'A beteg nem található ezen az osztályon.'], 404);
-    }
-    if ($mode === 'duplicate' && !$this->currentUser()->hasPermission('create surgery appointment')) {
-      return new JsonResponse(['ok' => FALSE, 'error' => 'Nincs jogosultságod az előjegyzés duplikálásához.'], 403);
     }
     if ($source->admission_date === $date && $source->slot_type === $slot) {
       return new JsonResponse(['ok' => TRUE]);
@@ -89,6 +89,28 @@ final class AppointmentMoveController extends ControllerBase {
     }
 
     return new JsonResponse(['ok' => TRUE, 'mode' => $mode, 'date' => $date, 'slot' => $slot]);
+  }
+
+  public function delete(Request $request): JsonResponse {
+    if (!in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE)) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'A törléshez Boss jogosultság szükséges.'], 403);
+    }
+
+    $data = json_decode($request->getContent(), TRUE);
+    $appointment_id = (int) ($data['appointment_id'] ?? 0);
+    if (!$appointment_id) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'Érvénytelen betegazonosító.'], 400);
+    }
+
+    $deleted = $this->database->delete('muteti_appointment')
+      ->condition('id', $appointment_id)
+      ->condition('department', UserDepartment::get($this->currentUser()))
+      ->execute();
+    if (!$deleted) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'A beteg nem található ezen az osztályon.'], 404);
+    }
+
+    return new JsonResponse(['ok' => TRUE]);
   }
 
 }
