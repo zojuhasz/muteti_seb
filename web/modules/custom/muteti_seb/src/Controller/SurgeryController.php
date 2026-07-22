@@ -53,21 +53,13 @@ final class SurgeryController extends ControllerBase {
     $cards = ['#type' => 'container', '#attributes' => ['class' => ['muteti-week-cards']]];
     foreach ($days as $i => $day) {
       $date = $day->format('Y-m-d');
-      $stored = $this->database->select('muteti_day_type', 't')->fields('t', ['day_type'])->condition('department', $department)->condition('date', $date)->execute()->fetchField();
-      $type = $stored ?: Schedule::departmentDayType($department, $day);
-      $occupied = (bool) $this->database->select('muteti_appointment', 'a')
-        ->condition('department', $department)
-        ->condition('surgery_date', $date)
-        ->countQuery()
-        ->execute()
-        ->fetchField();
       $classes = ['muteti-day-card'];
       if ($date === $selected) {
         $classes[] = 'is-selected';
       }
       $cards['d'.$i] = [
         '#type' => 'container',
-        '#attributes' => ['class' => array_filter(['muteti-day-card-shell', $occupied ? 'is-locked' : NULL])],
+        '#attributes' => ['class' => ['muteti-day-card-shell']],
         'link' => [
           '#type' => 'link',
           '#title' => [
@@ -75,20 +67,6 @@ final class SurgeryController extends ControllerBase {
           ],
           '#url' => Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $monday->format('Y-m-d'), 'day' => $date]]),
           '#attributes' => ['class' => $classes],
-        ],
-        'day_type' => [
-          '#type' => 'select',
-          '#title' => $this->t('Napfajta'),
-          '#title_display' => 'invisible',
-          '#options' => array_combine(Schedule::departmentDayTypes($department), Schedule::departmentDayTypes($department)),
-          '#default_value' => $type,
-          '#disabled' => $occupied || !$this->currentUser()->hasPermission('assign operating room'),
-          '#attributes' => [
-            'class' => ['muteti-day-type-select'],
-            'data-date' => $date,
-            'data-previous-value' => $type,
-            'title' => $occupied ? $this->t('A napfajta már nem módosítható, mert van műtőbe beosztott beteg.') : $this->t('Napfajta módosítása'),
-          ],
         ],
       ];
     }
@@ -136,7 +114,6 @@ final class SurgeryController extends ControllerBase {
         'library' => ['muteti_seb/surgery_board'],
         'drupalSettings' => ['mutetiSeb' => [
           'endpoint' => Url::fromRoute('muteti_seb.assignment', [], ['query' => ['token' => $this->csrf->get('muteti/api/assignment')]])->toString(),
-          'dayTypeEndpoint' => Url::fromRoute('muteti_seb.day_type', [], ['query' => ['token' => $this->csrf->get('muteti/api/day-type')]])->toString(),
         ]],
       ],
       '#cache' => ['max-age' => 0],
