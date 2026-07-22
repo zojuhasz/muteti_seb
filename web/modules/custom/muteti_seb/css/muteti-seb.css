@@ -293,6 +293,14 @@
 .muteti-doctor-color-preview { min-width: 145px; padding: .45rem .65rem; border: 1px solid rgba(30, 54, 76, .2); border-radius: .4rem; font-weight: 700; }
 #muteti-seb-doctor-form { max-width: 720px; padding: 1.2rem; border: 1px solid #aebdcd; border-radius: .7rem; background: #fff; box-shadow: 0 3px 14px rgba(24, 54, 84, .12); }
 #muteti-seb-doctor-form .form-item { margin-bottom: 1rem; }
+.muteti-audit-log { margin: 1rem 0; padding: 0; list-style: none; font: 13px/1.5 monospace; }
+.muteti-audit-log li { padding: .12rem .3rem; }
+.muteti-audit-log li:nth-child(odd) { background: #f2f5f8; }
+@media print {
+  .muteti-log-actions, header, nav, footer, .tabs, .messages, .region-breadcrumb { display: none !important; }
+  .muteti-audit-log { font-size: 10px; }
+  .muteti-audit-log li { break-inside: avoid; }
+}
 .muteti-doctor-form-preview { margin: 1rem 0; }
 .muteti-doctor-live-preview { margin-top: .4rem; padding: .8rem; border: 1px solid rgba(30, 54, 76, .2); border-radius: .45rem; font-weight: 700; }
 @media (max-width: 800px) {
