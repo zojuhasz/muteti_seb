@@ -239,6 +239,31 @@
   cursor: pointer;
 }
 .muteti-day-heading.is-locked .muteti-day-type-select { cursor: not-allowed; opacity: .65; }
+.muteti-day-pdf-link {
+  display: inline-block;
+  margin-top: .4rem;
+  padding: .18rem .38rem;
+  border: 1px solid #a52121;
+  border-radius: .3rem;
+  background: #fff;
+  color: #a52121;
+  font-size: .65rem;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+}
+.muteti-day-pdf-link::before {
+  content: '';
+  display: inline-block;
+  box-sizing: border-box;
+  width: .48rem;
+  height: .62rem;
+  margin-right: .22rem;
+  border: 1px solid currentColor;
+  border-radius: 1px;
+  vertical-align: -.08rem;
+}
+.muteti-day-pdf-link:hover { background: #a52121; color: #fff; }
 .muteti-surgery-page > .muteti-surgery-board { margin-top: 1rem; }
 .muteti-daily-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .muteti-daily-heading .muteti-panel-title { margin: 0; }
