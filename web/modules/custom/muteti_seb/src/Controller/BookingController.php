@@ -87,11 +87,27 @@ final class BookingController extends ControllerBase {
               '#attributes' => [
                 'type' => 'button',
                 'class' => ['muteti-move-link', 'is-target'],
+                'data-move-mode' => 'move',
                 'data-move-date' => $date,
                 'data-move-slot' => $slot,
                 'title' => 'Áthelyezés ide',
               ],
             ];
+            if ($this->currentUser()->hasPermission('create surgery appointment')) {
+              $empty_cell['duplicate'] = [
+                '#type' => 'html_tag',
+                '#tag' => 'button',
+                '#value' => 'dup',
+                '#attributes' => [
+                  'type' => 'button',
+                  'class' => ['muteti-move-link', 'is-target', 'is-duplicate'],
+                  'data-move-mode' => 'duplicate',
+                  'data-move-date' => $date,
+                  'data-move-slot' => $slot,
+                  'title' => 'Duplikálás ide',
+                ],
+              ];
+            }
           }
           $row[] = ['data' => $empty_cell];
         }
