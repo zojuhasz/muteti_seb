@@ -23,6 +23,7 @@ final class BookingController extends ControllerBase {
 
   public function week(Request $request): array {
     $department = UserDepartment::get($this->currentUser());
+    $is_boss = in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE);
     $week = $request->query->get('week', 'now');
     try { $monday = new DrupalDateTime($week === 'now' ? 'monday this week' : $week); }
     catch (\Exception) { $monday = new DrupalDateTime('monday this week'); }
@@ -79,7 +80,7 @@ final class BookingController extends ControllerBase {
           $slot_link = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
           $slot_link['#attributes']['class'][] = 'muteti-slot-link';
           $empty_cell = ['slot' => $slot_link];
-          if ($this->currentUser()->hasPermission('edit surgery appointment')) {
+          if ($is_boss) {
             $empty_cell['move'] = [
               '#type' => 'html_tag',
               '#tag' => 'button',
@@ -93,8 +94,7 @@ final class BookingController extends ControllerBase {
                 'title' => 'Áthelyezés ide',
               ],
             ];
-            if ($this->currentUser()->hasPermission('create surgery appointment')) {
-              $empty_cell['duplicate'] = [
+            $empty_cell['duplicate'] = [
                 '#type' => 'html_tag',
                 '#tag' => 'button',
                 '#value' => 'dup',
@@ -106,8 +106,7 @@ final class BookingController extends ControllerBase {
                   'data-move-slot' => $slot,
                   'title' => 'Duplikálás ide',
                 ],
-              ];
-            }
+            ];
           }
           $row[] = ['data' => $empty_cell];
         }
@@ -131,7 +130,7 @@ final class BookingController extends ControllerBase {
               'slot' => [
                 '#markup' => '<div class="muteti-patient-slot">'.Html::escape($slot).'</div>',
               ],
-              'move' => $this->currentUser()->hasPermission('edit surgery appointment') ? [
+              'move' => $is_boss ? [
                 '#type' => 'html_tag',
                 '#tag' => 'button',
                 '#value' => 'áth',
@@ -141,6 +140,19 @@ final class BookingController extends ControllerBase {
                   'data-move-id' => (string) $a->id,
                   'data-move-patient' => $a->patient_name,
                   'title' => 'Áthelyezés',
+                ],
+              ] : [],
+              'delete' => $is_boss ? [
+                '#type' => 'html_tag',
+                '#tag' => 'button',
+                '#value' => 'DEL',
+                '#attributes' => [
+                  'type' => 'button',
+                  'class' => ['muteti-delete-link'],
+                  'data-delete-id' => (string) $a->id,
+                  'data-delete-patient' => $a->patient_name,
+                  'title' => 'Beteg törlése',
+                  'aria-label' => 'Beteg törlése',
                 ],
               ] : [],
               'content' => [
@@ -162,6 +174,7 @@ final class BookingController extends ControllerBase {
         'library'=>['muteti_seb/surgery_board'],
         'drupalSettings'=>['mutetiSeb'=>[
           'appointmentMoveEndpoint'=>Url::fromRoute('muteti_seb.appointment_move',[],['query'=>['token'=>$this->csrf->get('muteti/api/appointment-move')]])->toString(),
+          'appointmentDeleteEndpoint'=>Url::fromRoute('muteti_seb.appointment_delete',[],['query'=>['token'=>$this->csrf->get('muteti/api/appointment-delete')]])->toString(),
         ]],
       ],
       '#cache'=>['max-age'=>0],
