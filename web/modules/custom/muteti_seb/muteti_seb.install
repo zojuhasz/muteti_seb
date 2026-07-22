@@ -90,6 +90,7 @@ function muteti_seb_install(): void {
     'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment']],
     'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room']],
     'muteti_orvos3' => ['Orvos', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
+    'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
     'muteti_department_seb' => ['Osztály: Sebészet', []],
     'muteti_department_urol' => ['Osztály: Urológia', []],
     'muteti_department_onkorad' => ['Osztály: Onkoradiológia', []],
@@ -194,4 +195,24 @@ function muteti_seb_update_11006(): void {
     $role->set('label', 'Orvos');
     $role->save();
   }
+}
+
+/**
+ * Adds the Boss role imported from Drupal 7.
+ */
+function muteti_seb_update_11007(): void {
+  $role = Role::load('muteti_boss') ?? Role::create([
+    'id' => 'muteti_boss',
+    'label' => 'Boss',
+  ]);
+  foreach ([
+    'view surgery schedule',
+    'create surgery appointment',
+    'edit surgery appointment',
+    'assign operating room',
+    'administer surgery system',
+  ] as $permission) {
+    $role->grantPermission($permission);
+  }
+  $role->save();
 }
