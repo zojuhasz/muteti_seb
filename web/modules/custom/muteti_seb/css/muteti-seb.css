@@ -111,6 +111,22 @@
 .muteti-move-link.is-target { top: auto; right: 2.65rem; bottom: .65rem; }
 .muteti-move-link.is-target.is-duplicate { right: .65rem; color: #305f22; }
 .muteti-move-link.is-selected { background: #8a4d00; color: #fff; }
+.muteti-delete-link {
+  position: absolute;
+  top: .35rem;
+  right: 2.65rem;
+  z-index: 3;
+  padding: .12rem .3rem;
+  border: 1px solid #9b1c1c;
+  border-radius: .3rem;
+  background: rgba(255, 255, 255, .9);
+  color: #9b1c1c;
+  cursor: pointer;
+  font-size: .68rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+.muteti-delete-link:hover { background: #9b1c1c; color: #fff; }
 .muteti-booking-table .muteti-patient:has(.muteti-move-link.is-selected) {
   outline: 3px solid #e39125;
   outline-offset: -2px;
