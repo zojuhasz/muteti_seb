@@ -10,6 +10,7 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\muteti_seb\Service\Schedule;
+use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -71,7 +72,7 @@ final class BookingController extends ControllerBase {
             'day' => [
               '#markup' => '<span class="muteti-heading-day">'.Html::escape((string) $this->t($d->format('l'))).'</span>',
             ],
-            'pdf' => $department === 'Onkoradiológia' ? [
+            'pdf' => DepartmentMode::get($department) === 'onko' ? [
               '#type' => 'link',
               '#title' => [
                 '#theme' => 'image',
