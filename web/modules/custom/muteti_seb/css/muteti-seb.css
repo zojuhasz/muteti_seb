@@ -95,6 +95,14 @@
   color: #8a2020;
 }
 .muteti-availability-toggle:disabled { opacity: .55; cursor: wait; }
+.muteti-availability-doctor {
+  display: inline-block;
+  min-width: 12rem;
+  padding: .35rem .65rem;
+  border: 1px solid rgba(30, 54, 76, .18);
+  border-radius: .4rem;
+  font-weight: 800;
+}
 .muteti-heading-on-call {
   display: block;
   min-height: 1rem;
