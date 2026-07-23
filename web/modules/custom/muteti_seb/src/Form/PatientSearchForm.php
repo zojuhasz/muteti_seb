@@ -18,7 +18,7 @@ final class PatientSearchForm extends FormBase {
     $identifier = $is_oncology ? 'kórlapja' : 'TAJ-száma';
     $form['#method'] = 'get';
     $form['#attributes']['class'][] = 'muteti-patient-search-form';
-    $form['query'] = [
+    $form['q'] = [
       '#type' => 'search',
       '#title' => $this->t('Beteg neve vagy @identifier', ['@identifier' => $identifier]),
       '#default_value' => trim((string) \Drupal::request()->query->get('q', '')),
@@ -41,14 +41,14 @@ final class PatientSearchForm extends FormBase {
   }
 
   public function validateForm(array &$form, FormStateInterface $form_state): void {
-    if (mb_strlen(trim((string) $form_state->getValue('query')), 'UTF-8') < 2) {
-      $form_state->setErrorByName('query', $this->t('Legalább két karaktert adj meg.'));
+    if (mb_strlen(trim((string) $form_state->getValue('q')), 'UTF-8') < 2) {
+      $form_state->setErrorByName('q', $this->t('Legalább két karaktert adj meg.'));
     }
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $form_state->setRedirect('muteti_seb.patient_search', [], [
-      'query' => ['q' => trim((string) $form_state->getValue('query'))],
+      'query' => ['q' => trim((string) $form_state->getValue('q'))],
     ]);
   }
 
