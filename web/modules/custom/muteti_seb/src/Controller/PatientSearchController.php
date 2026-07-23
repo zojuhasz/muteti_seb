@@ -79,23 +79,22 @@ final class PatientSearchController extends ControllerBase {
       ->fetchAll();
 
     $today = date('Y-m-d');
-    $can_edit = $this->currentUser()->hasPermission('create surgery appointment');
     $rows = [];
     foreach ($results as $result) {
       $period = $result->admission_date < $today
         ? 'Múlt'
         : ($result->admission_date > $today ? 'Jövő' : 'Ma');
-      $patient = ['#markup' => '<strong>'.Html::escape($result->patient_name).'</strong>'];
-      if ($can_edit) {
-        $patient = Link::fromTextAndUrl(
-          $result->patient_name,
-          Url::fromRoute('muteti_seb.appointment', [
-            'date' => $result->admission_date,
-            'slot' => $result->slot_type,
-          ])
-        )->toRenderable();
-        $patient['#attributes']['title'] = 'Előjegyzés megnyitása';
-      }
+      $week = (new \DateTimeImmutable($result->admission_date))
+        ->modify('monday this week')
+        ->format('Y-m-d');
+      $patient = Link::fromTextAndUrl(
+        $result->patient_name,
+        Url::fromRoute('muteti_seb.booking', [], [
+          'query' => ['week' => $week],
+          'fragment' => 'muteti-appointment-'.$result->id,
+        ])
+      )->toRenderable();
+      $patient['#attributes']['title'] = 'Megmutatás az előjegyzési táblában';
       $rows[] = [
         ['data' => Html::escape($result->admission_date), 'class' => ['muteti-search-date']],
         [
