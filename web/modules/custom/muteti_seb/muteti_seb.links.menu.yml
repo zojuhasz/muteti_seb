@@ -25,3 +25,10 @@ muteti_seb.availability_month:
   route_name: muteti_seb.availability_month
   menu_name: main
   weight: 30
+
+muteti_seb.away_month:
+  title: 'Idegenben'
+  description: 'Az osztály más kórházban dolgozó orvosainak havi listája.'
+  route_name: muteti_seb.away_month
+  menu_name: main
+  weight: 31
