@@ -267,7 +267,7 @@ final class BookingController extends ControllerBase {
               $patient_content .= '<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name).'</span>';
             }
             if (trim((string) $a->notes) !== '') {
-              $patient_content .= '<br><span class="muteti-patient-notes">'.nl2br(Html::escape($a->notes)).'</span>';
+              $patient_content .= '<br><span class="muteti-patient-notes">! '.nl2br(Html::escape($a->notes)).'</span>';
             }
           }
           else {
