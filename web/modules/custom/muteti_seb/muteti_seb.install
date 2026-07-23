@@ -615,19 +615,20 @@ function muteti_seb_ensure_article_content_type(): void {
     ]);
     $type->save();
   }
-  if (!\Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'field_muteti_article_department')) {
-    \Drupal\field\Entity\FieldStorageConfig::create([
+  $department_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'field_muteti_article_department');
+  if (!$department_storage) {
+    $department_storage = \Drupal\field\Entity\FieldStorageConfig::create([
       'field_name' => 'field_muteti_article_department',
       'entity_type' => 'node',
       'type' => 'string',
       'cardinality' => 1,
       'settings' => ['max_length' => 100],
-    ])->save();
+    ]);
+    $department_storage->save();
   }
   if (!\Drupal\field\Entity\FieldConfig::loadByName('node', 'muteti_article', 'field_muteti_article_department')) {
     \Drupal\field\Entity\FieldConfig::create([
-      'field_name' => 'field_muteti_article_department',
-      'entity_type' => 'node',
+      'field_storage' => $department_storage,
       'bundle' => 'muteti_article',
       'label' => 'Osztály',
       'required' => TRUE,
