@@ -136,6 +136,7 @@ muteti_seb.availability_month:
     _title: 'Szabadságok'
   requirements:
     _permission: 'view doctor availability'
+    _custom_access: '\Drupal\muteti_seb\Controller\AvailabilityController::availabilityAccess'
 
 muteti_seb.availability_pdf:
   path: '/muteti/szabadsagok/{month}/pdf'
@@ -144,6 +145,7 @@ muteti_seb.availability_pdf:
     _title: 'Havi szabadságlista PDF'
   requirements:
     _permission: 'view doctor availability'
+    _custom_access: '\Drupal\muteti_seb\Controller\AvailabilityController::availabilityAccess'
     month: '\d{4}-\d{2}'
 
 muteti_seb.away_month:
@@ -153,6 +155,7 @@ muteti_seb.away_month:
     _title: 'Idegenben'
   requirements:
     _permission: 'view doctor availability'
+    _custom_access: '\Drupal\muteti_seb\Controller\AvailabilityController::awayAccess'
 
 muteti_seb.away_pdf:
   path: '/muteti/idegenben/{month}/pdf'
@@ -161,4 +164,5 @@ muteti_seb.away_pdf:
     _title: 'Havi idegenben lista PDF'
   requirements:
     _permission: 'view doctor availability'
+    _custom_access: '\Drupal\muteti_seb\Controller\AvailabilityController::awayAccess'
     month: '\d{4}-\d{2}'
