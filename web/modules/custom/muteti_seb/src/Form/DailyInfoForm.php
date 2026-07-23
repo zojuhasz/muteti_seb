@@ -18,15 +18,42 @@ final class DailyInfoForm extends FormBase {
     $mode = DepartmentMode::get($department);
     $record = \Drupal::database()->select('muteti_daily_info', 'i')
       ->fields('i')->condition('department', $department)->condition('date', $date)->execute()->fetchObject();
+    $doctor_options = [];
+    $doctor_rows = \Drupal::database()->select('muteti_doctor', 'd')
+      ->fields('d', ['name'])
+      ->condition('department', $department)
+      ->condition('active', 1)
+      ->orderBy('name')
+      ->execute()
+      ->fetchCol();
+    foreach ($doctor_rows as $doctor_name) {
+      $doctor_options[$doctor_name] = $doctor_name;
+    }
+    $doctor_select = static function (string $title, string $default) use ($doctor_options): array {
+      $options = $doctor_options;
+      // Preserve a legacy or combined imported value until the user replaces
+      // it with one of the current department doctors.
+      if ($default !== '' && !isset($options[$default])) {
+        $options = [$default => $default.' (importált érték)'] + $options;
+      }
+      return [
+        '#type' => 'select',
+        '#title' => $title,
+        '#options' => $options,
+        '#empty_option' => '-',
+        '#default_value' => $default,
+      ];
+    };
     $form['date'] = ['#type' => 'hidden', '#value' => $date];
     if ($mode === 'seb') {
-      $form['responsible'] = ['#type' => 'textfield', '#title' => 'Aznapi műtét felelős', '#default_value' => $record->responsible ?? ''];
-      $form['acute_1'] = ['#type' => 'textfield', '#title' => 'Akut felelős 1', '#default_value' => $record->acute_1 ?? ''];
-      $form['acute_2'] = ['#type' => 'textfield', '#title' => 'Akut felelős 2', '#default_value' => $record->acute_2 ?? ''];
+      $form['responsible'] = $doctor_select('Aznapi műtét felelős', (string) ($record->responsible ?? ''));
+      $form['acute_1'] = $doctor_select('Akut felelős 1', (string) ($record->acute_1 ?? ''));
+      $form['acute_2'] = $doctor_select('Akut felelős 2', (string) ($record->acute_2 ?? ''));
       $form['ambulance'] = ['#type' => 'textfield', '#title' => 'Ambulancia felelős', '#default_value' => $record->ambulance ?? ''];
     }
     else {
-      $form['acute_1'] = ['#type' => 'textfield', '#title' => 'Akut beteg ellátás', '#default_value' => $record->acute_1 ?? ''];
+      $form['acute_1'] = $doctor_select('Akut beteg ellátás 1', (string) ($record->acute_1 ?? ''));
+      $form['acute_2'] = $doctor_select('Akut beteg ellátás 2', (string) ($record->acute_2 ?? ''));
     }
     if (!DepartmentMode::featureEnabled($department, 'availability_enabled')) {
       $form['other_absent'] = ['#type' => 'textarea', '#title' => 'Egyéb távollevők', '#default_value' => $record->other_absent ?? '', '#rows' => 3];
