@@ -245,7 +245,10 @@ final class BookingController extends ControllerBase {
           $doctor = $doctors[$a->doctor_id] ?? NULL;
           $patient_attributes = [
             'id' => 'muteti-appointment-'.$a->id,
-            'class' => ['muteti-patient'],
+            'class' => array_filter([
+              'muteti-patient',
+              trim((string) $a->patient_name) === '' ? 'is-without-patient' : NULL,
+            ]),
           ];
           if ($doctor) {
             $has_background = trim((string) $doctor->background_color) !== '';
