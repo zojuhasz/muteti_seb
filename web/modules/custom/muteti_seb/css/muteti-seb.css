@@ -95,10 +95,22 @@
   color: #8a2020;
 }
 .muteti-availability-toggle:disabled { opacity: .55; cursor: wait; }
-.muteti-availability-doctor-cell {
-  min-width: 12rem;
-  border-left: 4px solid rgba(30, 54, 76, .35);
+.muteti-availability-doctors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: .25rem;
+}
+.muteti-availability-doctor-tag {
+  display: inline-block;
+  max-width: 10rem;
+  padding: .24rem .38rem;
+  border: 1px solid rgba(30, 54, 76, .25);
+  border-radius: .35rem;
+  font-size: .68rem;
   font-weight: 800;
+  line-height: 1.12;
+  overflow-wrap: anywhere;
 }
 .muteti-availability-pdf-link {
   display: inline-flex;
