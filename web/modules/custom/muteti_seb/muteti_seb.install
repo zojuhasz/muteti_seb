@@ -120,6 +120,21 @@ function muteti_seb_schema(): array {
     'primary key' => ['user_id', 'date'],
     'indexes' => ['date' => ['date']],
   ];
+  $schema['muteti_daily_info'] = [
+    'description' => 'Napi műtéti felelősök és kezdési idő.',
+    'fields' => [
+      'department' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
+      'date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+      'responsible' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''],
+      'acute_1' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''],
+      'acute_2' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''],
+      'ambulance' => ['type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''],
+      'other_absent' => ['type' => 'text', 'not null' => FALSE],
+      'start_time' => ['type' => 'varchar', 'length' => 5, 'not null' => TRUE, 'default' => '08:30'],
+      'changed' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+    ],
+    'primary key' => ['department', 'date'],
+  ];
   return $schema;
 }
 
@@ -562,5 +577,15 @@ function muteti_seb_update_11018(): void {
          AND ward_room <> ''",
       [':department' => $department]
     );
+  }
+}
+
+/**
+ * Adds the daily operating-room information panel storage.
+ */
+function muteti_seb_update_11019(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('muteti_daily_info')) {
+    $schema->createTable('muteti_daily_info', muteti_seb_schema()['muteti_daily_info']);
   }
 }
