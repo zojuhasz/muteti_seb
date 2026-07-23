@@ -213,6 +213,61 @@ final class SurgeryController extends ControllerBase {
     $rooms=Schedule::departmentRooms($department);
     foreach($assigned as $a)if($a->operating_room&&!in_array($a->operating_room,$rooms,TRUE))$rooms[]=$a->operating_room;
     foreach($rooms as $room){$build['daily']['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['daily']['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
+    $mode = DepartmentMode::get($department);
+    $info = $this->database->select('muteti_daily_info', 'i')->fields('i')
+      ->condition('department', $department)->condition('date', $selected)->execute()->fetchObject();
+    $previous = date('Y-m-d', strtotime($selected.' -1 day'));
+    $previous_on_call = $this->database->select('muteti_on_call', 'u')->fields('u', ['doctor_name', 'doctor_name_2'])
+      ->condition('mode', $mode)->condition('date', $previous)->execute()->fetchObject();
+    $today_on_call = $this->database->select('muteti_on_call', 'u')->fields('u', ['doctor_name', 'doctor_name_2'])
+      ->condition('mode', $mode)->condition('date', $selected)->execute()->fetchObject();
+    $status_names = function (string $status) use ($selected, $department): string {
+      $query = $this->database->select('muteti_doctor_availability', 'a');
+      $query->join('muteti_doctor', 'd', 'd.user_id = a.user_id');
+      return implode(', ', $query->fields('d', ['name'])->condition('a.date', $selected)
+        ->condition('a.status', $status)->condition('d.department', $department)->condition('d.active', 1)
+        ->orderBy('d.name')->execute()->fetchCol());
+    };
+    $absent = $availability_enabled ? $status_names('absent') : (string) ($info->other_absent ?? '');
+    $away = $away_enabled ? $status_names('away') : '';
+    $start = $info->start_time ?? ($mode === 'urol' ? '08:00' : '08:30');
+    if ($mode === 'urol') {
+      $acute = array_filter([$info->acute_1 ?? '', $info->acute_2 ?? '']);
+      $lines = [
+        'Akut beteg ellátás' => implode(', ', $acute),
+        'Szabadnap' => $previous_on_call->doctor_name ?? '',
+        'Egyéb távollevők' => $absent,
+        'Telefonos' => $today_on_call->doctor_name_2 ?? '',
+        'Flór Ferenc KH-ban' => $away,
+      ];
+    }
+    else {
+      $free = array_filter([$previous_on_call->doctor_name ?? '', $previous_on_call->doctor_name_2 ?? '']);
+      $acute = array_filter([$info->acute_1 ?? '', $info->acute_2 ?? '']);
+      $lines = [
+        'Aznapi műtét felelős' => $info->responsible ?? '',
+        'Akut felelős' => implode(', ', $acute),
+        'Ambulancia' => $info->ambulance ?? '',
+        'Szabadnap' => implode(', ', $free),
+        'Egyéb távollevők' => $absent,
+      ];
+    }
+    $panel_markup = '';
+    foreach ($lines as $label => $value) {
+      $panel_markup .= '<div><strong>'.Html::escape($label).':</strong> '.Html::escape($value ?: '–').'</div>';
+    }
+    $panel_markup .= '<div class="muteti-daily-info-start"><strong>Műtétek kezdete:</strong> '.Html::escape($start).'</div>';
+    $build['daily']['info'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['muteti-daily-info']],
+      'content' => ['#markup' => $panel_markup],
+      'edit' => $this->currentUser()->hasPermission('assign operating room') ? [
+        '#type' => 'link',
+        '#title' => '+',
+        '#url' => Url::fromRoute('muteti_seb.daily_info', ['date' => $selected]),
+        '#attributes' => ['class' => ['muteti-daily-info-edit'], 'title' => 'Napi adatok felvitele vagy módosítása'],
+      ] : [],
+    ];
     return $build;
   }
 }
