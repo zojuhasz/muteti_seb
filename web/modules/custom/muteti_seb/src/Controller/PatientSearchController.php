@@ -56,14 +56,21 @@ final class PatientSearchController extends ControllerBase {
       'operating_room',
     ]);
     $query->addField('d', 'name', 'doctor_name');
-    $match = '%'.$this->database->escapeLike($term).'%';
     $query->condition('a.department', $department);
     $query->condition('a.patient_name', '', '<>');
-    $query->condition(
-      $query->orConditionGroup()
-        ->condition('a.patient_name', $match, 'LIKE')
-        ->condition('a.taj', $match, 'LIKE')
-    );
+    $fragments = preg_split('/\s+/u', mb_strtolower($term, 'UTF-8'), -1, PREG_SPLIT_NO_EMPTY);
+    foreach ($fragments as $index => $fragment) {
+      $name_placeholder = ':muteti_search_name_'.$index;
+      $identifier_placeholder = ':muteti_search_identifier_'.$index;
+      $match = '%'.$this->database->escapeLike($fragment).'%';
+      $query->where(
+        '(LOWER(a.patient_name) LIKE '.$name_placeholder.' OR LOWER(a.taj) LIKE '.$identifier_placeholder.')',
+        [
+          $name_placeholder => $match,
+          $identifier_placeholder => $match,
+        ]
+      );
+    }
     $results = $query
       ->orderBy('a.admission_date', 'DESC')
       ->orderBy('a.patient_name')
