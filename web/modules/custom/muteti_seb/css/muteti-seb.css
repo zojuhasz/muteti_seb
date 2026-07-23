@@ -89,12 +89,30 @@
   font-weight: 800;
   cursor: pointer;
 }
+.muteti-away-toggle {
+  width: calc(100% - .5rem);
+  margin: .05rem .25rem .15rem;
+  padding: .28rem .45rem;
+  border: 1px solid #7895ad;
+  border-radius: 999px;
+  background: #edf4fa;
+  color: #294f6d;
+  font-size: .7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.muteti-away-toggle.is-away {
+  border-color: #2d6f9f;
+  background: #dceffc;
+  color: #124d78;
+}
 .muteti-availability-toggle.is-absent {
   border-color: #c66565;
   background: #fdeaea;
   color: #8a2020;
 }
-.muteti-availability-toggle:disabled { opacity: .55; cursor: wait; }
+.muteti-availability-toggle:disabled,
+.muteti-away-toggle:disabled { opacity: .55; cursor: wait; }
 .muteti-availability-doctors {
   display: flex;
   flex-wrap: wrap;
