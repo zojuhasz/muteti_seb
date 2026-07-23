@@ -9,6 +9,7 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\muteti_seb\Service\UserDepartment;
+use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -72,23 +73,28 @@ final class AvailabilityController extends ControllerBase {
     }
 
     $rows = [];
-    if ($doctor_names) {
-      $absences = $this->database->select('muteti_doctor_availability', 'a')
-        ->fields('a', ['user_id', 'date'])
-        ->condition('user_id', array_keys($doctor_names), 'IN')
-        ->condition('date', [$start, $end], 'BETWEEN')
-        ->condition('status', 'absent')
-        ->orderBy('date')
-        ->execute();
-      foreach ($absences as $absence) {
-        $day = new DrupalDateTime($absence->date);
-        $rows[] = [
-          Html::escape($absence->date),
-          Html::escape((string) $this->t($day->format('l'))),
-          Html::escape($doctor_names[(int) $absence->user_id] ?? '—'),
-          $this->t('Távollét'),
-        ];
+    $absences = $this->database->select('muteti_doctor_availability', 'a')
+      ->fields('a', ['user_id', 'date'])
+      ->condition('date', [$start, $end], 'BETWEEN')
+      ->condition('status', 'absent')
+      ->orderBy('date')
+      ->execute();
+    foreach ($absences as $absence) {
+      $user_id = (int) $absence->user_id;
+      $account = User::load($user_id);
+      if (!$account || !$account->isActive() || !$account->hasPermission('manage own doctor availability')) {
+        continue;
       }
+      if (UserDepartment::get($account) !== $department) {
+        continue;
+      }
+      $day = new DrupalDateTime($absence->date);
+      $rows[] = [
+        Html::escape($absence->date),
+        Html::escape((string) $this->t($day->format('l'))),
+        Html::escape($doctor_names[$user_id] ?? $account->getDisplayName()),
+        $this->t('Távollét'),
+      ];
     }
 
     $previous = (clone $month)->modify('-1 month')->format('Y-m-01');
