@@ -4,6 +4,8 @@ namespace Drupal\muteti_seb\Form;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\muteti_seb\Service\DepartmentMode;
+use Drupal\muteti_seb\Service\UserDepartment;
 
 final class PatientSearchForm extends FormBase {
 
@@ -12,17 +14,19 @@ final class PatientSearchForm extends FormBase {
   }
 
   public function buildForm(array $form, FormStateInterface $form_state): array {
+    $is_oncology = DepartmentMode::get(UserDepartment::get($this->currentUser())) === 'onko';
+    $identifier = $is_oncology ? 'kórlapszáma' : 'TAJ-száma';
     $form['#method'] = 'get';
     $form['#attributes']['class'][] = 'muteti-patient-search-form';
     $form['query'] = [
       '#type' => 'search',
-      '#title' => $this->t('Beteg neve vagy TAJ-száma'),
+      '#title' => $this->t('Beteg neve vagy @identifier', ['@identifier' => $identifier]),
       '#default_value' => trim((string) \Drupal::request()->query->get('q', '')),
       '#required' => TRUE,
       '#size' => 40,
       '#maxlength' => 100,
       '#attributes' => [
-        'placeholder' => $this->t('Név vagy TAJ'),
+        'placeholder' => $is_oncology ? $this->t('Név vagy kórlapszám') : $this->t('Név vagy TAJ'),
         'autocomplete' => 'off',
         'minlength' => 2,
       ],
