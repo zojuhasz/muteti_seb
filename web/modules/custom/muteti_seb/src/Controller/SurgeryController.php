@@ -61,6 +61,12 @@ final class SurgeryController extends ControllerBase {
       $next_month_date->modify('+7 days');
     }
     $next_month = $next_month_date->format('Y-m-d');
+    $nav_link = static function (string $symbol, string $label, Url $url): array {
+      $link = Link::fromTextAndUrl($symbol, $url)->toRenderable();
+      $link['#attributes']['title'] = $label;
+      $link['#attributes']['aria-label'] = $label;
+      return $link;
+    };
     $availability = $this->database->select('muteti_doctor_availability', 'a')
       ->fields('a', ['date', 'status'])
       ->condition('user_id', (int) $this->currentUser()->id())
@@ -177,11 +183,11 @@ final class SurgeryController extends ControllerBase {
       'nav' => [
         '#type' => 'container',
         '#attributes' => ['class' => ['muteti-nav']],
-        'prev_month' => Link::fromTextAndUrl('⇤ Előző hónap', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $prev_month, 'day' => $prev_month_day->format('Y-m-d')]]))->toRenderable(),
-        'prev' => Link::fromTextAndUrl('← Előző hét', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $prev]]))->toRenderable(),
-        'today' => Link::fromTextAndUrl('Aktuális hét', Url::fromRoute('muteti_seb.surgery'))->toRenderable(),
-        'next' => Link::fromTextAndUrl('Következő hét →', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $next]]))->toRenderable(),
-        'next_month' => Link::fromTextAndUrl('Következő hónap ⇥', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $next_month, 'day' => $next_month_day->format('Y-m-d')]]))->toRenderable(),
+        'prev_month' => $nav_link('◀◀', 'Előző hónap', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $prev_month, 'day' => $prev_month_day->format('Y-m-d')]])),
+        'prev' => $nav_link('◀', 'Előző hét', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $prev]])),
+        'today' => $nav_link('●', 'Aktuális hét', Url::fromRoute('muteti_seb.surgery')),
+        'next' => $nav_link('▶', 'Következő hét', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $next]])),
+        'next_month' => $nav_link('▶▶', 'Következő hónap', Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $next_month, 'day' => $next_month_day->format('Y-m-d')]])),
       ],
       'cards' => $cards,
     ];
