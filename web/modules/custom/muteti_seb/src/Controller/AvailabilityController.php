@@ -8,6 +8,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
+use Drupal\muteti_seb\Service\Schedule;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -59,6 +60,12 @@ final class AvailabilityController extends ControllerBase {
     $start = $month->format('Y-m-01');
     $end = $month->format('Y-m-t');
     $department = UserDepartment::get($this->currentUser());
+    $stored_day_types = $this->database->select('muteti_day_type', 'd')
+      ->fields('d', ['date', 'day_type'])
+      ->condition('department', $department)
+      ->condition('date', [$start, $end], 'BETWEEN')
+      ->execute()
+      ->fetchAllKeyed();
 
     $doctor_rows = $this->database->select('muteti_doctor', 'd')
       ->fields('d', ['user_id', 'name', 'background_color', 'text_color'])
@@ -98,15 +105,16 @@ final class AvailabilityController extends ControllerBase {
       }
       $day = new DrupalDateTime($absence->date);
       $doctor_name = $doctor_names[$user_id] ?? $account->getDisplayName();
+      $day_type = $stored_day_types[$absence->date] ?? Schedule::departmentDayType($department, $day);
       $rows[] = [
         Html::escape($absence->date),
         Html::escape((string) $this->t($day->format('l'))),
+        Html::escape($day_type),
         [
           'data' => [
             '#markup' => '<span class="muteti-availability-doctor" style="'.Html::escape($doctor_styles[$user_id] ?? 'background-color:#eef2f6;color:#111111;').'">'.Html::escape($doctor_name).'</span>',
           ],
         ],
-        $this->t('Távollét'),
       ];
     }
 
@@ -128,7 +136,7 @@ final class AvailabilityController extends ControllerBase {
         '#attributes' => ['class' => ['muteti-table-frame']],
         'table' => [
           '#type' => 'table',
-          '#header' => [$this->t('Dátum'), $this->t('Nap'), $this->t('Orvos'), $this->t('Állapot')],
+          '#header' => [$this->t('Dátum'), $this->t('Nap'), $this->t('Naptípus'), $this->t('Orvos')],
           '#rows' => $rows,
           '#empty' => $this->t('Ebben a hónapban nincs rögzített távollét.'),
         ],
