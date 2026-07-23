@@ -339,6 +339,22 @@
 }
 .muteti-day-heading .form-item { margin: .15rem 0 0; }
 .muteti-day-heading.is-locked .muteti-day-type-select { cursor: not-allowed; opacity: .65; }
+.muteti-away-strip {
+  display: flex;
+  width: calc(100% - .5rem);
+  height: 5px;
+  margin: .14rem .25rem 0;
+  overflow: hidden;
+  border-radius: 999px;
+}
+.muteti-away-strip.is-empty {
+  visibility: hidden;
+}
+.muteti-away-strip-segment {
+  flex: 1 1 0;
+  min-width: 5px;
+  height: 5px;
+}
 .muteti-day-pdf-link {
   display: inline-flex;
   flex: 0 0 auto;
