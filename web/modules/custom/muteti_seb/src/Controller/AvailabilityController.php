@@ -108,8 +108,10 @@ final class AvailabilityController extends ControllerBase {
       $day = new DrupalDateTime($absence->date);
       $doctor_name = $doctor_names[$user_id] ?? $account->getDisplayName();
       $day_type = $stored_day_types[$absence->date] ?? Schedule::departmentDayType($department, $day);
+      $day_number = (int) $day->format('N');
       $grouped_days[$absence->date] ??= [
-        'day' => (string) $this->t($day->format('l')),
+        'day' => [1 => 'H', 'K', 'S', 'C', 'P', 'S', 'V'][$day_number],
+        'weekend' => $day_number >= 6,
         'day_type' => $day_type,
         'doctors' => [],
       ];
@@ -138,9 +140,21 @@ final class AvailabilityController extends ControllerBase {
         ];
       }
       $rows[] = [
-        Html::escape($date),
-        Html::escape($group['day']),
-        Html::escape($group['day_type']),
+        [
+          'data' => Html::escape(substr($date, 5)),
+          'class' => ['muteti-availability-date'],
+        ],
+        [
+          'data' => Html::escape($group['day']),
+          'class' => array_filter([
+            'muteti-availability-day',
+            $group['weekend'] ? 'is-weekend' : NULL,
+          ]),
+        ],
+        [
+          'data' => Html::escape($group['day_type']),
+          'class' => ['muteti-availability-day-type'],
+        ],
         ['data' => $doctor_list],
       ];
     }
@@ -218,12 +232,12 @@ final class AvailabilityController extends ControllerBase {
     }
 
     $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $days = [1 => 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+    $days = [1 => 'H', 'K', 'S', 'C', 'P', 'S', 'V'];
     $html = '<meta charset="utf-8"><style>
       @page{margin:14mm}body{font-family:DejaVu Sans,sans-serif;color:#172b3a;font-size:10px}
       h1{margin:0 0 4px;font-size:18px}h2{margin:0 0 16px;color:#536b7d;font-size:13px}
       table{width:100%;border-collapse:collapse}th{padding:7px;background:#dce8f2;text-align:left}
-      td{padding:6px;border-bottom:1px solid #d5dde5}.doctor{display:inline-block;margin:1px 2px;padding:3px 5px;border:1px solid #bbc5ce;border-radius:3px;font-size:8px;font-weight:700;line-height:1.1}.footer{margin-top:18px;text-align:right;color:#667;font-size:8px}
+      td{padding:6px;border-bottom:1px solid #d5dde5}.date{font-size:8px}.day{font-size:9px;font-weight:700}.weekend{color:#c62828}.day-type{font-size:8px;font-weight:700}.doctor{display:inline-block;margin:1px 2px;padding:3px 5px;border:1px solid #bbc5ce;border-radius:3px;font-size:8px;font-weight:700;line-height:1.1}.footer{margin-top:18px;text-align:right;color:#667;font-size:8px}
     </style><h1>'.$escape($department).' – szabadságok</h1><h2>'.$escape($month).'</h2><table><thead><tr><th>Dátum</th><th>Nap</th><th>Naptípus</th><th>Orvos</th></tr></thead><tbody>';
 
     $absences = $this->database->select('muteti_doctor_availability', 'a')
@@ -247,6 +261,7 @@ final class AvailabilityController extends ControllerBase {
       $day_type = $stored_day_types[$absence->date] ?? Schedule::departmentDayType($department, $date);
       $pdf_days[$absence->date] ??= [
         'day' => $days[(int) $date->format('N')],
+        'weekend' => (int) $date->format('N') >= 6,
         'day_type' => $day_type,
         'doctors' => [],
       ];
@@ -254,7 +269,8 @@ final class AvailabilityController extends ControllerBase {
     }
     foreach ($pdf_days as $date => $group) {
       ksort($group['doctors'], SORT_NATURAL | SORT_FLAG_CASE);
-      $html .= '<tr><td>'.$escape($date).'</td><td>'.$escape($group['day']).'</td><td>'.$escape($group['day_type']).'</td><td>'.implode('', $group['doctors']).'</td></tr>';
+      $day_class = $group['weekend'] ? 'day weekend' : 'day';
+      $html .= '<tr><td class="date">'.$escape(substr($date, 5)).'</td><td class="'.$day_class.'">'.$escape($group['day']).'</td><td class="day-type">'.$escape($group['day_type']).'</td><td>'.implode('', $group['doctors']).'</td></tr>';
     }
     $html .= '</tbody></table><div class="footer">Nyomtatva: '.$escape($this->currentUser()->getAccountName()).' '.date('Y.m.d H:i').'</div>';
 
