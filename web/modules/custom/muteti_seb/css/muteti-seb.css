@@ -342,7 +342,7 @@
 .muteti-away-strip {
   display: flex;
   width: calc(100% - .5rem);
-  height: 5px;
+  height: 7px;
   margin: .14rem .25rem 0;
   overflow: hidden;
   border-radius: 999px;
@@ -353,7 +353,7 @@
 .muteti-away-strip-segment {
   flex: 1 1 0;
   min-width: 5px;
-  height: 5px;
+  height: 7px;
 }
 .muteti-day-pdf-link {
   display: inline-flex;
