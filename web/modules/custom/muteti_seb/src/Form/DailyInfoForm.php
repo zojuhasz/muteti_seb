@@ -51,10 +51,6 @@ final class DailyInfoForm extends FormBase {
       $form['acute_2'] = $doctor_select('Akut felelős 2', (string) ($record->acute_2 ?? ''));
       $form['ambulance'] = ['#type' => 'textfield', '#title' => 'Ambulancia felelős', '#default_value' => $record->ambulance ?? ''];
     }
-    else {
-      $form['acute_1'] = $doctor_select('Akut beteg ellátás 1', (string) ($record->acute_1 ?? ''));
-      $form['acute_2'] = $doctor_select('Akut beteg ellátás 2', (string) ($record->acute_2 ?? ''));
-    }
     if (!DepartmentMode::featureEnabled($department, 'availability_enabled')) {
       $form['other_absent'] = ['#type' => 'textarea', '#title' => 'Egyéb távollevők', '#default_value' => $record->other_absent ?? '', '#rows' => 3];
     }
