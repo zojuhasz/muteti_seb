@@ -18,3 +18,10 @@ muteti_seb.audit_log:
   route_name: muteti_seb.audit_log
   parent: system.admin_reports
   weight: 20
+
+muteti_seb.availability_month:
+  title: 'Szabadságok'
+  description: 'Az osztály orvosainak havi távolléti listája.'
+  route_name: muteti_seb.availability_month
+  menu_name: main
+  weight: 30
