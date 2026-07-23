@@ -145,3 +145,20 @@ muteti_seb.availability_pdf:
   requirements:
     _permission: 'view doctor availability'
     month: '\d{4}-\d{2}'
+
+muteti_seb.away_month:
+  path: '/muteti/idegenben'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\AvailabilityController::awayMonth'
+    _title: 'Idegenben'
+  requirements:
+    _permission: 'view doctor availability'
+
+muteti_seb.away_pdf:
+  path: '/muteti/idegenben/{month}/pdf'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\AvailabilityController::awayPdf'
+    _title: 'Havi idegenben lista PDF'
+  requirements:
+    _permission: 'view doctor availability'
+    month: '\d{4}-\d{2}'
