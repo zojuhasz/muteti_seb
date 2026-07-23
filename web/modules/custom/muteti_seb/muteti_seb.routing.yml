@@ -119,3 +119,20 @@ muteti_seb.doctor_content:
     _title: 'Orvosok'
   requirements:
     _permission: 'administer surgery system'
+
+muteti_seb.availability_update:
+  path: '/muteti/api/tavollet'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\AvailabilityController::update'
+  methods: [POST]
+  requirements:
+    _permission: 'manage own doctor availability'
+    _csrf_token: 'TRUE'
+
+muteti_seb.availability_month:
+  path: '/muteti/szabadsagok'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\AvailabilityController::month'
+    _title: 'Szabadságok'
+  requirements:
+    _permission: 'view doctor availability'
