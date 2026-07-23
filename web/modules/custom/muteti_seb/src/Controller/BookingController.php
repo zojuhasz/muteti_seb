@@ -318,7 +318,9 @@ final class BookingController extends ControllerBase {
                 ],
               ] : [],
               'content' => [
-                '#markup' => $patient_content,
+                '#type' => 'container',
+                '#attributes' => ['class' => ['muteti-patient-content']],
+                'markup' => ['#markup' => $patient_content],
               ],
             ],
           ];
