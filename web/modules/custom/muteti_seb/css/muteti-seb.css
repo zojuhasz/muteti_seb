@@ -230,9 +230,9 @@
   overflow-wrap: anywhere;
 }
 .muteti-patient-slot {
-  min-height: 1.5rem;
-  margin: 0 0 .32rem 1.75rem;
-  text-align: left;
+  min-height: 1.15rem;
+  margin: 0 0 1.7rem;
+  text-align: center;
   font-size: .68rem;
   font-weight: 900;
   line-height: 1.15;
@@ -259,7 +259,7 @@
 .muteti-move-link.is-selected { background: #8a4d00; color: #fff; }
 .muteti-patient-actions {
   position: absolute;
-  top: .35rem;
+  top: 1.65rem;
   right: .4rem;
   z-index: 3;
   display: inline-flex;
@@ -315,7 +315,7 @@
 }
 .muteti-edit-link {
   position: absolute;
-  top: .35rem;
+  top: 1.65rem;
   left: .4rem;
   display: inline-flex;
   align-items: center;
