@@ -35,6 +35,8 @@ final class DepartmentController extends ControllerBase {
         $department->name,
         $department->machine_name,
         $department->mode,
+        !isset($department->availability_enabled) || $department->availability_enabled ? 'Igen' : 'Nem',
+        !isset($department->away_enabled) || $department->away_enabled ? 'Igen' : 'Nem',
         $department->role_id,
         [
           'data' => Link::fromTextAndUrl('Módosítás', Url::fromRoute('muteti_seb.department_edit', ['department' => $department->id]))->toRenderable(),
@@ -47,7 +49,7 @@ final class DepartmentController extends ControllerBase {
       'add' => Link::fromTextAndUrl('Új osztály', Url::fromRoute('muteti_seb.department_add'))->toRenderable(),
       'table' => [
         '#type' => 'table',
-        '#header' => ['Osztály', 'Gépi név', 'Működési mód', 'Felhasználói szerepkör', 'Művelet'],
+        '#header' => ['Osztály', 'Gépi név', 'Működési mód', 'Szabadság', 'Idegenben', 'Felhasználói szerepkör', 'Művelet'],
         '#rows' => $rows,
         '#empty' => 'Nincs beállított osztály.',
         '#attributes' => ['class' => ['muteti-doctor-table']],
