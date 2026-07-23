@@ -232,9 +232,8 @@ final class SurgeryController extends ControllerBase {
     $away = $away_enabled ? $status_names('away') : '';
     $start = $info->start_time ?? ($mode === 'urol' ? '08:00' : '08:30');
     if ($mode === 'urol') {
-      $acute = array_filter([$info->acute_1 ?? '', $info->acute_2 ?? '']);
       $lines = [
-        'Akut beteg ellátás' => implode(', ', $acute),
+        'Akut beteg ellátás' => $today_on_call->doctor_name ?? '',
         'Szabadnap' => $previous_on_call->doctor_name ?? '',
         'Egyéb távollevők' => $absent,
         'Telefonos' => $today_on_call->doctor_name_2 ?? '',
