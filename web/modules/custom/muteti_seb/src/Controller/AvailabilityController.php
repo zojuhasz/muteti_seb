@@ -89,7 +89,7 @@ final class AvailabilityController extends ControllerBase {
       }
     }
 
-    $rows = [];
+    $grouped_days = [];
     $absences = $this->database->select('muteti_doctor_availability', 'a')
       ->fields('a', ['user_id', 'date'])
       ->condition('date', [$start, $end], 'BETWEEN')
@@ -108,15 +108,22 @@ final class AvailabilityController extends ControllerBase {
       $day = new DrupalDateTime($absence->date);
       $doctor_name = $doctor_names[$user_id] ?? $account->getDisplayName();
       $day_type = $stored_day_types[$absence->date] ?? Schedule::departmentDayType($department, $day);
+      $grouped_days[$absence->date] ??= [
+        'day' => (string) $this->t($day->format('l')),
+        'day_type' => $day_type,
+        'doctors' => [],
+      ];
+      $style = $doctor_styles[$user_id] ?? 'background-color:#eef2f6;color:#111111;';
+      $grouped_days[$absence->date]['doctors'][$doctor_name] = '<span class="muteti-availability-doctor-tag" style="'.Html::escape($style).'">'.Html::escape($doctor_name).'</span>';
+    }
+    $rows = [];
+    foreach ($grouped_days as $date => $group) {
+      ksort($group['doctors'], SORT_NATURAL | SORT_FLAG_CASE);
       $rows[] = [
-        Html::escape($absence->date),
-        Html::escape((string) $this->t($day->format('l'))),
-        Html::escape($day_type),
-        [
-          'data' => ['#markup' => '<strong>'.Html::escape($doctor_name).'</strong>'],
-          'class' => ['muteti-availability-doctor-cell'],
-          'style' => $doctor_styles[$user_id] ?? 'background-color:#eef2f6;color:#111111;',
-        ],
+        Html::escape($date),
+        Html::escape($group['day']),
+        Html::escape($group['day_type']),
+        ['data' => ['#markup' => '<div class="muteti-availability-doctors">'.implode('', $group['doctors']).'</div>']],
       ];
     }
 
@@ -198,7 +205,7 @@ final class AvailabilityController extends ControllerBase {
       @page{margin:14mm}body{font-family:DejaVu Sans,sans-serif;color:#172b3a;font-size:10px}
       h1{margin:0 0 4px;font-size:18px}h2{margin:0 0 16px;color:#536b7d;font-size:13px}
       table{width:100%;border-collapse:collapse}th{padding:7px;background:#dce8f2;text-align:left}
-      td{padding:6px;border-bottom:1px solid #d5dde5}.doctor{font-weight:700}.footer{margin-top:18px;text-align:right;color:#667;font-size:8px}
+      td{padding:6px;border-bottom:1px solid #d5dde5}.doctor{display:inline-block;margin:1px 2px;padding:3px 5px;border:1px solid #bbc5ce;border-radius:3px;font-size:8px;font-weight:700;line-height:1.1}.footer{margin-top:18px;text-align:right;color:#667;font-size:8px}
     </style><h1>'.$escape($department).' – szabadságok</h1><h2>'.$escape($month).'</h2><table><thead><tr><th>Dátum</th><th>Nap</th><th>Naptípus</th><th>Orvos</th></tr></thead><tbody>';
 
     $absences = $this->database->select('muteti_doctor_availability', 'a')
@@ -207,6 +214,7 @@ final class AvailabilityController extends ControllerBase {
       ->condition('status', 'absent')
       ->orderBy('date')
       ->execute();
+    $pdf_days = [];
     foreach ($absences as $absence) {
       $user_id = (int) $absence->user_id;
       $account = User::load($user_id);
@@ -219,7 +227,16 @@ final class AvailabilityController extends ControllerBase {
       $background = $doctor && preg_match('/^#[0-9a-f]{3,6}$/i', (string) $doctor->background_color) ? (string) $doctor->background_color : '#eef2f6';
       $text = $doctor && preg_match('/^#[0-9a-f]{3,6}$/i', (string) $doctor->text_color) ? (string) $doctor->text_color : '#111111';
       $day_type = $stored_day_types[$absence->date] ?? Schedule::departmentDayType($department, $date);
-      $html .= '<tr><td>'.$escape($absence->date).'</td><td>'.$days[(int) $date->format('N')].'</td><td>'.$escape($day_type).'</td><td class="doctor" style="background:'.$escape($background).';color:'.$escape($text).'">'.$escape($name).'</td></tr>';
+      $pdf_days[$absence->date] ??= [
+        'day' => $days[(int) $date->format('N')],
+        'day_type' => $day_type,
+        'doctors' => [],
+      ];
+      $pdf_days[$absence->date]['doctors'][$name] = '<span class="doctor" style="background:'.$escape($background).';color:'.$escape($text).'">'.$escape($name).'</span>';
+    }
+    foreach ($pdf_days as $date => $group) {
+      ksort($group['doctors'], SORT_NATURAL | SORT_FLAG_CASE);
+      $html .= '<tr><td>'.$escape($date).'</td><td>'.$escape($group['day']).'</td><td>'.$escape($group['day_type']).'</td><td>'.implode('', $group['doctors']).'</td></tr>';
     }
     $html .= '</tbody></table><div class="footer">Nyomtatva: '.$escape($this->currentUser()->getAccountName()).' '.date('Y.m.d H:i').'</div>';
 
