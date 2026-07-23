@@ -4,13 +4,16 @@ namespace Drupal\muteti_seb\Controller;
 
 use Dompdf\Dompdf;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\muteti_seb\Service\Schedule;
+use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\UserDepartment;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -25,6 +28,18 @@ final class AvailabilityController extends ControllerBase {
     return new static($container->get('database'));
   }
 
+  public function availabilityAccess(AccountInterface $account): AccessResult {
+    return AccessResult::allowedIf(
+      DepartmentMode::featureEnabled(UserDepartment::get($account), 'availability_enabled')
+    )->addCacheContexts(['user']);
+  }
+
+  public function awayAccess(AccountInterface $account): AccessResult {
+    return AccessResult::allowedIf(
+      DepartmentMode::featureEnabled(UserDepartment::get($account), 'away_enabled')
+    )->addCacheContexts(['user']);
+  }
+
   public function update(Request $request): JsonResponse {
     $data = json_decode($request->getContent(), TRUE);
     $date = (string) ($data['date'] ?? '');
@@ -32,6 +47,11 @@ final class AvailabilityController extends ControllerBase {
     $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
     if (!$parsed || $parsed->format('Y-m-d') !== $date || !in_array($status, ['work', 'absent', 'away'], TRUE)) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'Érvénytelen dátum vagy állapot.'], 400);
+    }
+    $department = UserDepartment::get($this->currentUser());
+    if (($status === 'absent' && !DepartmentMode::featureEnabled($department, 'availability_enabled'))
+      || ($status === 'away' && !DepartmentMode::featureEnabled($department, 'away_enabled'))) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'Ez a funkció ennél az osztálynál nincs engedélyezve.'], 403);
     }
     $user_id = (int) $this->currentUser()->id();
     if ($status === 'work') {
