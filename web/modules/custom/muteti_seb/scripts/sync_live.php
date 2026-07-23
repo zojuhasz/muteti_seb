@@ -45,3 +45,9 @@ print "Ügyeleti U1 adatok: {$imported_on_call}\n";
 // Synchronize the legacy doctor absence calendar as part of every live run.
 putenv('MUTETI_SOURCE=d7_live');
 require __DIR__.'/import_absences.php';
+
+// Synchronize days when doctors work at another hospital. This intentionally
+// runs after absences, because _flor is the more specific state if both legacy
+// tables contain the same user and date.
+putenv('MUTETI_SOURCE=d7_live');
+require __DIR__.'/import_away.php';
