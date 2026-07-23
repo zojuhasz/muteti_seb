@@ -67,7 +67,7 @@
 }
 .muteti-booking-column-cell {
   position: relative;
-  padding: .28rem;
+  padding: .14rem;
   border-bottom: 1px solid #d5dde5;
 }
 .muteti-booking-column-cell:last-child { border-bottom: 0; }
@@ -210,7 +210,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 64px;
+  min-height: 48px;
   border: 1px dashed #9db2c6;
   border-radius: .45rem;
   color: #165b91;
@@ -220,21 +220,22 @@
 .muteti-slot-link:hover { background: #e8f4fd; border-color: #397eaf; }
 .muteti-patient {
   position: relative;
-  min-height: 64px;
-  padding: .3rem .4rem .5rem;
+  min-height: 48px;
+  padding: .2rem .32rem .3rem;
   border: 1px solid rgba(30, 54, 76, .18);
   border-radius: .45rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, .08);
   text-align: left;
+  line-height: 1.15;
   overflow-wrap: anywhere;
 }
 .muteti-patient-slot {
-  min-height: 1.45rem;
-  margin: 0 0 .35rem 1.75rem;
+  min-height: 1.15rem;
+  margin: 0 0 .18rem 1.75rem;
   text-align: left;
   font-size: .68rem;
   font-weight: 900;
-  line-height: 1.35;
+  line-height: 1.15;
   white-space: nowrap;
 }
 .muteti-move-link {
