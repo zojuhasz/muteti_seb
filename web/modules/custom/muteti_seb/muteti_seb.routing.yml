@@ -174,3 +174,12 @@ muteti_seb.patient_search:
     _title: 'Betegkereső'
   requirements:
     _permission: 'manage own doctor availability'
+
+muteti_seb.daily_info:
+  path: '/muteti/napi-informacio/{date}'
+  defaults:
+    _form: '\Drupal\muteti_seb\Form\DailyInfoForm'
+    _title: 'Napi műtéti információk'
+  requirements:
+    _permission: 'assign operating room'
+    date: '\d{4}-\d{2}-\d{2}'
