@@ -56,7 +56,11 @@ final class SurgeryController extends ControllerBase {
     $prev_month_day = (clone $monday)->modify('first day of previous month');
     $next_month_day = (clone $monday)->modify('first day of next month');
     $prev_month = (clone $prev_month_day)->modify('monday this week')->format('Y-m-d');
-    $next_month = (clone $next_month_day)->modify('monday this week')->format('Y-m-d');
+    $next_month_date = (clone $next_month_day)->modify('monday this week');
+    if ($next_month_date <= $monday) {
+      $next_month_date->modify('+7 days');
+    }
+    $next_month = $next_month_date->format('Y-m-d');
     $availability = $this->database->select('muteti_doctor_availability', 'a')
       ->fields('a', ['date', 'status'])
       ->condition('user_id', (int) $this->currentUser()->id())
