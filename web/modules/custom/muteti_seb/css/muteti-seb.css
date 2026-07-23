@@ -14,6 +14,16 @@
   font-weight: 600;
 }
 .muteti-nav a:hover { background: #edf5fc; }
+.muteti-login-message {
+  max-width: 520px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  border: 1px solid #aebdcd;
+  border-radius: .7rem;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(24, 54, 84, .12);
+  text-align: center;
+}
 .muteti-table-frame {
   overflow-x: auto;
   border: 1px solid #aebdcd;
