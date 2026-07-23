@@ -105,6 +105,17 @@ function muteti_seb_schema(): array {
     ],
     'primary key' => ['mode', 'date'],
   ];
+  $schema['muteti_doctor_availability'] = [
+    'description' => 'Az orvosok saját napi munka/távollét beállításai.',
+    'fields' => [
+      'user_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
+      'date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
+      'status' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE, 'default' => 'absent'],
+      'changed' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
+    ],
+    'primary key' => ['user_id', 'date'],
+    'indexes' => ['date' => ['date']],
+  ];
   return $schema;
 }
 
@@ -114,10 +125,10 @@ function muteti_seb_schema(): array {
 function muteti_seb_install(): void {
   $roles = [
     'muteti_view' => ['Betekintő', ['view surgery schedule']],
-    'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment']],
-    'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room']],
-    'muteti_orvos3' => ['Orvos', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
-    'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system']],
+    'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_orvos3' => ['Orvos', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability']],
     'muteti_department_seb' => ['Osztály: Sebészet', []],
     'muteti_department_urol' => ['Osztály: Urológia', []],
     'muteti_department_onkorad' => ['Osztály: Onkoradiológia', []],
@@ -469,4 +480,21 @@ function muteti_seb_update_11014(): void {
     );
   }
   muteti_seb_ensure_doctor_content_type();
+}
+
+/**
+ * Adds self-service doctor work/absence planning and monthly reports.
+ */
+function muteti_seb_update_11015(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->tableExists('muteti_doctor_availability')) {
+    $schema->createTable('muteti_doctor_availability', muteti_seb_schema()['muteti_doctor_availability']);
+  }
+  foreach (['muteti_orvos1', 'muteti_orvos2', 'muteti_orvos3', 'muteti_boss'] as $role_id) {
+    if ($role = Role::load($role_id)) {
+      $role->grantPermission('manage own doctor availability');
+      $role->grantPermission('view doctor availability');
+      $role->save();
+    }
+  }
 }
