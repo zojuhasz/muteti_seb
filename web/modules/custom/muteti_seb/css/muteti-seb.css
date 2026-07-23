@@ -330,6 +330,13 @@
   font-weight: 900;
 }
 .muteti-staff { display: inline-block; margin-top: .25rem; font-size: .85em; font-weight: 600; }
+.muteti-patient-notes {
+  display: inline-block;
+  margin-top: .22rem;
+  font-size: .94em;
+  font-weight: 800;
+  line-height: 1.2;
+}
 .muteti-aznm { position: absolute; left: 0; top: 0; bottom: 0; z-index: 2; width: 4px; background: #c00; }
 .muteti-surgery-week-frame,
 .muteti-surgery-board {
