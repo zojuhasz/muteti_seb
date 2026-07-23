@@ -102,9 +102,9 @@
   cursor: pointer;
 }
 .muteti-away-toggle.is-away {
-  border-color: #2d6f9f;
-  background: #dceffc;
-  color: #124d78;
+  border-color: #c66565;
+  background: #fdeaea;
+  color: #8a2020;
 }
 .muteti-availability-toggle.is-absent {
   border-color: #c66565;
