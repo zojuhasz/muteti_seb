@@ -635,9 +635,25 @@ function muteti_seb_ensure_article_content_type(): void {
       'default_value' => [['value' => 'all']],
     ])->save();
   }
+  $body_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'body');
+  if (!$body_storage) {
+    $body_storage = \Drupal\field\Entity\FieldStorageConfig::create([
+      'field_name' => 'body',
+      'entity_type' => 'node',
+      'type' => 'text_with_summary',
+      'cardinality' => 1,
+    ]);
+    $body_storage->save();
+  }
   $body = \Drupal\field\Entity\FieldConfig::loadByName('node', 'muteti_article', 'body');
   if (!$body) {
-    node_add_body_field($type, 'Szöveg');
+    $body = \Drupal\field\Entity\FieldConfig::create([
+      'field_storage' => $body_storage,
+      'bundle' => 'muteti_article',
+      'label' => 'Szöveg',
+      'required' => FALSE,
+    ]);
+    $body->save();
   }
   $form_display = \Drupal::service('entity_display.repository')->getFormDisplay('node', 'muteti_article', 'default');
   $form_display
