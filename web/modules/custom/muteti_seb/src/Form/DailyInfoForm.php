@@ -58,7 +58,15 @@ final class DailyInfoForm extends FormBase {
     if (!DepartmentMode::featureEnabled($department, 'availability_enabled')) {
       $form['other_absent'] = ['#type' => 'textarea', '#title' => 'Egyéb távollevők', '#default_value' => $record->other_absent ?? '', '#rows' => 3];
     }
-    $form['start_time'] = ['#type' => 'time', '#title' => 'Műtétek kezdete', '#default_value' => $record->start_time ?? ($mode === 'urol' ? '08:00' : '08:30'), '#required' => TRUE];
+    $form['start_time'] = [
+      '#type' => 'textfield',
+      '#title' => 'Műtétek kezdete',
+      '#default_value' => $record->start_time ?? ($mode === 'urol' ? '08:00' : '08:30'),
+      '#required' => TRUE,
+      '#size' => 5,
+      '#maxlength' => 5,
+      '#description' => 'ÓÓ:PP formátumban, például 08:00.',
+    ];
     $form['actions']['#type'] = 'actions';
     $form['actions']['submit'] = ['#type' => 'submit', '#value' => 'Mentés', '#button_type' => 'primary'];
     return $form;
@@ -66,13 +74,18 @@ final class DailyInfoForm extends FormBase {
 
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $department = UserDepartment::get($this->currentUser());
+    $mode = DepartmentMode::get($department);
     $date = $form_state->getValue('date');
     $fields = ['responsible', 'acute_1', 'acute_2', 'ambulance', 'other_absent'];
     $values = [];
     foreach ($fields as $field) {
-      $values[$field] = trim((string) $form_state->getValue($field, ''));
+      $value = trim((string) $form_state->getValue($field, ''));
+      $values[$field] = $value === '-' ? '' : $value;
     }
-    $values['start_time'] = $form_state->getValue('start_time');
+    $start_time = trim((string) $form_state->getValue('start_time'));
+    $values['start_time'] = preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $start_time)
+      ? $start_time
+      : ($mode === 'urol' ? '08:00' : '08:30');
     $values['changed'] = \Drupal::time()->getRequestTime();
     \Drupal::database()->merge('muteti_daily_info')
       ->keys(['department' => $department, 'date' => $date])->fields($values)->execute();
