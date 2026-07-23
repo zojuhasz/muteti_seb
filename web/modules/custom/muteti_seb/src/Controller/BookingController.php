@@ -382,15 +382,19 @@ final class BookingController extends ControllerBase {
         ]],
       ],
       '#cache'=>['max-age'=>0],
-      'department'=>['#markup'=>'<h2 class="muteti-panel-title">'.Html::escape($mode === 'onko' ? 'Kemoterápia' : $department).' – előjegyzés</h2>'],
-      'nav'=>[
+      'toolbar'=>[
         '#type'=>'container',
-        '#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']],
-        'prev_month'=>$nav_link('◀◀', 'Előző hónap', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev_month]])),
-        'prev'=>$nav_link('◀', 'Előző hét', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]])),
-        'today'=>$nav_link('●', 'Aktuális hét', Url::fromRoute('muteti_seb.booking')),
-        'next'=>$nav_link('▶', 'Következő hét', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]])),
-        'next_month'=>$nav_link('▶▶', 'Következő hónap', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next_month]])),
+        '#attributes'=>['class'=>['muteti-title-toolbar']],
+        'department'=>['#markup'=>'<h2 class="muteti-panel-title">'.Html::escape($mode === 'onko' ? 'Kemoterápia' : $department).' – előjegyzés</h2>'],
+        'nav'=>[
+          '#type'=>'container',
+          '#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']],
+          'prev_month'=>$nav_link('◀◀', 'Előző hónap', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev_month]])),
+          'prev'=>$nav_link('◀', 'Előző hét', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]])),
+          'today'=>$nav_link('●', 'Aktuális hét', Url::fromRoute('muteti_seb.booking')),
+          'next'=>$nav_link('▶', 'Következő hét', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]])),
+          'next_month'=>$nav_link('▶▶', 'Következő hónap', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next_month]])),
+        ],
       ],
       'table_wrapper'=>[
         '#type'=>'container',
