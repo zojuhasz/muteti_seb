@@ -55,6 +55,12 @@ final class SurgeryController extends ControllerBase {
     $next_month_day = (clone $monday)->modify('first day of next month');
     $prev_month = (clone $prev_month_day)->modify('monday this week')->format('Y-m-d');
     $next_month = (clone $next_month_day)->modify('monday this week')->format('Y-m-d');
+    $availability = $this->database->select('muteti_doctor_availability', 'a')
+      ->fields('a', ['date', 'status'])
+      ->condition('user_id', (int) $this->currentUser()->id())
+      ->condition('date', [$day_dates[0], $day_dates[6]], 'BETWEEN')
+      ->execute()
+      ->fetchAllKeyed();
     $cards = ['#type' => 'container', '#attributes' => ['class' => ['muteti-week-cards']]];
     foreach ($days as $i => $day) {
       $date = $day->format('Y-m-d');
@@ -72,6 +78,19 @@ final class SurgeryController extends ControllerBase {
           ],
           '#url' => Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $monday->format('Y-m-d'), 'day' => $date]]),
           '#attributes' => ['class' => $classes],
+        ],
+        'availability' => [
+          '#type' => 'html_tag',
+          '#tag' => 'button',
+          '#value' => ($availability[$date] ?? 'work') === 'absent' ? 'Távollevő vagyok' : 'Távollét?',
+          '#attributes' => [
+            'type' => 'button',
+            'class' => array_filter(['muteti-availability-toggle', ($availability[$date] ?? 'work') === 'absent' ? 'is-absent' : NULL]),
+            'data-date' => $date,
+            'data-status' => $availability[$date] ?? 'work',
+            'aria-pressed' => ($availability[$date] ?? 'work') === 'absent' ? 'true' : 'false',
+            'title' => 'Saját napi munka vagy távollét beállítása',
+          ],
         ],
       ];
     }
@@ -122,9 +141,10 @@ final class SurgeryController extends ControllerBase {
     };
     $build = [
       '#attached' => [
-        'library' => ['muteti_seb/surgery_board'],
+        'library' => ['muteti_seb/surgery_board', 'muteti_seb/availability'],
         'drupalSettings' => ['mutetiSeb' => [
           'endpoint' => Url::fromRoute('muteti_seb.assignment', [], ['query' => ['token' => $this->csrf->get('muteti/api/assignment')]])->toString(),
+          'availabilityEndpoint' => Url::fromRoute('muteti_seb.availability_update', [], ['query' => ['token' => $this->csrf->get('muteti/api/tavollet')]])->toString(),
         ]],
       ],
       '#cache' => ['max-age' => 0],
