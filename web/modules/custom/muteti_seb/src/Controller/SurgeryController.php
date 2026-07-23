@@ -233,7 +233,7 @@ final class SurgeryController extends ControllerBase {
     $start = $info->start_time ?? ($mode === 'urol' ? '08:00' : '08:30');
     if ($mode === 'urol') {
       $lines = [
-        'Akut beteg ellátás' => $today_on_call->doctor_name ?? '',
+        'Akut beteg ellátás' => trim((string) ($info->acute_1 ?? '')) ?: ($today_on_call->doctor_name ?? ''),
         'Szabadnap' => $previous_on_call->doctor_name ?? '',
         'Egyéb távollevők' => $absent,
         'Telefonos' => $today_on_call->doctor_name_2 ?? '',
