@@ -12,6 +12,13 @@ muteti_seb.departments:
   parent: system.admin_content
   weight: 21
 
+muteti_seb.departments_main:
+  title: 'Osztályok beállítása'
+  description: 'Osztályok, működési módok és modulok beállítása.'
+  route_name: muteti_seb.departments
+  menu_name: main
+  weight: 90
+
 muteti_seb.audit_log:
   title: 'Műtéti napló'
   description: 'Az előjegyzéseken végzett műveletek nyomtatható naplója.'
