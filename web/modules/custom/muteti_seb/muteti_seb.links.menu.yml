@@ -39,3 +39,10 @@ muteti_seb.away_month:
   route_name: muteti_seb.away_month
   menu_name: main
   weight: 31
+
+muteti_seb.patient_search:
+  title: 'Betegkereső'
+  description: 'Beteg keresése a saját osztály múltbeli és jövőbeli előjegyzéseiben.'
+  route_name: muteti_seb.patient_search
+  menu_name: main
+  weight: 32
