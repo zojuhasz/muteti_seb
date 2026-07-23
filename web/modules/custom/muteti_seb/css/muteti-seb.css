@@ -233,6 +233,13 @@
   outline: 3px solid #e39125;
   outline-offset: 2px;
 }
+.muteti-patient.is-without-patient .muteti-patient-slot {
+  margin-bottom: 2.15rem;
+}
+.muteti-patient.is-without-patient .muteti-edit-link,
+.muteti-patient.is-without-patient .muteti-patient-actions {
+  top: 2rem;
+}
 .muteti-patient-slot {
   min-height: 1.15rem;
   margin: 0 0 1.7rem;
