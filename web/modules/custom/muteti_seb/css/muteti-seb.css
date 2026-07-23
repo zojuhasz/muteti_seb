@@ -233,12 +233,33 @@
   outline: 3px solid #e39125;
   outline-offset: 2px;
 }
-.muteti-patient.is-without-patient .muteti-patient-slot {
-  margin-bottom: 2.15rem;
+.muteti-patient.is-without-patient {
+  display: grid;
+  grid-template-columns: 1.35rem 1fr auto;
+  column-gap: .25rem;
+  row-gap: .55rem;
 }
-.muteti-patient.is-without-patient .muteti-edit-link,
+.muteti-patient.is-without-patient .muteti-patient-slot {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  min-height: 0;
+  margin: 0 0 .35rem;
+  text-align: center;
+}
+.muteti-patient.is-without-patient .muteti-edit-link {
+  position: static;
+  grid-column: 1;
+  grid-row: 2;
+}
 .muteti-patient.is-without-patient .muteti-patient-actions {
-  top: 2rem;
+  position: static;
+  grid-column: 3;
+  grid-row: 2;
+  justify-self: end;
+}
+.muteti-patient.is-without-patient .muteti-patient-content {
+  grid-column: 1 / -1;
+  grid-row: 3;
 }
 .muteti-patient-slot {
   min-height: 1.15rem;
