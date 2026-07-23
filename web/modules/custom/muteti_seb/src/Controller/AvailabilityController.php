@@ -114,16 +114,34 @@ final class AvailabilityController extends ControllerBase {
         'doctors' => [],
       ];
       $style = $doctor_styles[$user_id] ?? 'background-color:#eef2f6;color:#111111;';
-      $grouped_days[$absence->date]['doctors'][$doctor_name] = '<span class="muteti-availability-doctor-tag" style="'.Html::escape($style).'">'.Html::escape($doctor_name).'</span>';
+      $grouped_days[$absence->date]['doctors'][$doctor_name] = [
+        'name' => $doctor_name,
+        'style' => $style,
+      ];
     }
     $rows = [];
     foreach ($grouped_days as $date => $group) {
       ksort($group['doctors'], SORT_NATURAL | SORT_FLAG_CASE);
+      $doctor_list = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['muteti-availability-doctors']],
+      ];
+      foreach (array_values($group['doctors']) as $index => $doctor) {
+        $doctor_list['doctor_'.$index] = [
+          '#type' => 'html_tag',
+          '#tag' => 'span',
+          '#value' => Html::escape($doctor['name']),
+          '#attributes' => [
+            'class' => ['muteti-availability-doctor-tag'],
+            'style' => $doctor['style'],
+          ],
+        ];
+      }
       $rows[] = [
         Html::escape($date),
         Html::escape($group['day']),
         Html::escape($group['day_type']),
-        ['data' => ['#markup' => '<div class="muteti-availability-doctors">'.implode('', $group['doctors']).'</div>']],
+        ['data' => $doctor_list],
       ];
     }
 
