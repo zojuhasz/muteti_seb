@@ -111,9 +111,9 @@ final class AvailabilityController extends ControllerBase {
         Html::escape((string) $this->t($day->format('l'))),
         Html::escape($day_type),
         [
-          'data' => [
-            '#markup' => '<span class="muteti-availability-doctor" style="'.Html::escape($doctor_styles[$user_id] ?? 'background-color:#eef2f6;color:#111111;').'">'.Html::escape($doctor_name).'</span>',
-          ],
+          'data' => ['#markup' => '<strong>'.Html::escape($doctor_name).'</strong>'],
+          'class' => ['muteti-availability-doctor-cell'],
+          'style' => $doctor_styles[$user_id] ?? 'background-color:#eef2f6;color:#111111;',
         ],
       ];
     }
