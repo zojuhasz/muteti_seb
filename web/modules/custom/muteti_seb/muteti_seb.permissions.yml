@@ -9,3 +9,7 @@ assign operating room:
 administer surgery system:
   title: 'Műtéti rendszer adminisztrációja'
   restrict access: true
+manage own doctor availability:
+  title: 'Saját munka és távollét beállítása'
+view doctor availability:
+  title: 'Orvosok havi távolléti listájának megtekintése'
