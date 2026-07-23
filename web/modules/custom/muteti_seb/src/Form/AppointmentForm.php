@@ -45,7 +45,7 @@ final class AppointmentForm extends FormBase {
         '#default_value' => $a->operation_name ?? '',
       ];
       $form['patient_name']=['#type'=>'textfield','#title'=>$this->t('Beteg neve @code',['@code'=>date('n-j',strtotime($date)).'-'.$slot]),'#required'=>TRUE,'#default_value'=>$a->patient_name ?? ''];
-      $form['ward_room']=['#type'=>'textfield','#title'=>$this->t('Kórlapszám'),'#default_value'=>$a->ward_room ?? ''];
+      $form['taj']=['#type'=>'textfield','#title'=>$this->t('Kórlapszám'),'#default_value'=>$a->taj ?? ''];
       $form['contact']=['#type'=>'textfield','#title'=>$this->t('Elérhetőség'),'#default_value'=>$a->contact ?? ''];
       $form['notes']=['#type'=>'textarea','#title'=>$this->t('Egyéb info'),'#default_value'=>$a->notes ?? ''];
       $form['doctor_id']=['#type'=>'select','#title'=>$this->t('Orvos'),'#options'=>$doctors,'#default_value'=>$a->doctor_id ?? 0];
@@ -71,7 +71,7 @@ final class AppointmentForm extends FormBase {
         'aznm' => 0,
         'patient_name' => trim((string) $v['patient_name']),
         'contact' => trim((string) $v['contact']),
-        'ward_room' => trim((string) $v['ward_room']),
+        'taj' => trim((string) $v['taj']),
         'diagnosis' => '',
         'operation_name' => (string) $v['operation_name'],
         'notes' => trim((string) $v['notes']),
@@ -89,7 +89,7 @@ final class AppointmentForm extends FormBase {
     $is_new = !$this->appointment;
     if ($this->appointment) $this->database->update('muteti_appointment')->fields($fields)->condition('id',$this->appointment->id)->execute();
     else { $fields += ['department'=>$department,'admission_date'=>$v['date'],'slot_type'=>$v['slot'],'created_by'=>(int)$this->currentUser()->id(),'created'=>$fields['changed']]; $this->database->insert('muteti_appointment')->fields($fields)->execute(); }
-    AuditLog::write($is_new ? 'új felvitel' : 'módosítás', $department, (string) $v['date'], (string) $v['slot'], (string) ($v['ward_room'] ?: ($v['taj'] ?? '')));
+    AuditLog::write($is_new ? 'új felvitel' : 'módosítás', $department, (string) $v['date'], (string) $v['slot'], (string) (($v['ward_room'] ?? '') ?: ($v['taj'] ?? '')));
     $this->messenger()->addStatus($this->t('Az előjegyzés mentve.')); $form_state->setRedirect('muteti_seb.booking',[],['query'=>['week'=>$v['date']]]);
   }
 }
