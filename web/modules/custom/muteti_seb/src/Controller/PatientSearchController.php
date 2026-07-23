@@ -120,7 +120,7 @@ final class PatientSearchController extends ControllerBase {
           'Időszak',
           'Beteg neve',
           'Születési dátum',
-          $is_oncology ? 'Kórlapszám' : 'TAJ',
+          $is_oncology ? 'Kórlap' : 'TAJ',
           'Cellatípus',
           'Műtét',
           'Orvos',
