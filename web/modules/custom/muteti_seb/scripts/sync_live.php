@@ -35,12 +35,16 @@ foreach ($on_call_rows as $on_call) {
     ->key('date', $date)
     ->fields([
       'doctor_name' => trim((string) $on_call->u1),
-      'doctor_name_2' => $mode === 'seb' ? trim((string) $on_call->u2) : '',
+      'doctor_name_2' => trim((string) $on_call->u2),
     ])
     ->execute();
   $imported_on_call++;
 }
 print "Ügyeleti U1 adatok: {$imported_on_call}\n";
+
+// Synchronize the daily operating-room responsibility records.
+putenv('MUTETI_SOURCE=d7_live');
+require __DIR__.'/import_daily_info.php';
 
 // Synchronize the legacy doctor absence calendar as part of every live run.
 putenv('MUTETI_SOURCE=d7_live');
