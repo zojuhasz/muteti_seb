@@ -42,7 +42,7 @@ final class AvailabilityController extends ControllerBase {
       $this->database->merge('muteti_doctor_availability')
         ->key('user_id', $user_id)
         ->key('date', $date)
-        ->fields(['status' => 'absent', 'changed' => time()])
+        ->fields(['status' => 'absent', 'source' => 'manual', 'legacy_id' => NULL, 'changed' => time()])
         ->execute();
     }
     return new JsonResponse(['ok' => TRUE, 'date' => $date, 'status' => $status]);
