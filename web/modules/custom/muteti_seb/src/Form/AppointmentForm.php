@@ -45,7 +45,7 @@ final class AppointmentForm extends FormBase {
         '#default_value' => $a->operation_name ?? '',
       ];
       $form['patient_name']=['#type'=>'textfield','#title'=>$this->t('Beteg neve @code',['@code'=>date('n-j',strtotime($date)).'-'.$slot]),'#required'=>TRUE,'#default_value'=>$a->patient_name ?? ''];
-      $form['taj']=['#type'=>'textfield','#title'=>$this->t('Kórlapszám'),'#default_value'=>$a->taj ?? ''];
+      $form['taj']=['#type'=>'textfield','#title'=>$this->t('Kórlap'),'#default_value'=>$a->taj ?? ''];
       $form['contact']=['#type'=>'textfield','#title'=>$this->t('Elérhetőség'),'#default_value'=>$a->contact ?? ''];
       $form['notes']=['#type'=>'textarea','#title'=>$this->t('Egyéb info'),'#default_value'=>$a->notes ?? ''];
       $form['doctor_id']=['#type'=>'select','#title'=>$this->t('Orvos'),'#options'=>$doctors,'#default_value'=>$a->doctor_id ?? 0];
