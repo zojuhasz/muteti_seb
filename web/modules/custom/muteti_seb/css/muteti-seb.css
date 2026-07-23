@@ -112,6 +112,20 @@
   line-height: 1.12;
   overflow-wrap: anywhere;
 }
+.muteti-availability-date {
+  font-size: .72rem;
+}
+.muteti-availability-day {
+  font-size: .76rem;
+  font-weight: 700;
+}
+.muteti-availability-day.is-weekend {
+  color: #c62828;
+}
+.muteti-availability-day-type {
+  font-size: .7rem;
+  font-weight: 800;
+}
 .muteti-availability-pdf-link {
   display: inline-flex;
   align-items: center;
