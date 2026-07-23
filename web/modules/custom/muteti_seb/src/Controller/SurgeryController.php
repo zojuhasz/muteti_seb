@@ -28,6 +28,8 @@ final class SurgeryController extends ControllerBase {
 
   public function week(Request $request): array {
     $department = UserDepartment::get($this->currentUser());
+    $availability_enabled = DepartmentMode::featureEnabled($department, 'availability_enabled');
+    $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
     try {
       $monday = new DrupalDateTime($request->query->get('week', 'monday this week'));
     }
@@ -79,7 +81,7 @@ final class SurgeryController extends ControllerBase {
           '#url' => Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $monday->format('Y-m-d'), 'day' => $date]]),
           '#attributes' => ['class' => $classes],
         ],
-        'availability' => [
+        'availability' => $availability_enabled ? [
           '#type' => 'html_tag',
           '#tag' => 'button',
           '#value' => ($availability[$date] ?? 'work') === 'absent' ? 'Távollevő vagyok' : 'Távollét?',
@@ -91,8 +93,8 @@ final class SurgeryController extends ControllerBase {
             'aria-pressed' => ($availability[$date] ?? 'work') === 'absent' ? 'true' : 'false',
             'title' => 'Saját napi munka vagy távollét beállítása',
           ],
-        ],
-        'away' => [
+        ] : [],
+        'away' => $away_enabled ? [
           '#type' => 'html_tag',
           '#tag' => 'button',
           '#value' => ($availability[$date] ?? 'work') === 'away' ? 'Idegenben vagyok' : 'Idegenben?',
@@ -104,7 +106,7 @@ final class SurgeryController extends ControllerBase {
             'aria-pressed' => ($availability[$date] ?? 'work') === 'away' ? 'true' : 'false',
             'title' => 'Másik kórházban végzett munka beállítása',
           ],
-        ],
+        ] : [],
       ];
     }
 
