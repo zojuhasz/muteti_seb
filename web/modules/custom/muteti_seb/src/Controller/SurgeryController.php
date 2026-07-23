@@ -92,6 +92,19 @@ final class SurgeryController extends ControllerBase {
             'title' => 'Saját napi munka vagy távollét beállítása',
           ],
         ],
+        'away' => [
+          '#type' => 'html_tag',
+          '#tag' => 'button',
+          '#value' => ($availability[$date] ?? 'work') === 'away' ? 'Idegenben vagyok' : 'Idegenben?',
+          '#attributes' => [
+            'type' => 'button',
+            'class' => array_filter(['muteti-away-toggle', ($availability[$date] ?? 'work') === 'away' ? 'is-away' : NULL]),
+            'data-date' => $date,
+            'data-status' => $availability[$date] ?? 'work',
+            'aria-pressed' => ($availability[$date] ?? 'work') === 'away' ? 'true' : 'false',
+            'title' => 'Másik kórházban végzett munka beállítása',
+          ],
+        ],
       ];
     }
 
