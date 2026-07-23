@@ -49,7 +49,7 @@ function muteti_seb_form_user_login_form_alter(array &$form, FormStateInterface 
  */
 function muteti_seb_login_redirect_submit(array &$form, FormStateInterface $form_state): void {
   if (!\Drupal::request()->query->has('destination')) {
-    $form_state->setRedirect('muteti_seb.booking');
+    $form_state->setRedirect('muteti_seb.home');
   }
 }
 
@@ -111,6 +111,14 @@ function muteti_seb_form_alter(array &$form, FormStateInterface $form_state, str
     return;
   }
   $entity = $form_object->getEntity();
+  if ($entity instanceof NodeInterface && $entity->bundle() === 'muteti_article') {
+    if (isset($form['field_muteti_article_department']['widget'][0]['value'])) {
+      $names = \Drupal::database()->select('muteti_department_config', 'd')->fields('d', ['name'])->orderBy('name')->execute()->fetchCol();
+      $form['field_muteti_article_department']['widget'][0]['value']['#type'] = 'select';
+      $form['field_muteti_article_department']['widget'][0]['value']['#options'] = ['all' => 'Minden osztály'] + array_combine($names, $names);
+    }
+    return;
+  }
   if (!$entity instanceof NodeInterface || $entity->bundle() !== 'muteti_doctor') {
     return;
   }
