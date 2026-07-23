@@ -260,7 +260,7 @@ final class BookingController extends ControllerBase {
           if ($mode === 'onko') {
             $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong>';
             if (trim((string) $a->taj) !== '') {
-              $patient_content .= '<br>Kórlapszám: '.Html::escape($a->taj);
+              $patient_content .= '<br>Kórlap: '.Html::escape($a->taj);
             }
             $patient_content .= '<br>'.Html::escape($a->operation_name);
             if ($doctor) {
