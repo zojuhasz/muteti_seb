@@ -15,7 +15,7 @@ final class PatientSearchForm extends FormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state): array {
     $is_oncology = DepartmentMode::get(UserDepartment::get($this->currentUser())) === 'onko';
-    $identifier = $is_oncology ? 'kórlapszáma' : 'TAJ-száma';
+    $identifier = $is_oncology ? 'kórlapja' : 'TAJ-száma';
     $form['#method'] = 'get';
     $form['#attributes']['class'][] = 'muteti-patient-search-form';
     $form['query'] = [
@@ -26,7 +26,7 @@ final class PatientSearchForm extends FormBase {
       '#size' => 40,
       '#maxlength' => 100,
       '#attributes' => [
-        'placeholder' => $is_oncology ? $this->t('Név vagy kórlapszám') : $this->t('Név vagy TAJ'),
+        'placeholder' => $is_oncology ? $this->t('Név vagy kórlap') : $this->t('Név vagy TAJ'),
         'autocomplete' => 'off',
         'minlength' => 2,
       ],
