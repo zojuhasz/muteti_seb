@@ -188,6 +188,6 @@ muteti_seb.home:
   path: '/muteti/nyito'
   defaults:
     _controller: '\Drupal\muteti_seb\Controller\ArticleController::listing'
-    _title: 'Hírek'
+    _title_callback: '\Drupal\muteti_seb\Controller\ArticleController::title'
   requirements:
     _permission: 'access content'
