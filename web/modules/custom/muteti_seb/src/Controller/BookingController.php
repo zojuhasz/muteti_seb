@@ -372,7 +372,7 @@ final class BookingController extends ControllerBase {
         ]],
       ],
       '#cache'=>['max-age'=>0],
-      'department'=>['#markup'=>'<h2 class="muteti-panel-title">'.Html::escape($department).' – előjegyzés</h2>'],
+      'department'=>['#markup'=>'<h2 class="muteti-panel-title">'.Html::escape($mode === 'onko' ? 'Kemoterápia' : $department).' – előjegyzés</h2>'],
       'nav'=>[
         '#type'=>'container',
         '#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']],
