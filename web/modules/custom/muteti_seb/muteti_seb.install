@@ -111,6 +111,8 @@ function muteti_seb_schema(): array {
       'user_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE],
       'date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
       'status' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE, 'default' => 'absent'],
+      'source' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE, 'default' => 'manual'],
+      'legacy_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
       'changed' => ['type' => 'int', 'not null' => TRUE, 'default' => 0],
     ],
     'primary key' => ['user_id', 'date'],
@@ -496,5 +498,27 @@ function muteti_seb_update_11015(): void {
       $role->grantPermission('view doctor availability');
       $role->save();
     }
+  }
+}
+
+/**
+ * Marks absences imported from the live Drupal 7 _szabi table.
+ */
+function muteti_seb_update_11016(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('muteti_doctor_availability', 'source')) {
+    $schema->addField('muteti_doctor_availability', 'source', [
+      'type' => 'varchar',
+      'length' => 10,
+      'not null' => TRUE,
+      'default' => 'manual',
+    ]);
+  }
+  if (!$schema->fieldExists('muteti_doctor_availability', 'legacy_id')) {
+    $schema->addField('muteti_doctor_availability', 'legacy_id', [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+    ]);
   }
 }
