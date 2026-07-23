@@ -24,7 +24,7 @@ final class PatientSearchController extends ControllerBase {
   public function search(Request $request): array {
     $department = UserDepartment::get($this->currentUser());
     $is_oncology = DepartmentMode::get($department) === 'onko';
-    $term = trim((string) $request->query->get('q', ''));
+    $term = trim((string) $request->query->get('q', $request->query->get('query', '')));
     $build = [
       '#attached' => ['library' => ['muteti_seb/surgery_board']],
       '#cache' => ['max-age' => 0],
