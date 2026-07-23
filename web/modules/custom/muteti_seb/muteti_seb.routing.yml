@@ -166,3 +166,11 @@ muteti_seb.away_pdf:
     _permission: 'view doctor availability'
     _custom_access: '\Drupal\muteti_seb\Controller\AvailabilityController::awayAccess'
     month: '\d{4}-\d{2}'
+
+muteti_seb.patient_search:
+  path: '/muteti/betegkereso'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\PatientSearchController::search'
+    _title: 'Betegkereső'
+  requirements:
+    _permission: 'manage own doctor availability'
