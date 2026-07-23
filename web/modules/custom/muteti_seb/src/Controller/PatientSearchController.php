@@ -8,6 +8,7 @@ use Drupal\Core\Database\Connection;
 use Drupal\Core\Link;
 use Drupal\Core\Url;
 use Drupal\muteti_seb\Form\PatientSearchForm;
+use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -22,6 +23,7 @@ final class PatientSearchController extends ControllerBase {
 
   public function search(Request $request): array {
     $department = UserDepartment::get($this->currentUser());
+    $is_oncology = DepartmentMode::get($department) === 'onko';
     $term = trim((string) $request->query->get('q', ''));
     $build = [
       '#attached' => ['library' => ['muteti_seb/surgery_board']],
@@ -48,6 +50,7 @@ final class PatientSearchController extends ControllerBase {
       'patient_name',
       'birth_date',
       'taj',
+      'ward_room',
       'operation_name',
       'surgery_date',
       'operating_room',
@@ -59,7 +62,7 @@ final class PatientSearchController extends ControllerBase {
     $query->condition(
       $query->orConditionGroup()
         ->condition('a.patient_name', $match, 'LIKE')
-        ->condition('a.taj', $match, 'LIKE')
+        ->condition($is_oncology ? 'a.ward_room' : 'a.taj', $match, 'LIKE')
     );
     $results = $query
       ->orderBy('a.admission_date', 'DESC')
@@ -94,7 +97,7 @@ final class PatientSearchController extends ControllerBase {
         ],
         ['data' => $patient],
         Html::escape($result->birth_date ?? ''),
-        Html::escape($result->taj ?? ''),
+        Html::escape($is_oncology ? ($result->ward_room ?? '') : ($result->taj ?? '')),
         Html::escape($result->slot_type),
         Html::escape($result->operation_name),
         Html::escape($result->doctor_name ?? ''),
@@ -117,7 +120,7 @@ final class PatientSearchController extends ControllerBase {
           'Időszak',
           'Beteg neve',
           'Születési dátum',
-          'TAJ',
+          $is_oncology ? 'Kórlapszám' : 'TAJ',
           'Cellatípus',
           'Műtét',
           'Orvos',
