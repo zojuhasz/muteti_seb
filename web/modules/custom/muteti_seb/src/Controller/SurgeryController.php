@@ -116,7 +116,7 @@ final class SurgeryController extends ControllerBase {
         '#type' => 'container',
         '#attributes' => $attributes,
         'content' => [
-          '#markup' => '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($staff ? '<br><span class="muteti-staff">'.implode(', ', array_map([Html::class, 'escape'], $staff)).'</span>' : ''),
+          '#markup' => (!empty($a->ward_room) ? '<strong>('.Html::escape($a->ward_room).')</strong> ' : '').'<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($staff ? '<br><span class="muteti-staff">'.implode(', ', array_map([Html::class, 'escape'], $staff)).'</span>' : ''),
         ],
       ];
     };
