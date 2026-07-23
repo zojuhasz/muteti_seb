@@ -77,6 +77,24 @@
 .muteti-heading-date { font-size: .83rem; font-weight: 600; }
 .muteti-heading-day { margin-top: .2rem; font-size: .78rem; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
 .muteti-heading-day-row { display: flex; align-items: center; justify-content: center; gap: .32rem; }
+.muteti-availability-toggle {
+  width: calc(100% - .5rem);
+  margin: .3rem .25rem .15rem;
+  padding: .28rem .45rem;
+  border: 1px solid #9aa9b7;
+  border-radius: 999px;
+  background: #f2f5f7;
+  color: #334b60;
+  font-size: .7rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.muteti-availability-toggle.is-absent {
+  border-color: #c66565;
+  background: #fdeaea;
+  color: #8a2020;
+}
+.muteti-availability-toggle:disabled { opacity: .55; cursor: wait; }
 .muteti-heading-on-call {
   display: block;
   min-height: 1rem;
