@@ -541,3 +541,26 @@ function muteti_seb_update_11017(): void {
     }
   }
 }
+
+/**
+ * Moves temporarily stored oncology chart numbers into the TAJ column.
+ */
+function muteti_seb_update_11018(): void {
+  $database = \Drupal::database();
+  $departments = $database->select('muteti_department_config', 'd')
+    ->fields('d', ['name'])
+    ->condition('mode', 'onko')
+    ->execute()
+    ->fetchCol();
+  foreach ($departments as $department) {
+    $database->query(
+      "UPDATE {muteti_appointment}
+       SET taj = ward_room
+       WHERE department = :department
+         AND (taj IS NULL OR taj = '')
+         AND ward_room IS NOT NULL
+         AND ward_room <> ''",
+      [':department' => $department]
+    );
+  }
+}
