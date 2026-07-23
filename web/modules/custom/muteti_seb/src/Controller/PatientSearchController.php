@@ -62,7 +62,7 @@ final class PatientSearchController extends ControllerBase {
     $query->condition(
       $query->orConditionGroup()
         ->condition('a.patient_name', $match, 'LIKE')
-        ->condition($is_oncology ? 'a.ward_room' : 'a.taj', $match, 'LIKE')
+        ->condition('a.taj', $match, 'LIKE')
     );
     $results = $query
       ->orderBy('a.admission_date', 'DESC')
@@ -97,7 +97,7 @@ final class PatientSearchController extends ControllerBase {
         ],
         ['data' => $patient],
         Html::escape($result->birth_date ?? ''),
-        Html::escape($is_oncology ? ($result->ward_room ?? '') : ($result->taj ?? '')),
+        Html::escape($result->taj ?? ''),
         Html::escape($result->slot_type),
         Html::escape($result->operation_name),
         Html::escape($result->doctor_name ?? ''),
