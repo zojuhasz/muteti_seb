@@ -3,9 +3,10 @@
 
   Drupal.behaviors.mutetiDoctorAvailability = {
     attach(context) {
-      once('muteti-availability-toggle', '.muteti-availability-toggle', context).forEach((button) => {
+      once('muteti-availability-toggle', '.muteti-availability-toggle, .muteti-away-toggle', context).forEach((button) => {
         button.addEventListener('click', async () => {
-          const nextStatus = button.dataset.status === 'absent' ? 'work' : 'absent';
+          const activeStatus = button.classList.contains('muteti-away-toggle') ? 'away' : 'absent';
+          const nextStatus = button.dataset.status === activeStatus ? 'work' : activeStatus;
           button.disabled = true;
           try {
             const response = await fetch(drupalSettings.mutetiSeb.availabilityEndpoint, {
@@ -16,15 +17,24 @@
             });
             const result = await response.json();
             if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
-            button.dataset.status = result.status;
-            button.textContent = result.status === 'absent' ? 'Távollevő vagyok' : 'Távollét?';
-            button.classList.toggle('is-absent', result.status === 'absent');
-            button.setAttribute('aria-pressed', result.status === 'absent' ? 'true' : 'false');
+            document.querySelectorAll(
+              `.muteti-availability-toggle[data-date="${result.date}"], .muteti-away-toggle[data-date="${result.date}"]`
+            ).forEach((relatedButton) => {
+              const isAbsence = relatedButton.classList.contains('muteti-availability-toggle');
+              const isActive = result.status === (isAbsence ? 'absent' : 'away');
+              relatedButton.dataset.status = result.status;
+              relatedButton.textContent = isAbsence
+                ? (isActive ? 'Távollevő vagyok' : 'Távollét?')
+                : (isActive ? 'Idegenben vagyok' : 'Idegenben?');
+              relatedButton.classList.toggle('is-absent', isAbsence && isActive);
+              relatedButton.classList.toggle('is-away', !isAbsence && isActive);
+              relatedButton.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            });
             button.disabled = false;
           }
           catch (error) {
             button.disabled = false;
-            window.alert(error.message || 'A távollét mentése sikertelen.');
+            window.alert(error.message || 'A napi állapot mentése sikertelen.');
           }
         });
       });
