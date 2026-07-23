@@ -20,3 +20,15 @@ doctor_form:
   dependencies:
     - core/drupal
     - core/once
+
+availability:
+  version: 1.x
+  css:
+    theme:
+      css/muteti-seb.css: {}
+  js:
+    js/availability.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+    - core/drupalSettings
