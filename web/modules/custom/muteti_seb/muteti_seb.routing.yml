@@ -183,3 +183,11 @@ muteti_seb.daily_info:
   requirements:
     _permission: 'assign operating room'
     date: '\d{4}-\d{2}-\d{2}'
+
+muteti_seb.home:
+  path: '/muteti/nyito'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\ArticleController::listing'
+    _title: 'Hírek'
+  requirements:
+    _permission: 'access content'
