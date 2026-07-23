@@ -1,3 +1,10 @@
+muteti_seb.home:
+  title: 'Nyitóoldal'
+  description: 'Az osztálynak szóló hírek és cikkek.'
+  route_name: muteti_seb.home
+  menu_name: main
+  weight: 0
+
 muteti_seb.doctors:
   title: 'Műtéti orvosok'
   description: 'Orvosok, színek, felhasználók és osztályok kezelése.'
