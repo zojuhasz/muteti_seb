@@ -496,6 +496,32 @@
   background: #f8fafc;
   box-shadow: 0 2px 7px rgba(24, 54, 84, .08);
 }
+.muteti-daily-info {
+  margin-top: 1rem;
+  padding: .8rem;
+  border: 1px solid #9ba8b4;
+  border-radius: .45rem;
+  background: #eef1f3;
+  color: #173f63;
+  font-size: .78rem;
+  line-height: 1.55;
+}
+.muteti-daily-info-start { margin-top: .8rem; }
+.muteti-daily-info-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  margin-top: .7rem;
+  border-radius: .3rem;
+  background: #2f7cad;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+}
 .muteti-waiting { border-color: #c6a86a; background: #fffdf7; }
 .muteti-zone-title {
   margin: -.75rem -.75rem .75rem;
