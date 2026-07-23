@@ -361,7 +361,11 @@ final class BookingController extends ControllerBase {
     $rows = [$column_row];
     $prev=(clone $monday)->modify('-7 days')->format('Y-m-d'); $next=(clone $monday)->modify('+7 days')->format('Y-m-d');
     $prev_month=(clone $monday)->modify('first day of previous month')->modify('monday this week')->format('Y-m-d');
-    $next_month=(clone $monday)->modify('first day of next month')->modify('monday this week')->format('Y-m-d');
+    $next_month_date=(clone $monday)->modify('first day of next month')->modify('monday this week');
+    if ($next_month_date <= $monday) {
+      $next_month_date->modify('+7 days');
+    }
+    $next_month=$next_month_date->format('Y-m-d');
     return [
       '#attached'=>[
         'library'=>['muteti_seb/surgery_board'],
