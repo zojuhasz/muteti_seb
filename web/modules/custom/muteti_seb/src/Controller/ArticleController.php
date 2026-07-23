@@ -9,6 +9,12 @@ use Drupal\muteti_seb\Service\UserDepartment;
 
 final class ArticleController extends ControllerBase {
 
+  public function title(): string {
+    return $this->currentUser()->isAnonymous()
+      ? 'Ez az oldal autentikációt igényel...'
+      : 'Hírek';
+  }
+
   public function listing(): array {
     if ($this->currentUser()->isAnonymous()) {
       $login = Link::fromTextAndUrl('Belépés', Url::fromRoute('user.login'))->toRenderable();
