@@ -168,6 +168,8 @@ function muteti_seb_install(): void {
     \Drupal::database()->insert('muteti_department_config')->fields(compact('name', 'machine_name', 'mode', 'role_id'))->execute();
   }
   muteti_seb_ensure_doctor_content_type();
+  muteti_seb_ensure_article_content_type();
+  \Drupal::configFactory()->getEditable('system.site')->set('page.front', '/muteti/nyito')->save();
 }
 
 /**
@@ -588,4 +590,63 @@ function muteti_seb_update_11019(): void {
   if (!$schema->tableExists('muteti_daily_info')) {
     $schema->createTable('muteti_daily_info', muteti_seb_schema()['muteti_daily_info']);
   }
+}
+
+/**
+ * Adds department-targeted articles and makes their list the front page.
+ */
+function muteti_seb_update_11020(): void {
+  muteti_seb_ensure_article_content_type();
+  \Drupal::configFactory()->getEditable('system.site')->set('page.front', '/muteti/nyito')->save();
+}
+
+/**
+ * Creates the department-aware Article content type and its fields.
+ */
+function muteti_seb_ensure_article_content_type(): void {
+  $type = \Drupal\node\Entity\NodeType::load('muteti_article');
+  if (!$type) {
+    $type = \Drupal\node\Entity\NodeType::create([
+      'type' => 'muteti_article',
+      'name' => 'Cikk',
+      'description' => 'Osztályhoz vagy minden osztályhoz megjelenő nyitóoldali cikk.',
+      'new_revision' => TRUE,
+      'display_submitted' => TRUE,
+    ]);
+    $type->save();
+  }
+  if (!\Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'field_muteti_article_department')) {
+    \Drupal\field\Entity\FieldStorageConfig::create([
+      'field_name' => 'field_muteti_article_department',
+      'entity_type' => 'node',
+      'type' => 'string',
+      'cardinality' => 1,
+      'settings' => ['max_length' => 100],
+    ])->save();
+  }
+  if (!\Drupal\field\Entity\FieldConfig::loadByName('node', 'muteti_article', 'field_muteti_article_department')) {
+    \Drupal\field\Entity\FieldConfig::create([
+      'field_name' => 'field_muteti_article_department',
+      'entity_type' => 'node',
+      'bundle' => 'muteti_article',
+      'label' => 'Osztály',
+      'required' => TRUE,
+      'default_value' => [['value' => 'all']],
+    ])->save();
+  }
+  $body = \Drupal\field\Entity\FieldConfig::loadByName('node', 'muteti_article', 'body');
+  if (!$body) {
+    node_add_body_field($type, 'Szöveg');
+  }
+  $form_display = \Drupal::service('entity_display.repository')->getFormDisplay('node', 'muteti_article', 'default');
+  $form_display
+    ->setComponent('title', ['type' => 'string_textfield', 'weight' => 0])
+    ->setComponent('field_muteti_article_department', ['type' => 'string_textfield', 'weight' => 10])
+    ->setComponent('body', ['type' => 'text_textarea_with_summary', 'weight' => 20])
+    ->save();
+  $view_display = \Drupal::service('entity_display.repository')->getViewDisplay('node', 'muteti_article', 'teaser');
+  $view_display
+    ->setComponent('body', ['type' => 'text_summary_or_trimmed', 'label' => 'hidden'])
+    ->removeComponent('field_muteti_article_department')
+    ->save();
 }
