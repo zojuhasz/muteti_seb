@@ -229,6 +229,10 @@
   line-height: 1.15;
   overflow-wrap: anywhere;
 }
+.muteti-patient:target {
+  outline: 3px solid #e39125;
+  outline-offset: 2px;
+}
 .muteti-patient-slot {
   min-height: 1.15rem;
   margin: 0 0 1.7rem;
