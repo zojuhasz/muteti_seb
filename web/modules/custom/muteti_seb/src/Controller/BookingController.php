@@ -25,6 +25,7 @@ final class BookingController extends ControllerBase {
   public function week(Request $request): array {
     $department = UserDepartment::get($this->currentUser());
     $mode = DepartmentMode::get($department);
+    $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
     $is_boss = in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE);
     $week = $request->query->get('week', 'now');
     try { $monday = new DrupalDateTime($week === 'now' ? 'monday this week' : $week); }
@@ -44,12 +45,15 @@ final class BookingController extends ControllerBase {
         ]));
       }
     }
-    $away_rows = $this->database->select('muteti_doctor_availability', 'a')
-      ->fields('a', ['user_id', 'date'])
-      ->condition('date', [$start, $end], 'BETWEEN')
-      ->condition('status', 'away')
-      ->execute()
-      ->fetchAll();
+    $away_rows = [];
+    if ($away_enabled) {
+      $away_rows = $this->database->select('muteti_doctor_availability', 'a')
+        ->fields('a', ['user_id', 'date'])
+        ->condition('date', [$start, $end], 'BETWEEN')
+        ->condition('status', 'away')
+        ->execute()
+        ->fetchAll();
+    }
     $away_user_ids = array_values(array_unique(array_map(
       static fn(object $row): int => (int) $row->user_id,
       $away_rows
@@ -160,7 +164,7 @@ final class BookingController extends ControllerBase {
               'title' => $occupied ? $this->t('A napfajta már nem módosítható, mert van előjegyzett beteg.') : $this->t('Napfajta módosítása'),
             ],
           ],
-          'away_strip' => [
+          'away_strip' => $away_enabled ? [
             '#type' => 'container',
             '#attributes' => [
               'class' => array_filter([
@@ -185,7 +189,7 @@ final class BookingController extends ControllerBase {
               return $segments;
             },
             []
-          ),
+          ) : [],
         ],
         'class' => array_filter(['muteti-day-heading', $occupied ? 'is-locked' : NULL]),
       ];
