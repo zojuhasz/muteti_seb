@@ -44,6 +44,48 @@ final class BookingController extends ControllerBase {
         ]));
       }
     }
+    $away_rows = $this->database->select('muteti_doctor_availability', 'a')
+      ->fields('a', ['user_id', 'date'])
+      ->condition('date', [$start, $end], 'BETWEEN')
+      ->condition('status', 'away')
+      ->execute()
+      ->fetchAll();
+    $away_user_ids = array_values(array_unique(array_map(
+      static fn(object $row): int => (int) $row->user_id,
+      $away_rows
+    )));
+    $away_doctors = [];
+    if ($away_user_ids) {
+      $doctor_rows = $this->database->select('muteti_doctor', 'd')
+        ->fields('d', ['user_id', 'name', 'background_color'])
+        ->condition('user_id', $away_user_ids, 'IN')
+        ->condition('department', $department)
+        ->condition('active', 1)
+        ->orderBy('name')
+        ->execute();
+      foreach ($doctor_rows as $doctor_row) {
+        $user_id = (int) $doctor_row->user_id;
+        if (!isset($away_doctors[$user_id]) || trim((string) $away_doctors[$user_id]->background_color) === '') {
+          $away_doctors[$user_id] = $doctor_row;
+        }
+      }
+    }
+    $away_by_date = [];
+    foreach ($away_rows as $away_row) {
+      $user_id = (int) $away_row->user_id;
+      if (!isset($away_doctors[$user_id])) {
+        continue;
+      }
+      $doctor = $away_doctors[$user_id];
+      $background = trim((string) $doctor->background_color);
+      if (!preg_match('/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i', $background)) {
+        $background = '#c62828';
+      }
+      $away_by_date[(string) $away_row->date][$user_id] = [
+        'name' => (string) $doctor->name,
+        'background' => $background,
+      ];
+    }
     $appointments = $this->database->select('muteti_appointment', 'a')->fields('a')->condition('department', $department)->condition('admission_date', [$start, $end], 'BETWEEN')->execute()->fetchAllAssoc('id');
     $by_cell = [];
     foreach ($appointments as $a) { $by_cell[$a->admission_date][$a->slot_type] = $a; }
@@ -118,6 +160,32 @@ final class BookingController extends ControllerBase {
               'title' => $occupied ? $this->t('A napfajta már nem módosítható, mert van előjegyzett beteg.') : $this->t('Napfajta módosítása'),
             ],
           ],
+          'away_strip' => [
+            '#type' => 'container',
+            '#attributes' => [
+              'class' => array_filter([
+                'muteti-away-strip',
+                empty($away_by_date[$date]) ? 'is-empty' : NULL,
+              ]),
+              'aria-label' => $this->t('Idegenben dolgozó orvosok'),
+            ],
+          ] + array_reduce(
+            array_values($away_by_date[$date] ?? []),
+            static function (array $segments, array $doctor): array {
+              $segments['doctor_'.count($segments)] = [
+                '#type' => 'html_tag',
+                '#tag' => 'span',
+                '#value' => '',
+                '#attributes' => [
+                  'class' => ['muteti-away-strip-segment'],
+                  'style' => 'background-color:'.$doctor['background'].';',
+                  'title' => $doctor['name'].' – idegenben',
+                ],
+              ];
+              return $segments;
+            },
+            []
+          ),
         ],
         'class' => array_filter(['muteti-day-heading', $occupied ? 'is-locked' : NULL]),
       ];
