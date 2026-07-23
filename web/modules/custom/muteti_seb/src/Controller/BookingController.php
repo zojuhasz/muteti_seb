@@ -243,7 +243,10 @@ final class BookingController extends ControllerBase {
           $edit['#attributes']['title'] = $this->t('Módosítás');
           $edit['#attributes']['aria-label'] = $this->t('Módosítás');
           $doctor = $doctors[$a->doctor_id] ?? NULL;
-          $patient_attributes = ['class' => ['muteti-patient']];
+          $patient_attributes = [
+            'id' => 'muteti-appointment-'.$a->id,
+            'class' => ['muteti-patient'],
+          ];
           if ($doctor) {
             $has_background = trim((string) $doctor->background_color) !== '';
             $background = $has_background ? $doctor->background_color : '#eef2f6';
