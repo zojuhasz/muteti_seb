@@ -221,19 +221,28 @@
 .muteti-empty-slot {
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  overflow: hidden;
   min-height: 48px;
+  padding: .2rem;
+  border: 1px dashed #9db2c6;
+  border-radius: .45rem;
 }
 .muteti-empty-slot .muteti-slot-link {
   min-height: 1.4rem;
   padding: .25rem .2rem;
+  border: 0;
+  border-radius: 0;
 }
+.muteti-empty-slot:hover { background: #e8f4fd; border-color: #397eaf; }
 .muteti-empty-slot-actions {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: .25rem;
   min-height: 1.45rem;
-  margin-top: .35rem;
+  margin-top: .3rem;
+  padding-bottom: .1rem;
 }
 .muteti-empty-slot-actions .muteti-move-link.is-target,
 .muteti-empty-slot-actions .muteti-move-link.is-target.is-duplicate {
