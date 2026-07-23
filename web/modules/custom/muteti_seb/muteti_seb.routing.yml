@@ -136,3 +136,12 @@ muteti_seb.availability_month:
     _title: 'Szabadságok'
   requirements:
     _permission: 'view doctor availability'
+
+muteti_seb.availability_pdf:
+  path: '/muteti/szabadsagok/{month}/pdf'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\AvailabilityController::pdf'
+    _title: 'Havi szabadságlista PDF'
+  requirements:
+    _permission: 'view doctor availability'
+    month: '\d{4}-\d{2}'
