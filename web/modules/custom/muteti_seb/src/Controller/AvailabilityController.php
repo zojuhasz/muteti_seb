@@ -2,6 +2,7 @@
 
 namespace Drupal\muteti_seb\Controller;
 
+use Dompdf\Dompdf;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
@@ -14,6 +15,7 @@ use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 final class AvailabilityController extends ControllerBase {
 
@@ -130,6 +132,22 @@ final class AvailabilityController extends ControllerBase {
         'previous' => Link::fromTextAndUrl('← Előző hónap', Url::fromRoute('muteti_seb.availability_month', [], ['query' => ['month' => $previous]]))->toRenderable(),
         'current' => Link::fromTextAndUrl('Aktuális hónap', Url::fromRoute('muteti_seb.availability_month'))->toRenderable(),
         'next' => Link::fromTextAndUrl('Következő hónap →', Url::fromRoute('muteti_seb.availability_month', [], ['query' => ['month' => $next]]))->toRenderable(),
+        'pdf' => [
+          '#type' => 'link',
+          '#title' => [
+            '#theme' => 'image',
+            '#uri' => base_path().'modules/custom/muteti_seb/images/pdf-icon.svg',
+            '#alt' => 'PDF',
+            '#attributes' => ['class' => ['muteti-program-pdf-icon']],
+          ],
+          '#url' => Url::fromRoute('muteti_seb.availability_pdf', ['month' => $month->format('Y-m')]),
+          '#attributes' => [
+            'class' => ['muteti-availability-pdf-link'],
+            'title' => 'Havi szabadságlista PDF',
+            'aria-label' => 'Havi szabadságlista PDF',
+            'target' => '_blank',
+          ],
+        ],
       ],
       'frame' => [
         '#type' => 'container',
@@ -142,6 +160,77 @@ final class AvailabilityController extends ControllerBase {
         ],
       ],
     ];
+  }
+
+  public function pdf(string $month): Response {
+    $parsed = \DateTimeImmutable::createFromFormat('!Y-m', $month);
+    if (!$parsed || $parsed->format('Y-m') !== $month) {
+      return new Response('Érvénytelen hónap.', 400);
+    }
+    $start = $parsed->format('Y-m-01');
+    $end = $parsed->format('Y-m-t');
+    $department = UserDepartment::get($this->currentUser());
+    $stored_day_types = $this->database->select('muteti_day_type', 'd')
+      ->fields('d', ['date', 'day_type'])
+      ->condition('department', $department)
+      ->condition('date', [$start, $end], 'BETWEEN')
+      ->execute()
+      ->fetchAllKeyed();
+
+    $doctor_rows = $this->database->select('muteti_doctor', 'd')
+      ->fields('d', ['user_id', 'name', 'background_color', 'text_color'])
+      ->condition('department', $department)
+      ->condition('active', 1)
+      ->isNotNull('user_id')
+      ->orderBy('name')
+      ->execute();
+    $doctors = [];
+    foreach ($doctor_rows as $doctor) {
+      $user_id = (int) $doctor->user_id;
+      if (!isset($doctors[$user_id]) || trim((string) $doctor->background_color) !== '') {
+        $doctors[$user_id] = $doctor;
+      }
+    }
+
+    $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $days = [1 => 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+    $html = '<meta charset="utf-8"><style>
+      @page{margin:14mm}body{font-family:DejaVu Sans,sans-serif;color:#172b3a;font-size:10px}
+      h1{margin:0 0 4px;font-size:18px}h2{margin:0 0 16px;color:#536b7d;font-size:13px}
+      table{width:100%;border-collapse:collapse}th{padding:7px;background:#dce8f2;text-align:left}
+      td{padding:6px;border-bottom:1px solid #d5dde5}.doctor{font-weight:700}.footer{margin-top:18px;text-align:right;color:#667;font-size:8px}
+    </style><h1>'.$escape($department).' – szabadságok</h1><h2>'.$escape($month).'</h2><table><thead><tr><th>Dátum</th><th>Nap</th><th>Naptípus</th><th>Orvos</th></tr></thead><tbody>';
+
+    $absences = $this->database->select('muteti_doctor_availability', 'a')
+      ->fields('a', ['user_id', 'date'])
+      ->condition('date', [$start, $end], 'BETWEEN')
+      ->condition('status', 'absent')
+      ->orderBy('date')
+      ->execute();
+    foreach ($absences as $absence) {
+      $user_id = (int) $absence->user_id;
+      $account = User::load($user_id);
+      if (!$account || !$account->isActive() || !$account->hasPermission('manage own doctor availability') || UserDepartment::get($account) !== $department) {
+        continue;
+      }
+      $date = new DrupalDateTime($absence->date);
+      $doctor = $doctors[$user_id] ?? NULL;
+      $name = $doctor ? (string) $doctor->name : $account->getDisplayName();
+      $background = $doctor && preg_match('/^#[0-9a-f]{3,6}$/i', (string) $doctor->background_color) ? (string) $doctor->background_color : '#eef2f6';
+      $text = $doctor && preg_match('/^#[0-9a-f]{3,6}$/i', (string) $doctor->text_color) ? (string) $doctor->text_color : '#111111';
+      $day_type = $stored_day_types[$absence->date] ?? Schedule::departmentDayType($department, $date);
+      $html .= '<tr><td>'.$escape($absence->date).'</td><td>'.$days[(int) $date->format('N')].'</td><td>'.$escape($day_type).'</td><td class="doctor" style="background:'.$escape($background).';color:'.$escape($text).'">'.$escape($name).'</td></tr>';
+    }
+    $html .= '</tbody></table><div class="footer">Nyomtatva: '.$escape($this->currentUser()->getAccountName()).' '.date('Y.m.d H:i').'</div>';
+
+    $pdf = new Dompdf(['isRemoteEnabled' => FALSE]);
+    $pdf->loadHtml($html, 'UTF-8');
+    $pdf->setPaper('A4', 'portrait');
+    $pdf->render();
+    return new Response($pdf->output(), 200, [
+      'Content-Type' => 'application/pdf',
+      'Content-Disposition' => 'inline; filename="szabadsagok-'.$month.'.pdf"',
+    ]);
   }
 
 }
