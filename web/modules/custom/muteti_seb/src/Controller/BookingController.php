@@ -366,6 +366,12 @@ final class BookingController extends ControllerBase {
       $next_month_date->modify('+7 days');
     }
     $next_month=$next_month_date->format('Y-m-d');
+    $nav_link = static function (string $symbol, string $label, Url $url): array {
+      $link = Link::fromTextAndUrl($symbol, $url)->toRenderable();
+      $link['#attributes']['title'] = $label;
+      $link['#attributes']['aria-label'] = $label;
+      return $link;
+    };
     return [
       '#attached'=>[
         'library'=>['muteti_seb/surgery_board'],
@@ -380,11 +386,11 @@ final class BookingController extends ControllerBase {
       'nav'=>[
         '#type'=>'container',
         '#attributes'=>['class'=>['muteti-nav','muteti-booking-nav']],
-        'prev_month'=>Link::fromTextAndUrl('⇤ Előző hónap',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev_month]]))->toRenderable(),
-        'prev'=>Link::fromTextAndUrl('← Előző hét',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]]))->toRenderable(),
-        'today'=>Link::fromTextAndUrl('Aktuális hét',Url::fromRoute('muteti_seb.booking'))->toRenderable(),
-        'next'=>Link::fromTextAndUrl('Következő hét →',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]]))->toRenderable(),
-        'next_month'=>Link::fromTextAndUrl('Következő hónap ⇥',Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next_month]]))->toRenderable(),
+        'prev_month'=>$nav_link('◀◀', 'Előző hónap', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev_month]])),
+        'prev'=>$nav_link('◀', 'Előző hét', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$prev]])),
+        'today'=>$nav_link('●', 'Aktuális hét', Url::fromRoute('muteti_seb.booking')),
+        'next'=>$nav_link('▶', 'Következő hét', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next]])),
+        'next_month'=>$nav_link('▶▶', 'Következő hónap', Url::fromRoute('muteti_seb.booking',[],['query'=>['week'=>$next_month]])),
       ],
       'table_wrapper'=>[
         '#type'=>'container',
