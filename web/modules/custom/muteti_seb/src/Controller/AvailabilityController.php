@@ -61,15 +61,23 @@ final class AvailabilityController extends ControllerBase {
     $department = UserDepartment::get($this->currentUser());
 
     $doctor_rows = $this->database->select('muteti_doctor', 'd')
-      ->fields('d', ['user_id', 'name'])
+      ->fields('d', ['user_id', 'name', 'background_color', 'text_color'])
       ->condition('department', $department)
       ->condition('active', 1)
       ->isNotNull('user_id')
       ->orderBy('name')
       ->execute();
     $doctor_names = [];
+    $doctor_styles = [];
     foreach ($doctor_rows as $doctor) {
-      $doctor_names[(int) $doctor->user_id] ??= (string) $doctor->name;
+      $user_id = (int) $doctor->user_id;
+      $doctor_names[$user_id] ??= (string) $doctor->name;
+      if (!isset($doctor_styles[$user_id])) {
+        $has_background = trim((string) $doctor->background_color) !== '';
+        $background = $has_background ? (string) $doctor->background_color : '#eef2f6';
+        $text = $has_background ? ((string) $doctor->text_color ?: '#111111') : '#111111';
+        $doctor_styles[$user_id] = 'background-color:'.$background.';color:'.$text.';';
+      }
     }
 
     $rows = [];
@@ -89,10 +97,15 @@ final class AvailabilityController extends ControllerBase {
         continue;
       }
       $day = new DrupalDateTime($absence->date);
+      $doctor_name = $doctor_names[$user_id] ?? $account->getDisplayName();
       $rows[] = [
         Html::escape($absence->date),
         Html::escape((string) $this->t($day->format('l'))),
-        Html::escape($doctor_names[$user_id] ?? $account->getDisplayName()),
+        [
+          'data' => [
+            '#markup' => '<span class="muteti-availability-doctor" style="'.Html::escape($doctor_styles[$user_id] ?? 'background-color:#eef2f6;color:#111111;').'">'.Html::escape($doctor_name).'</span>',
+          ],
+        ],
         $this->t('Távollét'),
       ];
     }
