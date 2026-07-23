@@ -257,6 +257,22 @@ final class BookingController extends ControllerBase {
             }
             $patient_attributes['style'] = $style;
           }
+          if ($mode === 'onko') {
+            $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong>';
+            if (trim((string) $a->ward_room) !== '') {
+              $patient_content .= '<br>Kórlapszám: '.Html::escape($a->ward_room);
+            }
+            $patient_content .= '<br>'.Html::escape($a->operation_name);
+            if ($doctor) {
+              $patient_content .= '<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name).'</span>';
+            }
+            if (trim((string) $a->notes) !== '') {
+              $patient_content .= '<br><span class="muteti-patient-notes">'.nl2br(Html::escape($a->notes)).'</span>';
+            }
+          }
+          else {
+            $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($doctor ? '<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name).'</span>' : '');
+          }
           $cell = [
             'patient' => [
               '#type' => 'container',
@@ -296,7 +312,7 @@ final class BookingController extends ControllerBase {
                 ],
               ] : [],
               'content' => [
-                '#markup' => '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($doctor ? '<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name).'</span>' : ''),
+                '#markup' => $patient_content,
               ],
             ],
           ];
