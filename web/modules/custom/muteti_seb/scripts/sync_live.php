@@ -41,3 +41,7 @@ foreach ($on_call_rows as $on_call) {
   $imported_on_call++;
 }
 print "Ügyeleti U1 adatok: {$imported_on_call}\n";
+
+// Synchronize the legacy doctor absence calendar as part of every live run.
+putenv('MUTETI_SOURCE=d7_live');
+require __DIR__.'/import_absences.php';
