@@ -206,22 +206,29 @@ final class BookingController extends ControllerBase {
         if (!$a || $placeholder) {
           $slot_link = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
           $slot_link['#attributes']['class'][] = 'muteti-slot-link';
-          $empty_cell = ['slot' => $slot_link];
+          $empty_cell = [
+            '#type' => 'container',
+            '#attributes' => ['class' => ['muteti-empty-slot']],
+            'slot' => $slot_link,
+          ];
           if ($is_boss && !$placeholder) {
-            $empty_cell['move'] = [
-              '#type' => 'html_tag',
-              '#tag' => 'button',
-              '#value' => 'áth',
-              '#attributes' => [
-                'type' => 'button',
-                'class' => ['muteti-move-link', 'is-target'],
-                'data-move-mode' => 'move',
-                'data-move-date' => $date,
-                'data-move-slot' => $slot,
-                'title' => 'Áthelyezés ide',
+            $empty_cell['actions'] = [
+              '#type' => 'container',
+              '#attributes' => ['class' => ['muteti-empty-slot-actions']],
+              'move' => [
+                '#type' => 'html_tag',
+                '#tag' => 'button',
+                '#value' => 'áth',
+                '#attributes' => [
+                  'type' => 'button',
+                  'class' => ['muteti-move-link', 'is-target'],
+                  'data-move-mode' => 'move',
+                  'data-move-date' => $date,
+                  'data-move-slot' => $slot,
+                  'title' => 'Áthelyezés ide',
+                ],
               ],
-            ];
-            $empty_cell['duplicate'] = [
+              'duplicate' => [
                 '#type' => 'html_tag',
                 '#tag' => 'button',
                 '#value' => 'dup',
@@ -233,6 +240,7 @@ final class BookingController extends ControllerBase {
                   'data-move-slot' => $slot,
                   'title' => 'Duplikálás ide',
                 ],
+              ],
             ];
           }
           $row[] = ['data' => $empty_cell];
