@@ -30,7 +30,7 @@ final class AvailabilityController extends ControllerBase {
     $date = (string) ($data['date'] ?? '');
     $status = (string) ($data['status'] ?? '');
     $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
-    if (!$parsed || $parsed->format('Y-m-d') !== $date || !in_array($status, ['work', 'absent'], TRUE)) {
+    if (!$parsed || $parsed->format('Y-m-d') !== $date || !in_array($status, ['work', 'absent', 'away'], TRUE)) {
       return new JsonResponse(['ok' => FALSE, 'error' => 'Érvénytelen dátum vagy állapot.'], 400);
     }
     $user_id = (int) $this->currentUser()->id();
@@ -44,13 +44,28 @@ final class AvailabilityController extends ControllerBase {
       $this->database->merge('muteti_doctor_availability')
         ->key('user_id', $user_id)
         ->key('date', $date)
-        ->fields(['status' => 'absent', 'source' => 'manual', 'legacy_id' => NULL, 'changed' => time()])
+        ->fields(['status' => $status, 'source' => 'manual', 'legacy_id' => NULL, 'changed' => time()])
         ->execute();
     }
     return new JsonResponse(['ok' => TRUE, 'date' => $date, 'status' => $status]);
   }
 
   public function month(Request $request): array {
+    return $this->monthReport($request, 'absent');
+  }
+
+  public function awayMonth(Request $request): array {
+    return $this->monthReport($request, 'away');
+  }
+
+  private function monthReport(Request $request, string $status): array {
+    $is_away = $status === 'away';
+    $month_route = $is_away ? 'muteti_seb.away_month' : 'muteti_seb.availability_month';
+    $pdf_route = $is_away ? 'muteti_seb.away_pdf' : 'muteti_seb.availability_pdf';
+    $page_label = $is_away ? 'idegenben' : 'távollétek';
+    $empty_label = $is_away
+      ? 'Ebben a hónapban nincs rögzített idegenben végzett munka.'
+      : 'Ebben a hónapban nincs rögzített távollét.';
     $month_value = (string) $request->query->get('month', 'first day of this month');
     try {
       $month = new DrupalDateTime($month_value);
@@ -93,7 +108,7 @@ final class AvailabilityController extends ControllerBase {
     $absences = $this->database->select('muteti_doctor_availability', 'a')
       ->fields('a', ['user_id', 'date'])
       ->condition('date', [$start, $end], 'BETWEEN')
-      ->condition('status', 'absent')
+      ->condition('status', $status)
       ->orderBy('date')
       ->execute();
     foreach ($absences as $absence) {
@@ -164,13 +179,13 @@ final class AvailabilityController extends ControllerBase {
     return [
       '#attached' => ['library' => ['muteti_seb/surgery_board']],
       '#cache' => ['max-age' => 0],
-      'title' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($department).' – '.$month->format('Y. m.').' havi távollétek</h2>'],
+      'title' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($department).' – '.$month->format('Y. m.').' havi '.Html::escape($page_label).'</h2>'],
       'nav' => [
         '#type' => 'container',
         '#attributes' => ['class' => ['muteti-nav']],
-        'previous' => Link::fromTextAndUrl('← Előző hónap', Url::fromRoute('muteti_seb.availability_month', [], ['query' => ['month' => $previous]]))->toRenderable(),
-        'current' => Link::fromTextAndUrl('Aktuális hónap', Url::fromRoute('muteti_seb.availability_month'))->toRenderable(),
-        'next' => Link::fromTextAndUrl('Következő hónap →', Url::fromRoute('muteti_seb.availability_month', [], ['query' => ['month' => $next]]))->toRenderable(),
+        'previous' => Link::fromTextAndUrl('← Előző hónap', Url::fromRoute($month_route, [], ['query' => ['month' => $previous]]))->toRenderable(),
+        'current' => Link::fromTextAndUrl('Aktuális hónap', Url::fromRoute($month_route))->toRenderable(),
+        'next' => Link::fromTextAndUrl('Következő hónap →', Url::fromRoute($month_route, [], ['query' => ['month' => $next]]))->toRenderable(),
         'pdf' => [
           '#type' => 'link',
           '#title' => [
@@ -179,11 +194,11 @@ final class AvailabilityController extends ControllerBase {
             '#alt' => 'PDF',
             '#attributes' => ['class' => ['muteti-program-pdf-icon']],
           ],
-          '#url' => Url::fromRoute('muteti_seb.availability_pdf', ['month' => $month->format('Y-m')]),
+          '#url' => Url::fromRoute($pdf_route, ['month' => $month->format('Y-m')]),
           '#attributes' => [
             'class' => ['muteti-availability-pdf-link'],
-            'title' => 'Havi szabadságlista PDF',
-            'aria-label' => 'Havi szabadságlista PDF',
+            'title' => $is_away ? 'Havi idegenben lista PDF' : 'Havi szabadságlista PDF',
+            'aria-label' => $is_away ? 'Havi idegenben lista PDF' : 'Havi szabadságlista PDF',
             'target' => '_blank',
           ],
         ],
@@ -195,13 +210,24 @@ final class AvailabilityController extends ControllerBase {
           '#type' => 'table',
           '#header' => [$this->t('Dátum'), $this->t('Nap'), $this->t('Naptípus'), $this->t('Orvos')],
           '#rows' => $rows,
-          '#empty' => $this->t('Ebben a hónapban nincs rögzített távollét.'),
+          '#empty' => $this->t($empty_label),
         ],
       ],
     ];
   }
 
   public function pdf(string $month): Response {
+    return $this->pdfReport($month, 'absent');
+  }
+
+  public function awayPdf(string $month): Response {
+    return $this->pdfReport($month, 'away');
+  }
+
+  private function pdfReport(string $month, string $status): Response {
+    $is_away = $status === 'away';
+    $report_label = $is_away ? 'idegenben' : 'szabadságok';
+    $filename = $is_away ? 'idegenben' : 'szabadsagok';
     $parsed = \DateTimeImmutable::createFromFormat('!Y-m', $month);
     if (!$parsed || $parsed->format('Y-m') !== $month) {
       return new Response('Érvénytelen hónap.', 400);
@@ -238,12 +264,12 @@ final class AvailabilityController extends ControllerBase {
       h1{margin:0 0 4px;font-size:18px}h2{margin:0 0 16px;color:#536b7d;font-size:13px}
       table{width:100%;border-collapse:collapse}th{padding:7px;background:#dce8f2;text-align:left}
       td{padding:6px;border-bottom:1px solid #d5dde5}.date{font-size:8px}.day{font-size:9px;font-weight:700}.weekend{color:#c62828}.day-type{font-size:8px;font-weight:700}.doctor{display:inline-block;margin:1px 2px;padding:3px 5px;border:1px solid #bbc5ce;border-radius:3px;font-size:8px;font-weight:700;line-height:1.1}.footer{margin-top:18px;text-align:right;color:#667;font-size:8px}
-    </style><h1>'.$escape($department).' – szabadságok</h1><h2>'.$escape($month).'</h2><table><thead><tr><th>Dátum</th><th>Nap</th><th>Naptípus</th><th>Orvos</th></tr></thead><tbody>';
+    </style><h1>'.$escape($department).' – '.$escape($report_label).'</h1><h2>'.$escape($month).'</h2><table><thead><tr><th>Dátum</th><th>Nap</th><th>Naptípus</th><th>Orvos</th></tr></thead><tbody>';
 
     $absences = $this->database->select('muteti_doctor_availability', 'a')
       ->fields('a', ['user_id', 'date'])
       ->condition('date', [$start, $end], 'BETWEEN')
-      ->condition('status', 'absent')
+      ->condition('status', $status)
       ->orderBy('date')
       ->execute();
     $pdf_days = [];
@@ -280,7 +306,7 @@ final class AvailabilityController extends ControllerBase {
     $pdf->render();
     return new Response($pdf->output(), 200, [
       'Content-Type' => 'application/pdf',
-      'Content-Disposition' => 'inline; filename="szabadsagok-'.$month.'.pdf"',
+      'Content-Disposition' => 'inline; filename="'.$filename.'-'.$month.'.pdf"',
     ]);
   }
 
