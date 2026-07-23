@@ -74,7 +74,7 @@ final class ProgramPdfController extends ControllerBase {
     foreach ($groups as $group => $group_rows) {
       $html .= '<div class="group">'.$escape($group).'</div><table>';
       foreach (array_filter($group_rows) as $row) {
-        $identifier = trim((string) ($row->ward_room ?: $row->taj));
+        $identifier = trim((string) $row->taj);
         $patient = trim((string) $row->patient_name).($identifier !== '' ? ' /'.$identifier.'/' : '');
         $doctor = $doctors[$row->doctor_id] ?? '';
         $treatment = trim((string) $row->operation_name).($doctor !== '' ? ' /'.$doctor.'/' : '');
