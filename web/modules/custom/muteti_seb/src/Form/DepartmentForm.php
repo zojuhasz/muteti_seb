@@ -64,6 +64,16 @@ final class DepartmentForm extends FormBase {
       ],
       '#default_value' => $record->mode ?? 'seb',
     ];
+    $form['availability_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Szabadság modul használata'),
+      '#default_value' => isset($record->availability_enabled) ? (int) $record->availability_enabled : 1,
+    ];
+    $form['away_enabled'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Idegenben modul használata'),
+      '#default_value' => isset($record->away_enabled) ? (int) $record->away_enabled : 1,
+    ];
     if ($record) {
       $form['role'] = ['#type' => 'item', '#title' => $this->t('Felhasználói szerepkör'), '#markup' => $record->role_id];
       $form['id'] = ['#type' => 'hidden', '#value' => $record->id];
@@ -95,10 +105,17 @@ final class DepartmentForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $name = trim((string) $form_state->getValue('name'));
     $mode = (string) $form_state->getValue('mode');
+    $availability_enabled = (int) (bool) $form_state->getValue('availability_enabled');
+    $away_enabled = (int) (bool) $form_state->getValue('away_enabled');
     if ($this->department) {
       $old_name = (string) $this->department->name;
       $this->database->update('muteti_department_config')
-        ->fields(['name' => $name, 'mode' => $mode])
+        ->fields([
+          'name' => $name,
+          'mode' => $mode,
+          'availability_enabled' => $availability_enabled,
+          'away_enabled' => $away_enabled,
+        ])
         ->condition('id', $this->department->id)
         ->execute();
       if ($old_name !== $name) {
@@ -121,6 +138,8 @@ final class DepartmentForm extends FormBase {
         'machine_name' => $machine_name,
         'mode' => $mode,
         'role_id' => $role_id,
+        'availability_enabled' => $availability_enabled,
+        'away_enabled' => $away_enabled,
       ])->execute();
     }
     DepartmentMode::reset();
