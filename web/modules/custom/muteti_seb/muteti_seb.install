@@ -71,6 +71,8 @@ function muteti_seb_schema(): array {
       'machine_name' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
       'mode' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
       'role_id' => ['type' => 'varchar', 'length' => 64, 'not null' => TRUE],
+      'availability_enabled' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1],
+      'away_enabled' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 1],
     ],
     'primary key' => ['id'],
     'unique keys' => [
@@ -520,5 +522,22 @@ function muteti_seb_update_11016(): void {
       'unsigned' => TRUE,
       'not null' => FALSE,
     ]);
+  }
+}
+
+/**
+ * Adds department-level switches for absence and external-work features.
+ */
+function muteti_seb_update_11017(): void {
+  $schema = \Drupal::database()->schema();
+  foreach (['availability_enabled', 'away_enabled'] as $field) {
+    if (!$schema->fieldExists('muteti_department_config', $field)) {
+      $schema->addField('muteti_department_config', $field, [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ]);
+    }
   }
 }
