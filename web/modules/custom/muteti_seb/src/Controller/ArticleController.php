@@ -3,11 +3,27 @@
 namespace Drupal\muteti_seb\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\Link;
+use Drupal\Core\Url;
 use Drupal\muteti_seb\Service\UserDepartment;
 
 final class ArticleController extends ControllerBase {
 
   public function listing(): array {
+    if ($this->currentUser()->isAnonymous()) {
+      $login = Link::fromTextAndUrl('Belépés', Url::fromRoute('user.login'))->toRenderable();
+      $login['#attributes']['class'][] = 'button';
+      $login['#attributes']['class'][] = 'button--primary';
+      return [
+        '#cache' => ['contexts' => ['user.roles']],
+        'message' => [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['muteti-login-message']],
+          'text' => ['#markup' => '<p><strong>Kérjük lépjen be felhasználói nevével!</strong></p>'],
+          'login' => $login,
+        ],
+      ];
+    }
     $department = UserDepartment::get($this->currentUser());
     $query = $this->entityTypeManager()->getStorage('node')->getQuery()
       ->accessCheck(TRUE)
