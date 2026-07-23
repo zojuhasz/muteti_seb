@@ -100,6 +100,12 @@
   border-left: 4px solid rgba(30, 54, 76, .35);
   font-weight: 800;
 }
+.muteti-availability-pdf-link {
+  display: inline-flex;
+  align-items: center;
+  padding: .2rem;
+  line-height: 0;
+}
 .muteti-heading-on-call {
   display: block;
   min-height: 1rem;
