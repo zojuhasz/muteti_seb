@@ -146,7 +146,7 @@ function muteti_seb_schema(): array {
 function muteti_seb_install(): void {
   $roles = [
     'muteti_view' => ['Betekintő', ['view surgery schedule']],
-    'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
     'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
     'muteti_orvos3' => ['Orvos', ['view surgery schedule']],
     'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability']],
@@ -715,6 +715,56 @@ function muteti_seb_update_11028(): void {
     ]);
     $block->save();
   }
+}
+
+/**
+ * Adds the oncology treatment content type imported from Drupal 7.
+ */
+function muteti_seb_update_11029(): void {
+  muteti_seb_ensure_oncology_treatment_content_type();
+}
+
+/**
+ * Creates the Onkológiai kezelések content type and its fields.
+ */
+function muteti_seb_ensure_oncology_treatment_content_type(): void {
+  $bundle = 'muteti_oncology_treatment';
+  if (!\Drupal\node\Entity\NodeType::load($bundle)) {
+    \Drupal\node\Entity\NodeType::create([
+      'type' => $bundle,
+      'name' => 'Onkológiai kezelések',
+      'description' => 'Onkológiai működésű osztályok választható gyógyszerei és kezelései.',
+      'new_revision' => TRUE,
+      'display_submitted' => FALSE,
+    ])->save();
+  }
+
+  $legacy_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'field_muteti_treatment_legacy_nid');
+  if (!$legacy_storage) {
+    $legacy_storage = \Drupal\field\Entity\FieldStorageConfig::create([
+      'field_name' => 'field_muteti_treatment_legacy_nid',
+      'entity_type' => 'node',
+      'type' => 'integer',
+      'cardinality' => 1,
+    ]);
+    $legacy_storage->save();
+  }
+  if (!\Drupal\field\Entity\FieldConfig::loadByName('node', $bundle, 'field_muteti_treatment_legacy_nid')) {
+    \Drupal\field\Entity\FieldConfig::create([
+      'field_storage' => $legacy_storage,
+      'bundle' => $bundle,
+      'label' => 'D7 NID',
+      'required' => FALSE,
+    ])->save();
+  }
+
+  \Drupal::service('entity_display.repository')->getFormDisplay('node', $bundle, 'default')
+    ->setComponent('title', ['type' => 'string_textfield', 'weight' => 0])
+    ->removeComponent('field_muteti_treatment_legacy_nid')
+    ->save();
+  \Drupal::service('entity_display.repository')->getViewDisplay('node', $bundle, 'default')
+    ->removeComponent('field_muteti_treatment_legacy_nid')
+    ->save();
 }
 
 /**
