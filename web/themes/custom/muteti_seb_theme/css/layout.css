@@ -1,0 +1,89 @@
+.muteti-site {
+  min-height: 100vh;
+}
+
+.muteti-site-header {
+  display: flex;
+  min-height: 42px;
+  align-items: stretch;
+  gap: .8rem;
+  padding: 0 .75rem;
+  border-bottom: 1px solid #0d304e;
+  background: linear-gradient(90deg, var(--muteti-blue-900), var(--muteti-blue-800));
+  color: #fff;
+  box-shadow: 0 1px 5px rgba(15, 42, 64, .2);
+}
+
+.muteti-site-brand {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.muteti-primary-navigation {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: stretch;
+}
+
+.muteti-highlighted,
+.muteti-help,
+.muteti-breadcrumb,
+.muteti-main,
+.muteti-site-footer {
+  width: 100%;
+  max-width: none;
+  padding-right: clamp(.45rem, 1vw, 1rem);
+  padding-left: clamp(.45rem, 1vw, 1rem);
+}
+
+.muteti-highlighted,
+.muteti-help {
+  margin-top: .5rem;
+}
+
+.muteti-breadcrumb {
+  padding-top: .3rem;
+  font-size: .72rem;
+}
+
+.muteti-main {
+  padding-top: .45rem;
+  padding-bottom: 1rem;
+}
+
+.muteti-site-footer {
+  padding-top: .65rem;
+  padding-bottom: .65rem;
+  color: #536674;
+  font-size: .75rem;
+}
+
+@media (max-width: 860px) {
+  .muteti-site-header {
+    position: relative;
+    min-height: 42px;
+    justify-content: space-between;
+  }
+
+  .muteti-primary-navigation {
+    position: absolute;
+    z-index: 50;
+    top: 100%;
+    right: .4rem;
+    left: .4rem;
+    display: none;
+    max-height: calc(100vh - 52px);
+    overflow: auto;
+    border: 1px solid #0d304e;
+    border-radius: 0 0 .45rem .45rem;
+    background: #fff;
+    box-shadow: 0 8px 18px rgba(12, 35, 53, .28);
+  }
+
+  .muteti-primary-navigation.is-open {
+    display: block;
+  }
+}
+
