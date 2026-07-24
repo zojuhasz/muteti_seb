@@ -19,8 +19,8 @@ final class AppointmentMoveController extends ControllerBase {
   }
 
   public function move(Request $request): JsonResponse {
-    if (!in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE)) {
-      return new JsonResponse(['ok' => FALSE, 'error' => 'Az áthelyezéshez Boss jogosultság szükséges.'], 403);
+    if (!$this->currentUser()->hasPermission('move surgery appointment')) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'Nincs jogosultságod az áthelyezéshez.'], 403);
     }
     $data = json_decode($request->getContent(), TRUE);
     $appointment_id = (int) ($data['appointment_id'] ?? 0);
