@@ -5,6 +5,7 @@ namespace Drupal\muteti_seb\Form;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\AuditLog;
 use Drupal\muteti_seb\Service\UserDepartment;
@@ -52,7 +53,7 @@ final class AppointmentForm extends FormBase {
       $form['doctor_id']=['#type'=>'select','#title'=>$this->t('Orvos'),'#options'=>$doctors,'#default_value'=>$a->doctor_id ?? 0];
       $form['actions']=['#type'=>'actions'];
       $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mehet'),'#button_type'=>'primary'];
-      return $form;
+      return $this->applyAccessMode($form);
     }
     $anaesth_options = [
       'Local' => 'Local',
@@ -83,7 +84,7 @@ final class AppointmentForm extends FormBase {
       }
       $form['actions']=['#type'=>'actions'];
       $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mehet'),'#button_type'=>'primary'];
-      return $form;
+      return $this->applyAccessMode($form);
     }
     $form['aznm']=['#type'=>'checkbox','#title'=>$this->t('AZNM.'),'#default_value'=>$a->aznm ?? 0];
     $form['patient_name']=['#type'=>'textfield','#title'=>$this->t('Beteg neve @code',['@code'=>date('n-j',strtotime($date)).'-'.$slot]),'#required'=>TRUE,'#default_value'=>$a->patient_name ?? ''];
@@ -132,10 +133,14 @@ final class AppointmentForm extends FormBase {
     ];
     $form['notes']=['#type'=>'textarea','#title'=>$this->t('Egyéb info'),'#default_value'=>$a->notes ?? ''];
     foreach (['doctor_id'=>'Orvos','assistant1_id'=>'Asszisztens 1','assistant2_id'=>'Asszisztens 2','assistant3_id'=>'Asszisztens 3'] as $key=>$label) $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>$doctors,'#default_value'=>$a->{$key} ?? 0];
-    $form['actions']=['#type'=>'actions']; $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mentés'),'#button_type'=>'primary']; return $form;
+    $form['actions']=['#type'=>'actions']; $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mentés'),'#button_type'=>'primary']; return $this->applyAccessMode($form);
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+    $required_permission = $this->appointment ? 'edit surgery appointment' : 'create surgery appointment';
+    if (!$this->currentUser()->hasPermission($required_permission)) {
+      throw new AccessDeniedHttpException();
+    }
     $v=$form_state->getValues(); $fields=[];
     $department = (string) $v['department'];
     $mode = DepartmentMode::get($department);
@@ -183,5 +188,23 @@ final class AppointmentForm extends FormBase {
     else { $fields += ['department'=>$department,'admission_date'=>$v['date'],'slot_type'=>$v['slot'],'created_by'=>(int)$this->currentUser()->id(),'created'=>$fields['changed']]; $this->database->insert('muteti_appointment')->fields($fields)->execute(); }
     AuditLog::write($is_new ? 'új felvitel' : 'módosítás', $department, (string) $v['date'], (string) $v['slot'], (string) (($v['ward_room'] ?? '') ?: ($v['taj'] ?? '')));
     $this->messenger()->addStatus($this->t('Az előjegyzés mentve.')); $form_state->setRedirect('muteti_seb.booking',[],['query'=>['week'=>$v['date']]]);
+  }
+
+  private function applyAccessMode(array $form): array {
+    $required_permission = $this->appointment ? 'edit surgery appointment' : 'create surgery appointment';
+    if ($this->currentUser()->hasPermission($required_permission)) {
+      return $form;
+    }
+    unset($form['actions']);
+    foreach ($form as $key => &$element) {
+      if (is_string($key) && !str_starts_with($key, '#') && is_array($element) && !in_array($key, ['date', 'slot', 'department'], TRUE)) {
+        $element['#disabled'] = TRUE;
+      }
+    }
+    $form['readonly_notice'] = [
+      '#weight' => -100,
+      '#markup' => '<p><strong>Csak megtekintés.</strong></p>',
+    ];
+    return $form;
   }
 }
