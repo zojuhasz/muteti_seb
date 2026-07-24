@@ -231,12 +231,12 @@ final class ProgramPdfController extends ControllerBase {
     ])));
     $html = '<meta charset="utf-8"><style>
       @page{margin:11mm 9mm 12mm}
-      body{font-family:DejaVu Sans,sans-serif;color:#000;font-size:9px;margin:0}
-      h1{font-size:16px;line-height:1.05;margin:0;font-weight:700}
-      h2{font-size:16px;line-height:1.05;margin:1px 0 3px;font-weight:700}
-      .on-call{font-size:8px;font-weight:700;margin:0 0 8px}
+      body{font-family:DejaVu Sans,sans-serif;color:#000;font-size:11px;margin:0}
+      h1{font-size:18px;line-height:1.05;margin:0;font-weight:700}
+      h2{font-size:18px;line-height:1.05;margin:1px 0 3px;font-weight:700}
+      .on-call{font-size:10px;font-weight:700;margin:0 0 8px}
       .room{margin:0 0 10mm;page-break-inside:avoid}
-      .room-title{border:1px solid #111;border-bottom:0;font-size:13px;padding:3px 5px;font-weight:400}
+      .room-title{border:1px solid #111;border-bottom:0;font-size:15px;padding:3px 5px;font-weight:400}
       table{border-collapse:collapse;width:100%;table-layout:fixed}
       thead{display:table-header-group}
       tr{page-break-inside:avoid}
@@ -246,12 +246,12 @@ final class ProgramPdfController extends ControllerBase {
       .patient{width:17%}.diagnosis{width:17%}.operation{width:17%}
       .anaesth{width:11%}.operator{width:17%}.assistants{width:18%}
       .empty{padding:8px;text-align:center}
-      .summary{margin-top:6mm;background:#fff;font-size:9px;line-height:1.2;page-break-inside:avoid}
+      .summary{margin-top:6mm;background:#fff;font-size:11px;line-height:1.2;page-break-inside:avoid}
       .summary-row{display:block;white-space:nowrap}
       .summary-label{display:inline-block;width:21%;font-weight:700}
       .summary-value{display:inline-block;width:57%;white-space:normal;vertical-align:top}
       .created{margin-top:2px;text-align:right;white-space:nowrap}
-      .created strong{font-size:10px}
+      .created strong{font-size:12px}
     </style>';
     $html .= '<h1>'.$escape($department).'</h1>';
     $html .= '<h2>'.$escape($parsed->format('Y.m.d')).' '.$weekdays[(int) $parsed->format('N')].'</h2>';
