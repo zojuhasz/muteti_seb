@@ -27,6 +27,8 @@ final class BookingController extends ControllerBase {
     $mode = DepartmentMode::get($department);
     $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
     $is_boss = in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE);
+    $can_create = $this->currentUser()->hasPermission('create surgery appointment');
+    $can_edit = $this->currentUser()->hasPermission('edit surgery appointment');
     $week = $request->query->get('week', 'now');
     try { $monday = new DrupalDateTime($week === 'now' ? 'monday this week' : $week); }
     catch (\Exception) { $monday = new DrupalDateTime('monday this week'); }
@@ -204,8 +206,15 @@ final class BookingController extends ControllerBase {
         $a=$by_cell[$date][$slot] ?? NULL;
         $placeholder = $a && trim((string) $a->patient_name) === '' && trim((string) $a->operation_name) === '' && empty($a->doctor_id);
         if (!$a || $placeholder) {
-          $slot_link = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
-          $slot_link['#attributes']['class'][] = 'muteti-slot-link';
+          if ($can_create) {
+            $slot_link = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
+            $slot_link['#attributes']['class'][] = 'muteti-slot-link';
+          }
+          else {
+            $slot_link = [
+              '#markup' => '<span class="muteti-slot-link is-readonly">'.Html::escape($slot).'</span>',
+            ];
+          }
           $empty_cell = [
             '#type' => 'container',
             '#attributes' => ['class' => ['muteti-empty-slot']],
@@ -246,10 +255,14 @@ final class BookingController extends ControllerBase {
           $row[] = ['data' => $empty_cell];
         }
         else {
-          $edit = Link::fromTextAndUrl('M', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
+          $edit = Link::fromTextAndUrl($can_edit ? 'M' : 'Néz', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
           $edit['#attributes']['class'][] = 'muteti-edit-link';
-          $edit['#attributes']['title'] = $this->t('Módosítás');
-          $edit['#attributes']['aria-label'] = $this->t('Módosítás');
+          if (!$can_edit) {
+            $edit['#attributes']['class'][] = 'is-view-only';
+          }
+          $edit_label = $can_edit ? $this->t('Módosítás') : $this->t('Betegadatok megtekintése');
+          $edit['#attributes']['title'] = $edit_label;
+          $edit['#attributes']['aria-label'] = $edit_label;
           $doctor = $doctors[$a->doctor_id] ?? NULL;
           $patient_attributes = [
             'id' => 'muteti-appointment-'.$a->id,
