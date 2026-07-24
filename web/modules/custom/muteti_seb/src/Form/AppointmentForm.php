@@ -3,6 +3,7 @@
 namespace Drupal\muteti_seb\Form;
 
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -13,8 +14,16 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 final class AppointmentForm extends FormBase {
   private ?object $appointment = NULL;
-  public function __construct(private readonly Connection $database) {}
-  public static function create(ContainerInterface $container): static { return new static($container->get('database')); }
+  public function __construct(
+    private readonly Connection $database,
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+  ) {}
+  public static function create(ContainerInterface $container): static {
+    return new static(
+      $container->get('database'),
+      $container->get('entity_type.manager'),
+    );
+  }
   public function getFormId(): string { return 'muteti_appointment_form'; }
 
   public function buildForm(array $form, FormStateInterface $form_state, ?string $date=NULL, ?string $slot=NULL): array {
@@ -25,7 +34,7 @@ final class AppointmentForm extends FormBase {
     $doctors=['0'=>'-']+$this->database->select('muteti_doctor','d')->fields('d',['id','name'])->condition('department',$department)->condition('active',1)->orderBy('name')->execute()->fetchAllKeyed();
     $mode = DepartmentMode::get($department);
     if ($mode === 'onko') {
-      $treatment_storage = $this->entityTypeManager()->getStorage('node');
+      $treatment_storage = $this->entityTypeManager->getStorage('node');
       $treatment_ids = $treatment_storage->getQuery()
         ->accessCheck(FALSE)
         ->condition('type', 'muteti_oncology_treatment')
