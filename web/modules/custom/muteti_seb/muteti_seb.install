@@ -691,6 +691,33 @@ function muteti_seb_update_11027(): void {
 }
 
 /**
+ * Places the compact theme's authenticated logout button.
+ */
+function muteti_seb_update_11028(): void {
+  if (!\Drupal::service('theme_handler')->themeExists('muteti_seb_theme')) {
+    return;
+  }
+  $block = \Drupal\block\Entity\Block::load('muteti_seb_theme_logout');
+  if (!$block) {
+    $block = \Drupal\block\Entity\Block::create([
+      'id' => 'muteti_seb_theme_logout',
+      'theme' => 'muteti_seb_theme',
+      'region' => 'account_menu',
+      'weight' => 0,
+      'plugin' => 'muteti_logout_block',
+      'settings' => [
+        'id' => 'muteti_logout_block',
+        'label' => 'Kijelentkezés',
+        'label_display' => FALSE,
+        'provider' => 'muteti_seb',
+      ],
+      'visibility' => [],
+    ]);
+    $block->save();
+  }
+}
+
+/**
  * Creates the Drupal Napfajták content type and its fields.
  */
 function muteti_seb_ensure_day_type_content_type(): void {
