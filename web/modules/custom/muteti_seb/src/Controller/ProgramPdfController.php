@@ -173,13 +173,45 @@ final class ProgramPdfController extends ControllerBase {
       ->condition('date', $date)
       ->execute()
       ->fetchObject();
-    $start_time = $this->database->select('muteti_daily_info', 'i')
-      ->fields('i', ['start_time'])
+    $daily_info = $this->database->select('muteti_daily_info', 'i')
+      ->fields('i')
       ->condition('department', $department)
       ->condition('date', $date)
       ->execute()
-      ->fetchField();
-    $start_time = trim((string) $start_time) ?: '08:00';
+      ->fetchObject();
+    $start_time = trim((string) ($daily_info->start_time ?? '')) ?: '08:00';
+    $previous_date = $parsed->modify('-1 day')->format('Y-m-d');
+    $previous_on_call = $this->database->select('muteti_on_call', 'u')
+      ->fields('u', ['doctor_name'])
+      ->condition('mode', 'urol')
+      ->condition('date', $previous_date)
+      ->execute()
+      ->fetchObject();
+    $status_names = function (string $status) use ($date, $department): string {
+      $query = $this->database->select('muteti_doctor_availability', 'a');
+      $query->join('muteti_doctor', 'd', 'd.user_id = a.user_id');
+      return implode(', ', $query->fields('d', ['name'])
+        ->condition('a.date', $date)
+        ->condition('a.status', $status)
+        ->condition('d.department', $department)
+        ->condition('d.active', 1)
+        ->orderBy('d.name')
+        ->execute()
+        ->fetchCol());
+    };
+    $absent = DepartmentMode::featureEnabled($department, 'availability_enabled')
+      ? $status_names('absent')
+      : trim((string) ($daily_info->other_absent ?? ''));
+    $away = DepartmentMode::featureEnabled($department, 'away_enabled')
+      ? $status_names('away')
+      : '';
+    $summary = [
+      'Akut betegek' => trim((string) ($daily_info->acute_1 ?? '')) ?: trim((string) ($on_call->doctor_name ?? '')),
+      'Szabadnap' => trim((string) ($previous_on_call->doctor_name ?? '')),
+      'Egyéb távollévők' => $absent,
+      'Telefonos' => trim((string) ($on_call->doctor_name_2 ?? '')),
+      'Idegen intézményben' => $away,
+    ];
 
     $rooms = [];
     foreach ($rows as $appointment) {
@@ -211,6 +243,12 @@ final class ProgramPdfController extends ControllerBase {
       .patient{width:17%}.diagnosis{width:17%}.operation{width:17%}
       .anaesth{width:11%}.operator{width:17%}.assistants{width:18%}
       .empty{padding:8px;text-align:center}
+      .summary{margin-top:8mm;width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:avoid}
+      .summary td{border:0;padding:0 4px 0 0;line-height:1.2}
+      .summary-label{width:21%;font-weight:700;white-space:nowrap}
+      .summary-value{width:59%}
+      .created{width:20%;text-align:right;vertical-align:bottom!important;white-space:nowrap}
+      .created strong{font-size:9px}
     </style>';
     $html .= '<h1>'.$escape($department).'</h1>';
     $html .= '<h2>'.$escape($parsed->format('Y.m.d')).' '.$weekdays[(int) $parsed->format('N')].'</h2>';
@@ -218,40 +256,50 @@ final class ProgramPdfController extends ControllerBase {
 
     if (!$rooms) {
       $html .= '<div class="empty">Erre a napra nincs műtőbe beosztott beteg.</div>';
-      return $html;
     }
-
-    foreach ($rooms as $room => $appointments) {
-      $html .= '<section class="room">';
-      $html .= '<div class="room-title">'.$escape($room).'. MŰTŐ - kezdés '.$escape($start_time).'</div>';
-      $html .= '<table><thead><tr>';
-      $html .= '<th class="order"></th><th class="patient">Beteg</th><th class="diagnosis">Dg.</th><th class="operation">Műtét</th><th class="anaesth">Anaesth.</th><th class="operator">Operál</th><th class="assistants">Asszisztál</th>';
-      $html .= '</tr></thead><tbody>';
-      foreach ($appointments as $index => $appointment) {
-        $assistants = [];
-        foreach (['assistant1_id', 'assistant2_id', 'assistant3_id'] as $field) {
-          if ($appointment->{$field} && isset($doctors[$appointment->{$field}])) {
-            $assistants[] = $doctors[$appointment->{$field}];
+    else {
+      foreach ($rooms as $room => $appointments) {
+        $html .= '<section class="room">';
+        $html .= '<div class="room-title">'.$escape($room).'. MŰTŐ - kezdés '.$escape($start_time).'</div>';
+        $html .= '<table><thead><tr>';
+        $html .= '<th class="order"></th><th class="patient">Beteg</th><th class="diagnosis">Dg.</th><th class="operation">Műtét</th><th class="anaesth">Anaesth.</th><th class="operator">Operál</th><th class="assistants">Asszisztál</th>';
+        $html .= '</tr></thead><tbody>';
+        foreach ($appointments as $index => $appointment) {
+          $assistants = [];
+          foreach (['assistant1_id', 'assistant2_id', 'assistant3_id'] as $field) {
+            if ($appointment->{$field} && isset($doctors[$appointment->{$field}])) {
+              $assistants[] = $doctors[$appointment->{$field}];
+            }
           }
+          $assistants = array_values(array_unique($assistants));
+          $order = (int) $appointment->surgery_order > 0 ? (int) $appointment->surgery_order : $index + 1;
+          $patient = $escape($appointment->patient_name);
+          if (trim((string) $appointment->taj) !== '') {
+            $patient .= '<br>TAJ:'.$escape($appointment->taj);
+          }
+          $html .= '<tr>';
+          $html .= '<td class="order">'.$order.'</td>';
+          $html .= '<td class="patient">'.$patient.'</td>';
+          $html .= '<td class="diagnosis">'.$escape($appointment->diagnosis).'</td>';
+          $html .= '<td class="operation">'.$escape($appointment->operation_name).'</td>';
+          $html .= '<td class="anaesth">'.$escape($appointment->anaesth).'</td>';
+          $html .= '<td class="operator">'.$escape($doctors[$appointment->doctor_id] ?? '-').'</td>';
+          $html .= '<td class="assistants">'.$escape(implode(', ', $assistants)).'</td>';
+          $html .= '</tr>';
         }
-        $assistants = array_values(array_unique($assistants));
-        $order = (int) $appointment->surgery_order > 0 ? (int) $appointment->surgery_order : $index + 1;
-        $patient = $escape($appointment->patient_name);
-        if (trim((string) $appointment->taj) !== '') {
-          $patient .= '<br>TAJ:'.$escape($appointment->taj);
-        }
-        $html .= '<tr>';
-        $html .= '<td class="order">'.$order.'</td>';
-        $html .= '<td class="patient">'.$patient.'</td>';
-        $html .= '<td class="diagnosis">'.$escape($appointment->diagnosis).'</td>';
-        $html .= '<td class="operation">'.$escape($appointment->operation_name).'</td>';
-        $html .= '<td class="anaesth">'.$escape($appointment->anaesth).'</td>';
-        $html .= '<td class="operator">'.$escape($doctors[$appointment->doctor_id] ?? '-').'</td>';
-        $html .= '<td class="assistants">'.$escape(implode(', ', $assistants)).'</td>';
-        $html .= '</tr>';
+        $html .= '</tbody></table></section>';
       }
-      $html .= '</tbody></table></section>';
     }
+    $html .= '<table class="summary"><tbody>';
+    $summary_count = count($summary);
+    foreach ($summary as $index => $value) {
+      $html .= '<tr><td class="summary-label">'.$escape($index).':</td><td class="summary-value">'.$escape($value ?: '-').'</td>';
+      if ($index === array_key_first($summary)) {
+        $html .= '<td class="created" rowspan="'.$summary_count.'">Készült: &nbsp;<strong>'.$escape(date('Y.m.d H:i')).'</strong></td>';
+      }
+      $html .= '</tr>';
+    }
+    $html .= '</tbody></table>';
     return $html;
   }
 }
