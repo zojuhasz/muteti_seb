@@ -26,7 +26,6 @@ final class BookingController extends ControllerBase {
     $department = UserDepartment::get($this->currentUser());
     $mode = DepartmentMode::get($department);
     $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
-    $is_boss = in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE);
     $can_create = $this->currentUser()->hasPermission('create surgery appointment');
     $can_edit = $this->currentUser()->hasPermission('edit surgery appointment');
     $can_move = $this->currentUser()->hasPermission('move surgery appointment');
@@ -309,7 +308,7 @@ final class BookingController extends ControllerBase {
               'slot' => [
                 '#markup' => '<div class="muteti-patient-slot">'.Html::escape($slot).'</div>',
               ],
-              'actions' => ($can_move || $is_boss) ? [
+              'actions' => $can_move ? [
                 '#type' => 'container',
                 '#attributes' => ['class' => ['muteti-patient-actions']],
                 'move' => $can_move ? [
@@ -324,8 +323,8 @@ final class BookingController extends ControllerBase {
                     'title' => 'Áthelyezés',
                   ],
                 ] : [],
-                'separator' => $can_move && $is_boss ? ['#markup' => '<span class="muteti-action-separator">|</span>'] : [],
-                'delete' => $is_boss ? [
+                'separator' => ['#markup' => '<span class="muteti-action-separator">|</span>'],
+                'delete' => [
                   '#type' => 'html_tag',
                   '#tag' => 'button',
                   '#value' => '0',
@@ -337,7 +336,7 @@ final class BookingController extends ControllerBase {
                     'title' => 'Beteg törlése',
                     'aria-label' => 'Beteg törlése',
                   ],
-                ] : [],
+                ],
               ] : [],
               'content' => [
                 '#type' => 'container',
