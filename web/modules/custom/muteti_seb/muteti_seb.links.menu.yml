@@ -26,6 +26,13 @@ muteti_seb.day_types:
   parent: system.admin_content
   weight: 22
 
+muteti_seb.oncology_treatments:
+  title: 'Onkológiai kezelések'
+  description: 'Az onkológiai előjegyzésben választható gyógyszerek és kezelések.'
+  route_name: muteti_seb.oncology_treatment_content
+  parent: system.admin_content
+  weight: 23
+
 muteti_seb.departments_main:
   title: 'Osztályok beállítása'
   description: 'Osztályok, működési módok és modulok beállítása.'
