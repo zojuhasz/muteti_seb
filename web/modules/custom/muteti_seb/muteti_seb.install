@@ -146,10 +146,10 @@ function muteti_seb_schema(): array {
 function muteti_seb_install(): void {
   $roles = [
     'muteti_view' => ['Betekintő', ['view surgery schedule']],
-    'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'manage own doctor availability', 'view doctor availability']],
-    'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
     'muteti_orvos3' => ['Orvos', ['view surgery schedule']],
-    'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability']],
     'muteti_department_seb' => ['Osztály: Sebészet', []],
     'muteti_department_urol' => ['Osztály: Urológia', []],
     'muteti_department_onkorad' => ['Osztály: Onkoradiológia', []],
@@ -651,6 +651,18 @@ function muteti_seb_update_11023(): void {
   }
   $role->grantPermission('view surgery schedule');
   $role->save();
+}
+
+/**
+ * Allows Orvos1 and higher roles to move and duplicate appointments.
+ */
+function muteti_seb_update_11024(): void {
+  foreach (['muteti_orvos1', 'muteti_orvos2', 'muteti_boss'] as $role_id) {
+    if ($role = Role::load($role_id)) {
+      $role->grantPermission('move surgery appointment');
+      $role->save();
+    }
+  }
 }
 
 /**
