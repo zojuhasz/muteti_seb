@@ -739,17 +739,17 @@ function muteti_seb_ensure_oncology_treatment_content_type(): void {
     ])->save();
   }
 
-  $legacy_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'field_muteti_treatment_legacy_nid');
+  $legacy_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'field_muteti_treat_legacy_nid');
   if (!$legacy_storage) {
     $legacy_storage = \Drupal\field\Entity\FieldStorageConfig::create([
-      'field_name' => 'field_muteti_treatment_legacy_nid',
+      'field_name' => 'field_muteti_treat_legacy_nid',
       'entity_type' => 'node',
       'type' => 'integer',
       'cardinality' => 1,
     ]);
     $legacy_storage->save();
   }
-  if (!\Drupal\field\Entity\FieldConfig::loadByName('node', $bundle, 'field_muteti_treatment_legacy_nid')) {
+  if (!\Drupal\field\Entity\FieldConfig::loadByName('node', $bundle, 'field_muteti_treat_legacy_nid')) {
     \Drupal\field\Entity\FieldConfig::create([
       'field_storage' => $legacy_storage,
       'bundle' => $bundle,
@@ -760,10 +760,10 @@ function muteti_seb_ensure_oncology_treatment_content_type(): void {
 
   \Drupal::service('entity_display.repository')->getFormDisplay('node', $bundle, 'default')
     ->setComponent('title', ['type' => 'string_textfield', 'weight' => 0])
-    ->removeComponent('field_muteti_treatment_legacy_nid')
+    ->removeComponent('field_muteti_treat_legacy_nid')
     ->save();
   \Drupal::service('entity_display.repository')->getViewDisplay('node', $bundle, 'default')
-    ->removeComponent('field_muteti_treatment_legacy_nid')
+    ->removeComponent('field_muteti_treat_legacy_nid')
     ->save();
 }
 
