@@ -4,6 +4,8 @@ create surgery appointment:
   title: 'Műtéti előjegyzés létrehozása'
 edit surgery appointment:
   title: 'Műtéti előjegyzés módosítása'
+move surgery appointment:
+  title: 'Műtéti előjegyzés áthelyezése és duplikálása'
 assign operating room:
   title: 'Betegek műtőbe osztása és sorrendezése'
 administer surgery system:
