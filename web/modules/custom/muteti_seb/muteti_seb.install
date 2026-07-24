@@ -15,6 +15,7 @@ function muteti_seb_schema(): array {
       'admission_date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
       'slot_type' => ['type' => 'varchar', 'length' => 20, 'not null' => TRUE],
       'aznm' => ['type' => 'int', 'size' => 'tiny', 'not null' => TRUE, 'default' => 0],
+      'care_type' => ['type' => 'varchar', 'length' => 20, 'not null' => TRUE, 'default' => 'normal'],
       'patient_name' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
       'birth_date' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
       'taj' => ['type' => 'varchar', 'length' => 12, 'not null' => FALSE],
@@ -611,6 +612,21 @@ function muteti_seb_update_11021(): void {
       'type' => 'varchar',
       'length' => 50,
       'not null' => FALSE,
+    ]);
+  }
+}
+
+/**
+ * Adds the urology one-day surgery classification.
+ */
+function muteti_seb_update_11022(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('muteti_appointment', 'care_type')) {
+    $schema->addField('muteti_appointment', 'care_type', [
+      'type' => 'varchar',
+      'length' => 20,
+      'not null' => TRUE,
+      'default' => 'normal',
     ]);
   }
 }
