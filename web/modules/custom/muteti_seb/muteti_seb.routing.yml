@@ -120,6 +120,14 @@ muteti_seb.doctor_content:
   requirements:
     _permission: 'administer surgery system'
 
+muteti_seb.day_type_content:
+  path: '/admin/content/muteti-napfajtak'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\DayTypeNodeController::listing'
+    _title: 'Napfajták'
+  requirements:
+    _permission: 'administer surgery system'
+
 muteti_seb.availability_update:
   path: '/muteti/api/tavollet'
   defaults:
