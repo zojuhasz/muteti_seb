@@ -26,6 +26,7 @@ function muteti_seb_schema(): array {
       'mesh' => ['type' => 'varchar', 'length' => 10, 'not null' => FALSE],
       'laterality' => ['type' => 'varchar', 'length' => 20, 'not null' => FALSE],
       'blood_type' => ['type' => 'varchar', 'length' => 5, 'not null' => FALSE],
+      'anaesth' => ['type' => 'varchar', 'length' => 50, 'not null' => FALSE],
       'notes' => ['type' => 'text', 'size' => 'big', 'not null' => FALSE],
       'doctor_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
       'assistant1_id' => ['type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE],
@@ -598,6 +599,20 @@ function muteti_seb_update_11019(): void {
 function muteti_seb_update_11020(): void {
   muteti_seb_ensure_article_content_type();
   \Drupal::configFactory()->getEditable('system.site')->set('page.front', '/muteti/nyito')->save();
+}
+
+/**
+ * Adds the dedicated anaesthesia selection to appointments.
+ */
+function muteti_seb_update_11021(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('muteti_appointment', 'anaesth')) {
+    $schema->addField('muteti_appointment', 'anaesth', [
+      'type' => 'varchar',
+      'length' => 50,
+      'not null' => FALSE,
+    ]);
+  }
 }
 
 /**
