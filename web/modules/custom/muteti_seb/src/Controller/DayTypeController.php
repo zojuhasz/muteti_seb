@@ -26,9 +26,19 @@ final class DayTypeController extends ControllerBase {
   }
 
   public function update(Request $request): JsonResponse {
+    $account = $this->currentUser();
+    if (!$account->isAuthenticated() || (
+      !$account->hasPermission('assign operating room')
+      && !$account->hasPermission('administer surgery system')
+    )) {
+      return new JsonResponse([
+        'ok' => FALSE,
+        'error' => 'Nincs jogosultsága a napfajta módosításához.',
+      ], 403);
+    }
     if (!$this->csrf->validate(
       (string) $request->query->get('token', ''),
-      'muteti_day_type_update'
+      'muteti/api/day-type'
     )) {
       return new JsonResponse([
         'ok' => FALSE,
@@ -38,7 +48,7 @@ final class DayTypeController extends ControllerBase {
     $data = json_decode($request->getContent(), TRUE);
     $date = (string) ($data['date'] ?? '');
     $day_type = (string) ($data['day_type'] ?? '');
-    $department = UserDepartment::get($this->currentUser());
+    $department = UserDepartment::get($account);
 
     $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
     if (!$parsed || $parsed->format('Y-m-d') !== $date) {
