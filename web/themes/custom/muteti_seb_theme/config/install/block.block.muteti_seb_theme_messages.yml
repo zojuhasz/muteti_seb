@@ -1,0 +1,20 @@
+langcode: hu
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - muteti_seb_theme
+id: muteti_seb_theme_messages
+theme: muteti_seb_theme
+region: highlighted
+weight: 0
+provider: null
+plugin: system_messages_block
+settings:
+  id: system_messages_block
+  label: Állapotüzenetek
+  label_display: '0'
+  provider: system
+visibility: {  }
+
