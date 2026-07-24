@@ -9,9 +9,9 @@ libraries:
 regions:
   header: Fejléc
   primary_menu: Főmenü
+  account_menu: Felhasználói műveletek
   highlighted: Kiemelt
   help: Súgó
   breadcrumb: Útvonal
   content: Tartalom
   footer: Lábléc
-
