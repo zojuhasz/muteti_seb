@@ -5,6 +5,7 @@ namespace Drupal\muteti_seb\Service;
 use Drupal\Core\Datetime\DrupalDateTime;
 
 final class Schedule {
+  private static array $definitionCache = [];
   public const DAY_TYPES = [
     'HK' => ['B-Zu', 'B-2', 'B-3', 'B-NM', 'EP-1', 'Tu-1', 'Tu-2', 'Tu-3', 'Tu-4', 'S-1', 'S-2', 'Amb-1', 'Amb-2', 'Amb-3', 'Amb-4'],
     'SZCS' => ['B-Zu', 'B-2', 'B-3', 'B-NM', 'EP-1', 'EP-2', 'EP-3', 'Tu-1', 'Tu-2', 'S-1', 'S-2', 'Amb-1', 'Amb-2', 'Amb-3', 'Amb-4'],
@@ -26,6 +27,12 @@ final class Schedule {
 
   public static function departmentDayType(string $department, DrupalDateTime|\DateTimeInterface $date): string {
     $day = (int) $date->format('N');
+    $date_string = $date->format('Y-m-d');
+    foreach (self::definitions($department) as $definition) {
+      if (in_array($day, $definition['weekdays'], TRUE) && self::definitionApplies($definition, $date_string)) {
+        return $definition['code'];
+      }
+    }
     return match (DepartmentMode::get($department)) {
       'urol' => match (TRUE) {
         $day <= 4 => 'HKSZCS',
@@ -40,6 +47,18 @@ final class Schedule {
 
   public static function departmentSlots(string $department, DrupalDateTime|\DateTimeInterface $date, ?string $day_type = NULL): array {
     $day_type ??= self::departmentDayType($department, $date);
+    $date_string = $date->format('Y-m-d');
+    foreach (self::definitions($department) as $definition) {
+      if ($definition['code'] === $day_type && self::definitionApplies($definition, $date_string)) {
+        if (trim($definition['slots']) === '') {
+          return [];
+        }
+        return array_map(
+          static fn(string $slot): ?string => trim($slot) === '' ? NULL : trim($slot),
+          explode('%', $definition['slots'])
+        );
+      }
+    }
     $mode = DepartmentMode::get($department);
     if ($mode === 'seb') {
       return self::DAY_TYPES[$day_type] ?? [];
@@ -93,6 +112,14 @@ final class Schedule {
   }
 
   public static function departmentDayTypes(string $department): array {
+    $definitions = self::definitions($department);
+    if ($definitions) {
+      $codes = array_values(array_unique(array_column($definitions, 'code')));
+      if (!in_array('SEMMI', $codes, TRUE)) {
+        $codes[] = 'SEMMI';
+      }
+      return $codes;
+    }
     return match (DepartmentMode::get($department)) {
       'urol' => ['HKSZCS', 'P', 'SZ', 'V', 'SEMMI'],
       'onko' => ['HKSZCSP', 'SZV', 'SEMMI'],
@@ -106,5 +133,41 @@ final class Schedule {
       $slots[] = $prefix.$separator.$number;
     }
     return $slots;
+  }
+
+  private static function definitions(string $department): array {
+    if (array_key_exists($department, self::$definitionCache)) {
+      return self::$definitionCache[$department];
+    }
+    if (!\Drupal::moduleHandler()->moduleExists('node')) {
+      return self::$definitionCache[$department] = [];
+    }
+    if (!\Drupal\node\Entity\NodeType::load('muteti_day_type_definition')) {
+      return self::$definitionCache[$department] = [];
+    }
+    $storage = \Drupal::entityTypeManager()->getStorage('node');
+    $ids = $storage->getQuery()
+      ->accessCheck(FALSE)
+      ->condition('type', 'muteti_day_type_definition')
+      ->condition('status', 1)
+      ->condition('field_muteti_daytype_department', $department)
+      ->execute();
+    $definitions = [];
+    foreach ($storage->loadMultiple($ids) as $node) {
+      $definitions[] = [
+        'code' => trim((string) $node->get('field_muteti_daytype_code')->value),
+        'weekdays' => array_map('intval', array_column($node->get('field_muteti_daytype_weekdays')->getValue(), 'value')),
+        'slots' => (string) $node->get('field_muteti_daytype_slots')->value,
+        'from' => trim((string) $node->get('field_muteti_daytype_from')->value),
+        'until' => trim((string) $node->get('field_muteti_daytype_until')->value),
+      ];
+    }
+    usort($definitions, static fn(array $a, array $b): int => strcmp($b['from'], $a['from']));
+    return self::$definitionCache[$department] = $definitions;
+  }
+
+  private static function definitionApplies(array $definition, string $date): bool {
+    return ($definition['from'] === '' || $date >= $definition['from'])
+      && ($definition['until'] === '' || $date <= $definition['until']);
   }
 }
