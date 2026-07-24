@@ -29,6 +29,7 @@ final class BookingController extends ControllerBase {
     $is_boss = in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE);
     $can_create = $this->currentUser()->hasPermission('create surgery appointment');
     $can_edit = $this->currentUser()->hasPermission('edit surgery appointment');
+    $can_move = $this->currentUser()->hasPermission('move surgery appointment');
     $week = $request->query->get('week', 'now');
     try { $monday = new DrupalDateTime($week === 'now' ? 'monday this week' : $week); }
     catch (\Exception) { $monday = new DrupalDateTime('monday this week'); }
@@ -220,7 +221,7 @@ final class BookingController extends ControllerBase {
             '#attributes' => ['class' => ['muteti-empty-slot']],
             'slot' => $slot_link,
           ];
-          if ($is_boss && !$placeholder) {
+          if ($can_move && !$placeholder) {
             $empty_cell['actions'] = [
               '#type' => 'container',
               '#attributes' => ['class' => ['muteti-empty-slot-actions']],
@@ -308,10 +309,10 @@ final class BookingController extends ControllerBase {
               'slot' => [
                 '#markup' => '<div class="muteti-patient-slot">'.Html::escape($slot).'</div>',
               ],
-              'actions' => $is_boss ? [
+              'actions' => ($can_move || $is_boss) ? [
                 '#type' => 'container',
                 '#attributes' => ['class' => ['muteti-patient-actions']],
-                'move' => [
+                'move' => $can_move ? [
                   '#type' => 'html_tag',
                   '#tag' => 'button',
                   '#value' => 'áth',
@@ -322,9 +323,9 @@ final class BookingController extends ControllerBase {
                     'data-move-patient' => $a->patient_name,
                     'title' => 'Áthelyezés',
                   ],
-                ],
-                'separator' => ['#markup' => '<span class="muteti-action-separator">|</span>'],
-                'delete' => [
+                ] : [],
+                'separator' => $can_move && $is_boss ? ['#markup' => '<span class="muteti-action-separator">|</span>'] : [],
+                'delete' => $is_boss ? [
                   '#type' => 'html_tag',
                   '#tag' => 'button',
                   '#value' => '0',
@@ -336,7 +337,7 @@ final class BookingController extends ControllerBase {
                     'title' => 'Beteg törlése',
                     'aria-label' => 'Beteg törlése',
                   ],
-                ],
+                ] : [],
               ] : [],
               'content' => [
                 '#type' => 'container',
