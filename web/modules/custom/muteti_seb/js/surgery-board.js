@@ -2,6 +2,15 @@
   'use strict';
   Drupal.behaviors.mutetiSurgeryBoard = {
     attach(context) {
+      const readJson = async (response) => {
+        const body = await response.text();
+        try {
+          return JSON.parse(body);
+        }
+        catch (error) {
+          throw new Error(`A szerver nem JSON-választ adott (HTTP ${response.status}).`);
+        }
+      };
       const bookingNavLinks = once('muteti-booking-scroll', '.muteti-booking-nav a', context);
       bookingNavLinks.forEach((link) => {
         link.addEventListener('click', () => sessionStorage.setItem('mutetiBookingScrollY', String(window.scrollY)));
@@ -73,7 +82,7 @@
                 mode: button.dataset.moveMode || 'move'
               })
             });
-            const result = await response.json();
+            const result = await readJson(response);
             if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
             sessionStorage.removeItem(moveStorageKey);
             window.location.reload();
@@ -100,7 +109,7 @@
               credentials: 'same-origin',
               body: JSON.stringify({appointment_id: Number(button.dataset.deleteId)})
             });
-            const result = await response.json();
+            const result = await readJson(response);
             if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
             sessionStorage.removeItem(moveStorageKey);
             window.location.reload();
@@ -134,7 +143,7 @@
               credentials: 'same-origin',
               body: JSON.stringify({date: select.dataset.date, day_type: select.value})
             });
-            const result = await response.json();
+            const result = await readJson(response);
             if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
             select.dataset.previousValue = select.value;
             sessionStorage.setItem('mutetiBookingScrollY', String(window.scrollY));
@@ -176,7 +185,7 @@
               body: JSON.stringify({id: Number(dragged.dataset.id), room: zone.dataset.room || '', date: zone.dataset.date || '', ordered_ids: orderedIds})
             });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const result = await response.json();
+            const result = await readJson(response);
             if (!result.ok) throw new Error(result.error || 'Unknown save error');
             dragged = null;
           }
