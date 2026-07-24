@@ -29,6 +29,8 @@ final class BookingController extends ControllerBase {
     $can_create = $this->currentUser()->hasPermission('create surgery appointment');
     $can_edit = $this->currentUser()->hasPermission('edit surgery appointment');
     $can_move = $this->currentUser()->hasPermission('move surgery appointment');
+    $roles = $this->currentUser()->getRoles();
+    $can_manage_restricted_slots = in_array('muteti_orvos2', $roles, TRUE) || in_array('muteti_boss', $roles, TRUE);
     $week = $request->query->get('week', 'now');
     try { $monday = new DrupalDateTime($week === 'now' ? 'monday this week' : $week); }
     catch (\Exception) { $monday = new DrupalDateTime('monday this week'); }
@@ -203,10 +205,12 @@ final class BookingController extends ControllerBase {
         $date=$d->format('Y-m-d');
         $slot = $slots_by_date[$date][$r] ?? NULL;
         if (!$slot) { $row[]=['data'=>['#markup'=>'—']]; continue; }
+        $restricted_slot = in_array($slot, ['S-1', 'S-2'], TRUE);
+        $can_manage_slot = !$restricted_slot || $can_manage_restricted_slots;
         $a=$by_cell[$date][$slot] ?? NULL;
         $placeholder = $a && trim((string) $a->patient_name) === '' && trim((string) $a->operation_name) === '' && empty($a->doctor_id);
         if (!$a || $placeholder) {
-          if ($can_create) {
+          if ($can_create && $can_manage_slot) {
             $slot_link = Link::fromTextAndUrl($slot, Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
             $slot_link['#attributes']['class'][] = 'muteti-slot-link';
           }
@@ -220,7 +224,7 @@ final class BookingController extends ControllerBase {
             '#attributes' => ['class' => ['muteti-empty-slot']],
             'slot' => $slot_link,
           ];
-          if ($can_move && !$placeholder) {
+          if ($can_move && $can_manage_slot && !$placeholder) {
             $empty_cell['actions'] = [
               '#type' => 'container',
               '#attributes' => ['class' => ['muteti-empty-slot-actions']],
@@ -255,12 +259,13 @@ final class BookingController extends ControllerBase {
           $row[] = ['data' => $empty_cell];
         }
         else {
-          $edit = Link::fromTextAndUrl($can_edit ? 'M' : 'Néz', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
+          $can_edit_slot = $can_edit && $can_manage_slot;
+          $edit = Link::fromTextAndUrl($can_edit_slot ? 'M' : 'Néz', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
           $edit['#attributes']['class'][] = 'muteti-edit-link';
-          if (!$can_edit) {
+          if (!$can_edit_slot) {
             $edit['#attributes']['class'][] = 'is-view-only';
           }
-          $edit_label = $can_edit ? $this->t('Módosítás') : $this->t('Betegadatok megtekintése');
+          $edit_label = $can_edit_slot ? $this->t('Módosítás') : $this->t('Betegadatok megtekintése');
           $edit['#attributes']['title'] = $edit_label;
           $edit['#attributes']['aria-label'] = $edit_label;
           $doctor = $doctors[$a->doctor_id] ?? NULL;
@@ -308,7 +313,7 @@ final class BookingController extends ControllerBase {
               'slot' => [
                 '#markup' => '<div class="muteti-patient-slot">'.Html::escape($slot).'</div>',
               ],
-              'actions' => $can_move ? [
+              'actions' => $can_move && $can_manage_slot ? [
                 '#type' => 'container',
                 '#attributes' => ['class' => ['muteti-patient-actions']],
                 'move' => $can_move ? [
