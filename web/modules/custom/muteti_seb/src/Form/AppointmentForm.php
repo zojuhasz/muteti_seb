@@ -22,7 +22,8 @@ final class AppointmentForm extends FormBase {
     $a=$this->appointment; $form['date']=['#type'=>'hidden','#value'=>$date]; $form['slot']=['#type'=>'hidden','#value'=>$slot];
     $form['department']=['#type'=>'hidden','#value'=>$department];
     $doctors=['0'=>'-']+$this->database->select('muteti_doctor','d')->fields('d',['id','name'])->condition('department',$department)->condition('active',1)->orderBy('name')->execute()->fetchAllKeyed();
-    if (DepartmentMode::get($department) === 'onko') {
+    $mode = DepartmentMode::get($department);
+    if ($mode === 'onko') {
       $treatments = $this->database->select('muteti_appointment', 'a')
         ->distinct()
         ->fields('a', ['operation_name'])
@@ -53,11 +54,6 @@ final class AppointmentForm extends FormBase {
       $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mehet'),'#button_type'=>'primary'];
       return $form;
     }
-    $form['aznm']=['#type'=>'checkbox','#title'=>$this->t('AZNM.'),'#default_value'=>$a->aznm ?? 0];
-    $form['patient_name']=['#type'=>'textfield','#title'=>$this->t('Beteg neve @code',['@code'=>date('n-j',strtotime($date)).'-'.$slot]),'#required'=>TRUE,'#default_value'=>$a->patient_name ?? ''];
-    $form['birth_date']=['#type'=>'date','#title'=>$this->t('Születési dátum'),'#default_value'=>$a->birth_date ?? ''];
-    foreach (['taj'=>'TAJ','contact'=>'Elérhetőség','ward_room'=>'Kórterem','diagnosis'=>'Diagnózis','operation_name'=>'Műtét'] as $key=>$label) $form[$key]=['#type'=>'textfield','#title'=>$this->t($label),'#required'=>in_array($key,['diagnosis','operation_name']), '#default_value'=>$a->{$key} ?? ''];
-    foreach (['laparoscope'=>'Laparoszkóp','mesh'=>'Háló','laterality'=>'Oldaliság','blood_type'=>'Vércsoport'] as $key=>$label) $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>['?'=>'?','Igen'=>'Igen','Nem'=>'Nem','Bal'=>'Bal','Jobb'=>'Jobb','A+'=>'A+','A-'=>'A-','B+'=>'B+','B-'=>'B-','0+'=>'0+','0-'=>'0-','AB+'=>'AB+','AB-'=>'AB-'],'#default_value'=>$a->{$key} ?? '?'];
     $anaesth_options = [
       'Local' => 'Local',
       'i.v. narc.' => 'i.v. narc.',
@@ -67,6 +63,33 @@ final class AppointmentForm extends FormBase {
       'ITN+EDA' => 'ITN+EDA',
       'I.v. + N. obt blokad' => 'I.v. + N. obt blokad',
     ];
+    if ($mode === 'urol') {
+      $form['care_type'] = [
+        '#type' => 'radios',
+        '#title' => '1 napos sebészet',
+        '#options' => ['normal' => 'Normál', 'one_day' => 'Egynapos', 'same_day' => 'Aznapi'],
+        '#default_value' => $a->care_type ?? 'normal',
+      ];
+      $form['patient_name']=['#type'=>'textfield','#title'=>$this->t('Beteg neve @code',['@code'=>date('n-j',strtotime($date)).'-'.$slot]),'#required'=>TRUE,'#default_value'=>$a->patient_name ?? ''];
+      foreach (['taj'=>'TAJ/Szül.dat.','contact'=>'Elérhetőség','ward_room'=>'Kórterem','diagnosis'=>'Diagnózis','operation_name'=>'Műtét'] as $key=>$label) {
+        $form[$key]=['#type'=>'textfield','#title'=>$this->t($label),'#required'=>in_array($key,['diagnosis','operation_name'],TRUE),'#default_value'=>$a->{$key} ?? ''];
+      }
+      $form['anaesth']=['#type'=>'select','#title'=>'Anaesth','#options'=>$anaesth_options,'#empty_option'=>'?','#default_value'=>$a->anaesth ?? ''];
+      $blood_options=['?'=>'?','A+'=>'A+','A-'=>'A-','B+'=>'B+','B-'=>'B-','0+'=>'0+','0-'=>'0-','AB+'=>'AB+','AB-'=>'AB-'];
+      $form['blood_type']=['#type'=>'select','#title'=>'Vércsoport','#options'=>$blood_options,'#default_value'=>$a->blood_type ?? '?'];
+      $form['notes']=['#type'=>'textarea','#title'=>$this->t('Egyéb info'),'#default_value'=>$a->notes ?? ''];
+      foreach (['doctor_id'=>'Orvos','assistant1_id'=>'Asszisztens 1','assistant2_id'=>'Asszisztens 2','assistant3_id'=>'Asszisztens 3'] as $key=>$label) {
+        $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>$doctors,'#default_value'=>$a->{$key} ?? 0];
+      }
+      $form['actions']=['#type'=>'actions'];
+      $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mehet'),'#button_type'=>'primary'];
+      return $form;
+    }
+    $form['aznm']=['#type'=>'checkbox','#title'=>$this->t('AZNM.'),'#default_value'=>$a->aznm ?? 0];
+    $form['patient_name']=['#type'=>'textfield','#title'=>$this->t('Beteg neve @code',['@code'=>date('n-j',strtotime($date)).'-'.$slot]),'#required'=>TRUE,'#default_value'=>$a->patient_name ?? ''];
+    $form['birth_date']=['#type'=>'date','#title'=>$this->t('Születési dátum'),'#default_value'=>$a->birth_date ?? ''];
+    foreach (['taj'=>'TAJ','contact'=>'Elérhetőség','ward_room'=>'Kórterem','diagnosis'=>'Diagnózis','operation_name'=>'Műtét'] as $key=>$label) $form[$key]=['#type'=>'textfield','#title'=>$this->t($label),'#required'=>in_array($key,['diagnosis','operation_name']), '#default_value'=>$a->{$key} ?? ''];
+    foreach (['laparoscope'=>'Laparoszkóp','mesh'=>'Háló','laterality'=>'Oldaliság','blood_type'=>'Vércsoport'] as $key=>$label) $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>['?'=>'?','Igen'=>'Igen','Nem'=>'Nem','Bal'=>'Bal','Jobb'=>'Jobb','A+'=>'A+','A-'=>'A-','B+'=>'B+','B-'=>'B-','0+'=>'0+','0-'=>'0-','AB+'=>'AB+','AB-'=>'AB-'],'#default_value'=>$a->{$key} ?? '?'];
     $form['anaesth'] = [
       '#type' => 'select',
       '#title' => 'Anaesth',
@@ -82,7 +105,8 @@ final class AppointmentForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $v=$form_state->getValues(); $fields=[];
     $department = (string) $v['department'];
-    if (DepartmentMode::get($department) === 'onko') {
+    $mode = DepartmentMode::get($department);
+    if ($mode === 'onko') {
       $fields = [
         'aznm' => 0,
         'patient_name' => trim((string) $v['patient_name']),
@@ -95,6 +119,25 @@ final class AppointmentForm extends FormBase {
         'assistant1_id' => NULL,
         'assistant2_id' => NULL,
         'assistant3_id' => NULL,
+      ];
+    }
+    elseif ($mode === 'urol') {
+      $fields = [
+        'aznm' => 0,
+        'care_type' => (string) ($v['care_type'] ?? 'normal'),
+        'patient_name' => trim((string) $v['patient_name']),
+        'taj' => trim((string) $v['taj']),
+        'contact' => trim((string) $v['contact']),
+        'ward_room' => trim((string) $v['ward_room']),
+        'diagnosis' => trim((string) $v['diagnosis']),
+        'operation_name' => trim((string) $v['operation_name']),
+        'anaesth' => (string) ($v['anaesth'] ?? '') ?: NULL,
+        'blood_type' => (string) ($v['blood_type'] ?? '?'),
+        'notes' => trim((string) $v['notes']),
+        'doctor_id' => (int) $v['doctor_id'] ?: NULL,
+        'assistant1_id' => (int) $v['assistant1_id'] ?: NULL,
+        'assistant2_id' => (int) $v['assistant2_id'] ?: NULL,
+        'assistant3_id' => (int) $v['assistant3_id'] ?: NULL,
       ];
     }
     else {
