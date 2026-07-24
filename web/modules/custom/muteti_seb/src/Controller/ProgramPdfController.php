@@ -95,12 +95,163 @@ final class ProgramPdfController extends ControllerBase {
   }
 
   public function pdf(string $date): Response {
-    $department=UserDepartment::get($this->currentUser());
-    $rows=$this->database->select('muteti_appointment','a')->fields('a')->condition('department',$department)->condition('surgery_date',$date)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
-    $doctor_ids=[];foreach($rows as $a)foreach(['doctor_id','assistant1_id','assistant2_id','assistant3_id'] as $f)if($a->{$f})$doctor_ids[]=$a->{$f};
-    $doctors=$doctor_ids?$this->database->select('muteti_doctor','d')->fields('d',['id','name'])->condition('id',array_unique($doctor_ids),'IN')->execute()->fetchAllKeyed():[];
-    $html='<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:18px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}</style><h1>'.htmlspecialchars($department).'</h1><h2>'.htmlspecialchars($date).'</h2>';
-    $current=NULL;foreach($rows as $a){if($current!==$a->operating_room){$current=$a->operating_room;$html.='<div class="room">'.htmlspecialchars($current).'</div><small>MŰTŐ 08:30</small>';}$assist=[];foreach(['assistant1_id','assistant2_id','assistant3_id'] as $f)if($a->{$f}&&isset($doctors[$a->{$f}]))$assist[]=$doctors[$a->{$f}];$html.='<div class="patient"><div class="diag">Dg.: '.htmlspecialchars($a->diagnosis).'</div><strong>('.$a->surgery_order.') '.htmlspecialchars($a->patient_name).'</strong><br>Op.: '.htmlspecialchars($a->operation_name).'<br><strong>'.htmlspecialchars($doctors[$a->doctor_id]??'-').($assist?', '.htmlspecialchars(implode(', ',$assist)):'').'</strong></div>';}
-    $pdf=new Dompdf(['isRemoteEnabled'=>FALSE]);$pdf->loadHtml($html,'UTF-8');$pdf->setPaper('A4','portrait');$pdf->render();return new Response($pdf->output(),200,['Content-Type'=>'application/pdf','Content-Disposition'=>'inline; filename="muteti-program-'.$date.'.pdf"']);
+    $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+    if (!$parsed || $parsed->format('Y-m-d') !== $date) {
+      return new Response('Érvénytelen dátum.', 400);
+    }
+
+    $department = UserDepartment::get($this->currentUser());
+    $mode = DepartmentMode::get($department);
+    $rows = $this->database->select('muteti_appointment', 'a')
+      ->fields('a')
+      ->condition('department', $department)
+      ->condition('surgery_date', $date)
+      ->orderBy('operating_room')
+      ->orderBy('surgery_order')
+      ->execute()
+      ->fetchAll();
+    $doctor_ids = [];
+    foreach ($rows as $appointment) {
+      foreach (['doctor_id', 'assistant1_id', 'assistant2_id', 'assistant3_id'] as $field) {
+        if ($appointment->{$field}) {
+          $doctor_ids[] = (int) $appointment->{$field};
+        }
+      }
+    }
+    $doctors = $doctor_ids
+      ? $this->database->select('muteti_doctor', 'd')
+        ->fields('d', ['id', 'name'])
+        ->condition('id', array_values(array_unique($doctor_ids)), 'IN')
+        ->execute()
+        ->fetchAllKeyed()
+      : [];
+
+    if ($mode === 'urol') {
+      $html = $this->urologyProgramHtml($department, $date, $parsed, $rows, $doctors);
+    }
+    else {
+      $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:18px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}</style><h1>'.$escape($department).'</h1><h2>'.$escape($date).'</h2>';
+      $current = NULL;
+      foreach ($rows as $appointment) {
+        if ($current !== $appointment->operating_room) {
+          $current = $appointment->operating_room;
+          $html .= '<div class="room">'.$escape($current).'</div><small>MŰTŐ 08:30</small>';
+        }
+        $assistants = [];
+        foreach (['assistant1_id', 'assistant2_id', 'assistant3_id'] as $field) {
+          if ($appointment->{$field} && isset($doctors[$appointment->{$field}])) {
+            $assistants[] = $doctors[$appointment->{$field}];
+          }
+        }
+        $html .= '<div class="patient"><div class="diag">Dg.: '.$escape($appointment->diagnosis).'</div><strong>('.$appointment->surgery_order.') '.$escape($appointment->patient_name).'</strong><br>Op.: '.$escape($appointment->operation_name).'<br><strong>'.$escape($doctors[$appointment->doctor_id] ?? '-').($assistants ? ', '.$escape(implode(', ', $assistants)) : '').'</strong></div>';
+      }
+    }
+
+    $pdf = new Dompdf(['isRemoteEnabled' => FALSE]);
+    $pdf->loadHtml($html, 'UTF-8');
+    $pdf->setPaper('A4', 'portrait');
+    $pdf->render();
+    return new Response($pdf->output(), 200, [
+      'Content-Type' => 'application/pdf',
+      'Content-Disposition' => 'inline; filename="muteti-program-'.$date.'.pdf"',
+    ]);
+  }
+
+  /**
+   * Builds the compact, operating-room based Urology program.
+   *
+   * @param array<int, object> $rows
+   * @param array<int, string> $doctors
+   */
+  private function urologyProgramHtml(string $department, string $date, \DateTimeImmutable $parsed, array $rows, array $doctors): string {
+    $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $weekdays = [1 => 'HÉTFŐ', 'KEDD', 'SZERDA', 'CSÜTÖRTÖK', 'PÉNTEK', 'SZOMBAT', 'VASÁRNAP'];
+    $on_call = $this->database->select('muteti_on_call', 'u')
+      ->fields('u', ['doctor_name', 'doctor_name_2'])
+      ->condition('mode', 'urol')
+      ->condition('date', $date)
+      ->execute()
+      ->fetchObject();
+    $start_time = $this->database->select('muteti_daily_info', 'i')
+      ->fields('i', ['start_time'])
+      ->condition('department', $department)
+      ->condition('date', $date)
+      ->execute()
+      ->fetchField();
+    $start_time = trim((string) $start_time) ?: '08:00';
+
+    $rooms = [];
+    foreach ($rows as $appointment) {
+      $room = trim((string) $appointment->operating_room);
+      if ($room !== '' && $room !== '0') {
+        $rooms[$room][] = $appointment;
+      }
+    }
+    uksort($rooms, static fn(string $left, string $right): int => strnatcasecmp($left, $right));
+
+    $on_call_names = array_values(array_filter(array_unique([
+      trim((string) ($on_call->doctor_name ?? '')),
+      trim((string) ($on_call->doctor_name_2 ?? '')),
+    ])));
+    $html = '<meta charset="utf-8"><style>
+      @page{margin:11mm 9mm 12mm}
+      body{font-family:DejaVu Sans,sans-serif;color:#000;font-size:8px;margin:0}
+      h1{font-size:14px;line-height:1.05;margin:0;font-weight:700}
+      h2{font-size:14px;line-height:1.05;margin:1px 0 2px;font-weight:700}
+      .on-call{font-size:7px;font-weight:700;margin:0 0 8px}
+      .room{margin:0 0 15mm;page-break-inside:avoid}
+      .room-title{border:1px solid #111;border-bottom:0;font-size:12px;padding:3px 5px;font-weight:400}
+      table{border-collapse:collapse;width:100%;table-layout:fixed}
+      thead{display:table-header-group}
+      tr{page-break-inside:avoid}
+      th,td{border:1px solid #111;padding:2px 3px;vertical-align:top;line-height:1.18;overflow-wrap:anywhere}
+      th{text-align:left;font-weight:700}
+      .order{width:3%;text-align:center;padding-left:1px;padding-right:1px}
+      .patient{width:17%}.diagnosis{width:17%}.operation{width:17%}
+      .anaesth{width:11%}.operator{width:17%}.assistants{width:18%}
+      .empty{padding:8px;text-align:center}
+    </style>';
+    $html .= '<h1>'.$escape($department).'</h1>';
+    $html .= '<h2>'.$escape($parsed->format('Y.m.d')).' '.$weekdays[(int) $parsed->format('N')].'</h2>';
+    $html .= '<div class="on-call">Ügyelet: '.$escape($on_call_names ? implode(', ', $on_call_names) : '-').'</div>';
+
+    if (!$rooms) {
+      $html .= '<div class="empty">Erre a napra nincs műtőbe beosztott beteg.</div>';
+      return $html;
+    }
+
+    foreach ($rooms as $room => $appointments) {
+      $html .= '<section class="room">';
+      $html .= '<div class="room-title">'.$escape($room).'. MŰTŐ - kezdés '.$escape($start_time).'</div>';
+      $html .= '<table><thead><tr>';
+      $html .= '<th class="order"></th><th class="patient">Beteg</th><th class="diagnosis">Dg.</th><th class="operation">Műtét</th><th class="anaesth">Anaesth.</th><th class="operator">Operál</th><th class="assistants">Asszisztál</th>';
+      $html .= '</tr></thead><tbody>';
+      foreach ($appointments as $index => $appointment) {
+        $assistants = [];
+        foreach (['assistant1_id', 'assistant2_id', 'assistant3_id'] as $field) {
+          if ($appointment->{$field} && isset($doctors[$appointment->{$field}])) {
+            $assistants[] = $doctors[$appointment->{$field}];
+          }
+        }
+        $assistants = array_values(array_unique($assistants));
+        $order = (int) $appointment->surgery_order > 0 ? (int) $appointment->surgery_order : $index + 1;
+        $patient = $escape($appointment->patient_name);
+        if (trim((string) $appointment->taj) !== '') {
+          $patient .= '<br>TAJ:'.$escape($appointment->taj);
+        }
+        $html .= '<tr>';
+        $html .= '<td class="order">'.$order.'</td>';
+        $html .= '<td class="patient">'.$patient.'</td>';
+        $html .= '<td class="diagnosis">'.$escape($appointment->diagnosis).'</td>';
+        $html .= '<td class="operation">'.$escape($appointment->operation_name).'</td>';
+        $html .= '<td class="anaesth">'.$escape($appointment->anaesth).'</td>';
+        $html .= '<td class="operator">'.$escape($doctors[$appointment->doctor_id] ?? '-').'</td>';
+        $html .= '<td class="assistants">'.$escape(implode(', ', $assistants)).'</td>';
+        $html .= '</tr>';
+      }
+      $html .= '</tbody></table></section>';
+    }
+    return $html;
   }
 }
