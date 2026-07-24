@@ -396,7 +396,7 @@ final class BookingController extends ControllerBase {
         'drupalSettings'=>['mutetiSeb'=>[
           'appointmentMoveEndpoint'=>Url::fromRoute('muteti_seb.appointment_move',[],['query'=>['token'=>$this->csrf->get('/muteti/api/appointment-move')]])->toString(),
           'appointmentDeleteEndpoint'=>Url::fromRoute('muteti_seb.appointment_delete',[],['query'=>['token'=>$this->csrf->get('/muteti/api/appointment-delete')]])->toString(),
-          'dayTypeEndpoint'=>Url::fromRoute('muteti_seb.day_type',[],['query'=>['token'=>$this->csrf->get('/muteti/api/day-type')]])->toString(),
+          'dayTypeEndpoint'=>Url::fromRoute('muteti_seb.day_type',[],['query'=>['token'=>$this->csrf->get('muteti_day_type_update')]])->toString(),
         ]],
       ],
       '#cache'=>['max-age'=>0],
