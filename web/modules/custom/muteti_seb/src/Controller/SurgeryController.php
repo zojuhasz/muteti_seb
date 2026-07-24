@@ -30,6 +30,8 @@ final class SurgeryController extends ControllerBase {
     $department = UserDepartment::get($this->currentUser());
     $availability_enabled = DepartmentMode::featureEnabled($department, 'availability_enabled');
     $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
+    $can_assign = $this->currentUser()->hasPermission('assign operating room');
+    $can_manage_availability = $this->currentUser()->hasPermission('manage own doctor availability');
     try {
       $monday = new DrupalDateTime($request->query->get('week', 'monday this week'));
     }
@@ -91,7 +93,7 @@ final class SurgeryController extends ControllerBase {
           '#url' => Url::fromRoute('muteti_seb.surgery', [], ['query' => ['week' => $monday->format('Y-m-d'), 'day' => $date]]),
           '#attributes' => ['class' => $classes],
         ],
-        'availability' => $availability_enabled ? [
+        'availability' => $availability_enabled && $can_manage_availability ? [
           '#type' => 'html_tag',
           '#tag' => 'button',
           '#value' => ($availability[$date] ?? 'work') === 'absent' ? 'Távollevő vagyok' : 'Távollét?',
@@ -104,7 +106,7 @@ final class SurgeryController extends ControllerBase {
             'title' => 'Saját napi munka vagy távollét beállítása',
           ],
         ] : [],
-        'away' => $away_enabled ? [
+        'away' => $away_enabled && $can_manage_availability ? [
           '#type' => 'html_tag',
           '#tag' => 'button',
           '#value' => ($availability[$date] ?? 'work') === 'away' ? 'Idegenben vagyok' : 'Idegenben?',
@@ -133,7 +135,7 @@ final class SurgeryController extends ControllerBase {
       }
     }
     $doctors=$doctor_ids?$this->database->select('muteti_doctor','d')->fields('d')->condition('id',array_unique($doctor_ids),'IN')->execute()->fetchAllAssoc('id'):[];
-    $card = function ($a) use ($doctors): array {
+    $card = function ($a) use ($doctors, $can_assign): array {
       $doctor = $doctors[$a->doctor_id] ?? NULL;
       $staff = [];
       foreach ([$a->doctor_id, $a->assistant1_id, $a->assistant2_id, $a->assistant3_id] as $staff_id) {
@@ -144,9 +146,11 @@ final class SurgeryController extends ControllerBase {
       $staff = array_values(array_unique($staff));
       $attributes = [
         'class' => array_filter(['muteti-drag-card', $a->aznm ? 'is-aznm' : NULL]),
-        'draggable' => 'true',
         'data-id' => (string) $a->id,
       ];
+      if ($can_assign) {
+        $attributes['draggable'] = 'true';
+      }
       if ($doctor) {
         $has_background = trim((string) $doctor->background_color) !== '';
         $style = 'background-color:'.($has_background ? $doctor->background_color : '#eef2f6').';color:'.($has_background ? ($doctor->text_color ?: '#111111') : '#111111').';';
@@ -221,12 +225,12 @@ final class SurgeryController extends ControllerBase {
       ],
       'layout' => ['#type' => 'container', '#attributes' => ['class' => ['muteti-board-layout']]],
     ];
-    $build['daily']['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>['muteti-dropzone','muteti-waiting'],'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtétre váró bentfekvők</h3>']];
+    $build['daily']['layout']['waiting']=['#type'=>'container','#attributes'=>['class'=>array_filter([$can_assign ? 'muteti-dropzone' : NULL,'muteti-waiting']),'data-room'=>'','data-date'=>''] ,'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtétre váró bentfekvők</h3>']];
     foreach($waiting as $a)$build['daily']['layout']['waiting']['p'.$a->id]=$card($a);
     $build['daily']['layout']['rooms']=['#type'=>'container','#attributes'=>['class'=>['muteti-rooms']]];
     $rooms=Schedule::departmentRooms($department);
     foreach($assigned as $a)if($a->operating_room&&!in_array($a->operating_room,$rooms,TRUE))$rooms[]=$a->operating_room;
-    foreach($rooms as $room){$build['daily']['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>['muteti-room','muteti-dropzone'],'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['daily']['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
+    foreach($rooms as $room){$build['daily']['layout']['rooms']['r'.$room]=['#type'=>'container','#attributes'=>['class'=>array_filter(['muteti-room',$can_assign ? 'muteti-dropzone' : NULL]),'data-room'=>$room,'data-date'=>$selected],'title'=>['#markup'=>'<h3 class="muteti-zone-title">Műtő '.$room.'</h3>']];foreach($assigned as $a)if($a->operating_room===$room)$build['daily']['layout']['rooms']['r'.$room]['p'.$a->id]=$card($a);}
     $mode = DepartmentMode::get($department);
     $info = $this->database->select('muteti_daily_info', 'i')->fields('i')
       ->condition('department', $department)->condition('date', $selected)->execute()->fetchObject();
