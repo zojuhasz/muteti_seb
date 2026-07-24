@@ -172,7 +172,7 @@ final class SurgeryController extends ControllerBase {
       '#attached' => [
         'library' => ['muteti_seb/surgery_board', 'muteti_seb/availability'],
         'drupalSettings' => ['mutetiSeb' => [
-          'endpoint' => Url::fromRoute('muteti_seb.assignment', [], ['query' => ['token' => $this->csrf->get('/muteti/api/assignment')]])->toString(),
+          'endpoint' => Url::fromRoute('muteti_seb.assignment', [], ['query' => ['token' => $this->csrf->get('muteti/api/assignment')]])->toString(),
           'availabilityEndpoint' => Url::fromRoute('muteti_seb.availability_update', [], ['query' => ['token' => $this->csrf->get('/muteti/api/tavollet')]])->toString(),
         ]],
       ],
