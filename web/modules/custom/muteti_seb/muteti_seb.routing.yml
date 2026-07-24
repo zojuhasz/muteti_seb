@@ -48,7 +48,7 @@ muteti_seb.appointment_move:
     _controller: '\Drupal\muteti_seb\Controller\AppointmentMoveController::move'
   methods: [POST]
   requirements:
-    _permission: 'edit surgery appointment'
+    _permission: 'move surgery appointment'
     _csrf_token: 'TRUE'
 
 muteti_seb.appointment_delete:
