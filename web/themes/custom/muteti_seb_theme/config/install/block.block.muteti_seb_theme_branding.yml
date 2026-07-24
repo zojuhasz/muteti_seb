@@ -1,0 +1,23 @@
+langcode: hu
+status: true
+dependencies:
+  module:
+    - system
+  theme:
+    - muteti_seb_theme
+id: muteti_seb_theme_branding
+theme: muteti_seb_theme
+region: header
+weight: 0
+provider: null
+plugin: system_branding_block
+settings:
+  id: system_branding_block
+  label: Webhelynév
+  label_display: '0'
+  provider: system
+  use_site_logo: false
+  use_site_name: true
+  use_site_slogan: false
+visibility: {  }
+
