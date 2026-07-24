@@ -96,8 +96,8 @@ final class AppointmentMoveController extends ControllerBase {
   }
 
   public function delete(Request $request): JsonResponse {
-    if (!in_array('muteti_boss', $this->currentUser()->getRoles(), TRUE)) {
-      return new JsonResponse(['ok' => FALSE, 'error' => 'A törléshez Boss jogosultság szükséges.'], 403);
+    if (!$this->currentUser()->hasPermission('move surgery appointment')) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'Nincs jogosultságod a törléshez.'], 403);
     }
 
     $data = json_decode($request->getContent(), TRUE);
