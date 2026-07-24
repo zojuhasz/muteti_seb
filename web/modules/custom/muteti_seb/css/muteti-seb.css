@@ -412,6 +412,16 @@
   font-size: .75rem;
   font-weight: 900;
 }
+.muteti-edit-link.is-view-only {
+  width: auto;
+  min-width: 1.35rem;
+  padding: 0 .3rem;
+  font-size: .65rem;
+}
+.muteti-slot-link.is-readonly {
+  cursor: default;
+  color: #41576b;
+}
 .muteti-staff { display: inline-block; margin-top: .25rem; font-size: .85em; font-weight: 600; }
 .muteti-patient-notes {
   display: inline-block;
