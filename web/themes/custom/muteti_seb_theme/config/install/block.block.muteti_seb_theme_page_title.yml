@@ -1,0 +1,17 @@
+langcode: hu
+status: true
+dependencies:
+  theme:
+    - muteti_seb_theme
+id: muteti_seb_theme_page_title
+theme: muteti_seb_theme
+region: content
+weight: -20
+provider: null
+plugin: page_title_block
+settings:
+  id: page_title_block
+  label: Oldalcím
+  label_display: '0'
+  provider: core
+visibility: {  }
