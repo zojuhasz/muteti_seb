@@ -148,7 +148,7 @@ function muteti_seb_install(): void {
     'muteti_view' => ['Betekintő', ['view surgery schedule']],
     'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'manage own doctor availability', 'view doctor availability']],
     'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
-    'muteti_orvos3' => ['Orvos', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_orvos3' => ['Orvos', ['view surgery schedule']],
     'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability']],
     'muteti_department_seb' => ['Osztály: Sebészet', []],
     'muteti_department_urol' => ['Osztály: Urológia', []],
@@ -629,6 +629,28 @@ function muteti_seb_update_11022(): void {
       'default' => 'normal',
     ]);
   }
+}
+
+/**
+ * Makes the basic Orvos role strictly read-only.
+ */
+function muteti_seb_update_11023(): void {
+  $role = Role::load('muteti_orvos3');
+  if (!$role) {
+    return;
+  }
+  foreach ([
+    'create surgery appointment',
+    'edit surgery appointment',
+    'assign operating room',
+    'administer surgery system',
+    'manage own doctor availability',
+    'view doctor availability',
+  ] as $permission) {
+    $role->revokePermission($permission);
+  }
+  $role->grantPermission('view surgery schedule');
+  $role->save();
 }
 
 /**
