@@ -171,6 +171,8 @@ function muteti_seb_install(): void {
   }
   muteti_seb_ensure_doctor_content_type();
   muteti_seb_ensure_article_content_type();
+  muteti_seb_ensure_day_type_content_type();
+  muteti_seb_seed_day_type_nodes();
   \Drupal::configFactory()->getEditable('system.site')->set('page.front', '/muteti/nyito')->save();
 }
 
@@ -661,6 +663,229 @@ function muteti_seb_update_11024(): void {
     if ($role = Role::load($role_id)) {
       $role->grantPermission('move surgery appointment');
       $role->save();
+    }
+  }
+}
+
+/**
+ * Adds editable, department-specific day-type definitions.
+ */
+function muteti_seb_update_11025(): void {
+  muteti_seb_ensure_day_type_content_type();
+  muteti_seb_seed_day_type_nodes();
+}
+
+/**
+ * Creates the Drupal Napfajták content type and its fields.
+ */
+function muteti_seb_ensure_day_type_content_type(): void {
+  $bundle = 'muteti_day_type_definition';
+  $type = \Drupal\node\Entity\NodeType::load($bundle);
+  if (!$type) {
+    \Drupal\node\Entity\NodeType::create([
+      'type' => $bundle,
+      'name' => 'Napfajták',
+      'description' => 'Osztályonként beállítható napfajták és az azokhoz tartozó előjegyzési cellák.',
+      'new_revision' => TRUE,
+      'display_submitted' => FALSE,
+    ])->save();
+  }
+
+  $fields = [
+    'field_muteti_daytype_department' => [
+      'type' => 'string',
+      'label' => 'Osztály',
+      'cardinality' => 1,
+      'settings' => ['max_length' => 100],
+      'required' => TRUE,
+    ],
+    'field_muteti_daytype_code' => [
+      'type' => 'string',
+      'label' => 'Napfajta jele',
+      'cardinality' => 1,
+      'settings' => ['max_length' => 20],
+      'required' => TRUE,
+    ],
+    'field_muteti_daytype_weekdays' => [
+      'type' => 'list_string',
+      'label' => 'A hét napjai',
+      'cardinality' => -1,
+      'settings' => [
+        'allowed_values' => [
+          1 => 'Hétfő',
+          2 => 'Kedd',
+          3 => 'Szerda',
+          4 => 'Csütörtök',
+          5 => 'Péntek',
+          6 => 'Szombat',
+          7 => 'Vasárnap',
+        ],
+      ],
+      'required' => FALSE,
+    ],
+    'field_muteti_daytype_slots' => [
+      'type' => 'string_long',
+      'label' => 'Cellatípusok',
+      'cardinality' => 1,
+      'settings' => [],
+      'required' => FALSE,
+    ],
+    'field_muteti_daytype_from' => [
+      'type' => 'string',
+      'label' => 'Érvényes ettől',
+      'cardinality' => 1,
+      'settings' => ['max_length' => 10],
+      'required' => FALSE,
+    ],
+    'field_muteti_daytype_until' => [
+      'type' => 'string',
+      'label' => 'Érvényes eddig',
+      'cardinality' => 1,
+      'settings' => ['max_length' => 10],
+      'required' => FALSE,
+    ],
+  ];
+
+  foreach ($fields as $field_name => $definition) {
+    $storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', $field_name);
+    if (!$storage) {
+      $storage = \Drupal\field\Entity\FieldStorageConfig::create([
+        'field_name' => $field_name,
+        'entity_type' => 'node',
+        'type' => $definition['type'],
+        'cardinality' => $definition['cardinality'],
+        'settings' => $definition['settings'],
+      ]);
+      $storage->save();
+    }
+    if (!\Drupal\field\Entity\FieldConfig::loadByName('node', $bundle, $field_name)) {
+      \Drupal\field\Entity\FieldConfig::create([
+        'field_storage' => $storage,
+        'bundle' => $bundle,
+        'label' => $definition['label'],
+        'required' => $definition['required'],
+      ])->save();
+    }
+  }
+
+  $form_display = \Drupal::service('entity_display.repository')->getFormDisplay('node', $bundle, 'default');
+  $form_display
+    ->setComponent('title', ['type' => 'string_textfield', 'weight' => -20])
+    ->setComponent('field_muteti_daytype_department', ['type' => 'string_textfield', 'weight' => 0])
+    ->setComponent('field_muteti_daytype_code', ['type' => 'string_textfield', 'weight' => 10])
+    ->setComponent('field_muteti_daytype_weekdays', ['type' => 'options_buttons', 'weight' => 20])
+    ->setComponent('field_muteti_daytype_slots', ['type' => 'string_textarea', 'weight' => 30])
+    ->setComponent('field_muteti_daytype_from', ['type' => 'string_textfield', 'weight' => 40])
+    ->setComponent('field_muteti_daytype_until', ['type' => 'string_textfield', 'weight' => 50])
+    ->save();
+}
+
+/**
+ * Seeds the hard-coded schedules as editable Napfajták nodes.
+ */
+function muteti_seb_seed_day_type_nodes(): void {
+  $database = \Drupal::database();
+  if (!$database->schema()->tableExists('muteti_department_config')) {
+    return;
+  }
+
+  $numbered = static function (string $prefix, int $to, string $separator = ' - '): array {
+    $values = [];
+    for ($number = 1; $number <= $to; $number++) {
+      $values[] = $prefix . $separator . $number;
+    }
+    return $values;
+  };
+  $join = static fn(array $slots): string => implode('%', array_map(
+    static fn($slot): string => $slot ?? '',
+    $slots
+  ));
+
+  $seb_hk = ['B-Zu', 'B-2', 'B-3', 'B-NM', 'EP-1', 'Tu-1', 'Tu-2', 'Tu-3', 'Tu-4', 'S-1', 'S-2', 'Amb-1', 'Amb-2', 'Amb-3', 'Amb-4'];
+  $seb_szcs = ['B-Zu', 'B-2', 'B-3', 'B-NM', 'EP-1', 'EP-2', 'EP-3', 'Tu-1', 'Tu-2', 'S-1', 'S-2', 'Amb-1', 'Amb-2', 'Amb-3', 'Amb-4'];
+  $seb_p = ['B-Zu', 'B-2', 'B-3', 'B-NM', 'EP-1', 'EP-2', 'Tu-1', 'Tu-2', 'Tu-3', 'S-1', 'S-2', 'Amb-1', 'Amb-2', 'Amb-3', 'Amb-4'];
+  $urol_hkszcs = ['Ffi-1', 'Ffi-2', 'Ffi-3', 'N1', 'N2', 'TRUS-1', 'TRUS-2', 'Amb-Egyn-1', 'Amb-Egyn-2', 'Plusz-1', 'Plusz-2'];
+  $urol_p = [NULL, NULL, NULL, NULL, NULL, 'Amb-Egyn-1', 'Amb-Egyn-2', 'Amb-3', 'Amb-4', 'Plusz-1', 'Plusz-2'];
+  $urol_v = ['Ffi-1', 'Ffi-2', 'Ffi-3', 'N1', 'N2', 'TRUS-1', 'TRUS-2', 'Plusz-1', 'Plusz-2'];
+  $onko_old = array_merge(
+    $numbered('4-6h', 10),
+    $numbered('2-3h', 15),
+    $numbered('1h', 15),
+    $numbered('Fejh.', 4),
+    $numbered('sc Herc.', 15),
+    $numbered('Fekv.', 15),
+  );
+  $onko_middle = array_merge(
+    $numbered('4-6h', 13),
+    $numbered('2-3h', 18),
+    $numbered('1h', 18),
+    $numbered('Fejh.', 4),
+    $numbered('Fekv.', 15),
+  );
+  $onko_current = $onko_old;
+
+  $by_mode = [
+    'seb' => [
+      ['HK', [1, 2], $join($seb_hk), '', ''],
+      ['SZCS', [3, 4], $join($seb_szcs), '', ''],
+      ['P', [5], $join($seb_p), '', ''],
+      ['SEMMI', [6, 7], '', '', ''],
+    ],
+    'urol' => [
+      ['HKSZCS', [1, 2, 3, 4], $join($urol_hkszcs), '', ''],
+      ['P', [5], $join($urol_p), '', ''],
+      ['SZ', [6], $join($numbered('ESWL', 15, '')), '', ''],
+      ['V', [7], $join($urol_v), '', ''],
+      ['SEMMI', [], '', '', ''],
+    ],
+    'onko' => [
+      ['HKSZCSP', [1, 2, 3, 4, 5], $join($onko_old), '', '2025-02-02'],
+      ['HKSZCSP', [1, 2, 3, 4, 5], $join($onko_middle), '2025-02-03', '2025-03-03'],
+      ['HKSZCSP', [1, 2, 3, 4, 5], $join($onko_current), '2025-03-04', ''],
+      ['SZV', [6, 7], $join($numbered('Fekv.', 15)), '', ''],
+      ['SEMMI', [], '', '', ''],
+    ],
+  ];
+
+  $node_storage = \Drupal::entityTypeManager()->getStorage('node');
+  $departments = $database->select('muteti_department_config', 'd')
+    ->fields('d', ['name', 'mode'])
+    ->execute();
+  foreach ($departments as $department) {
+    foreach ($by_mode[$department->mode] ?? [] as [$code, $weekdays, $slots, $from, $until]) {
+      $query = $node_storage->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('type', 'muteti_day_type_definition')
+        ->condition('field_muteti_daytype_department', $department->name)
+        ->condition('field_muteti_daytype_code', $code);
+      $from === ''
+        ? $query->notExists('field_muteti_daytype_from')
+        : $query->condition('field_muteti_daytype_from', $from);
+      $until === ''
+        ? $query->notExists('field_muteti_daytype_until')
+        : $query->condition('field_muteti_daytype_until', $until);
+      if ($query->range(0, 1)->execute()) {
+        continue;
+      }
+      $title = $department->name . ' – ' . $code;
+      if ($from !== '' || $until !== '') {
+        $title .= ' (' . ($from ?: 'kezdet') . ' – ' . ($until ?: 'folyamatos') . ')';
+      }
+      $node_storage->create([
+        'type' => 'muteti_day_type_definition',
+        'title' => $title,
+        'status' => 1,
+        'uid' => 1,
+        'field_muteti_daytype_department' => $department->name,
+        'field_muteti_daytype_code' => $code,
+        'field_muteti_daytype_weekdays' => array_map(
+          static fn(int $day): array => ['value' => (string) $day],
+          $weekdays
+        ),
+        'field_muteti_daytype_slots' => $slots,
+        'field_muteti_daytype_from' => $from ?: NULL,
+        'field_muteti_daytype_until' => $until ?: NULL,
+      ])->save();
     }
   }
 }
