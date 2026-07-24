@@ -230,12 +230,12 @@ final class ProgramPdfController extends ControllerBase {
       trim((string) ($on_call->doctor_name_2 ?? '')),
     ])));
     $html = '<meta charset="utf-8"><style>
-      @page{margin:11mm 9mm 28mm}
+      @page{margin:11mm 9mm 12mm}
       body{font-family:DejaVu Sans,sans-serif;color:#000;font-size:8px;margin:0}
       h1{font-size:14px;line-height:1.05;margin:0;font-weight:700}
       h2{font-size:14px;line-height:1.05;margin:1px 0 2px;font-weight:700}
       .on-call{font-size:7px;font-weight:700;margin:0 0 8px}
-      .room{margin:0 0 15mm;page-break-inside:avoid}
+      .room{margin:0 0 10mm;page-break-inside:avoid}
       .room-title{border:1px solid #111;border-bottom:0;font-size:12px;padding:3px 5px;font-weight:400}
       table{border-collapse:collapse;width:100%;table-layout:fixed}
       thead{display:table-header-group}
@@ -246,24 +246,16 @@ final class ProgramPdfController extends ControllerBase {
       .patient{width:17%}.diagnosis{width:17%}.operation{width:17%}
       .anaesth{width:11%}.operator{width:17%}.assistants{width:18%}
       .empty{padding:8px;text-align:center}
-      .summary{position:fixed;left:0;right:0;bottom:0;height:18mm;background:#fff;font-size:8px;line-height:1.2}
+      .summary{margin-top:6mm;background:#fff;font-size:8px;line-height:1.2;page-break-inside:avoid}
       .summary-row{display:block;white-space:nowrap}
       .summary-label{display:inline-block;width:21%;font-weight:700}
       .summary-value{display:inline-block;width:57%;white-space:normal;vertical-align:top}
-      .created{position:absolute;right:0;bottom:0;text-align:right;white-space:nowrap}
+      .created{margin-top:2px;text-align:right;white-space:nowrap}
       .created strong{font-size:9px}
     </style>';
     $html .= '<h1>'.$escape($department).'</h1>';
     $html .= '<h2>'.$escape($parsed->format('Y.m.d')).' '.$weekdays[(int) $parsed->format('N')].'</h2>';
     $html .= '<div class="on-call">Ügyelet: '.$escape($on_call_names ? implode(', ', $on_call_names) : '-').'</div>';
-    // Dompdf only repeats/renders fixed elements reliably when they occur
-    // before the normal-flow page content.
-    $html .= '<div class="summary">';
-    foreach ($summary as $label => $value) {
-      $html .= '<div class="summary-row"><span class="summary-label">'.$escape($label).':</span><span class="summary-value">'.$escape($value ?: '-').'</span></div>';
-    }
-    $html .= '<div class="created">Készült: &nbsp;<strong>'.$escape(date('Y.m.d H:i')).'</strong></div></div>';
-
     if (!$rooms) {
       $html .= '<div class="empty">Erre a napra nincs műtőbe beosztott beteg.</div>';
     }
@@ -303,6 +295,11 @@ final class ProgramPdfController extends ControllerBase {
         $html .= '</tbody></table></section>';
       }
     }
+    $html .= '<div class="summary">';
+    foreach ($summary as $label => $value) {
+      $html .= '<div class="summary-row"><span class="summary-label">'.$escape($label).':</span><span class="summary-value">'.$escape($value ?: '-').'</span></div>';
+    }
+    $html .= '<div class="created">Készült: &nbsp;<strong>'.$escape(date('Y.m.d H:i')).'</strong></div></div>';
     return $html;
   }
 }
