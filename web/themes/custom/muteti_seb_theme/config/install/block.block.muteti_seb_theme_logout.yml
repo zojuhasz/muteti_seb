@@ -1,0 +1,20 @@
+langcode: hu
+status: true
+dependencies:
+  module:
+    - muteti_seb
+  theme:
+    - muteti_seb_theme
+id: muteti_seb_theme_logout
+theme: muteti_seb_theme
+region: account_menu
+weight: 0
+provider: null
+plugin: muteti_logout_block
+settings:
+  id: muteti_logout_block
+  label: Kijelentkezés
+  label_display: '0'
+  provider: muteti_seb
+visibility: {  }
+
