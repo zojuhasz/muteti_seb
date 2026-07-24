@@ -256,6 +256,13 @@ final class ProgramPdfController extends ControllerBase {
     $html .= '<h1>'.$escape($department).'</h1>';
     $html .= '<h2>'.$escape($parsed->format('Y.m.d')).' '.$weekdays[(int) $parsed->format('N')].'</h2>';
     $html .= '<div class="on-call">Ügyelet: '.$escape($on_call_names ? implode(', ', $on_call_names) : '-').'</div>';
+    // Dompdf only repeats/renders fixed elements reliably when they occur
+    // before the normal-flow page content.
+    $html .= '<div class="summary">';
+    foreach ($summary as $label => $value) {
+      $html .= '<div class="summary-row"><span class="summary-label">'.$escape($label).':</span><span class="summary-value">'.$escape($value ?: '-').'</span></div>';
+    }
+    $html .= '<div class="created">Készült: &nbsp;<strong>'.$escape(date('Y.m.d H:i')).'</strong></div></div>';
 
     if (!$rooms) {
       $html .= '<div class="empty">Erre a napra nincs műtőbe beosztott beteg.</div>';
@@ -271,7 +278,10 @@ final class ProgramPdfController extends ControllerBase {
           $assistants = [];
           foreach (['assistant1_id', 'assistant2_id', 'assistant3_id'] as $field) {
             if ($appointment->{$field} && isset($doctors[$appointment->{$field}])) {
-              $assistants[] = $doctors[$appointment->{$field}];
+              $assistant = trim((string) $doctors[$appointment->{$field}]);
+              if ($assistant !== '' && $assistant !== '-') {
+                $assistants[] = $assistant;
+              }
             }
           }
           $assistants = array_values(array_unique($assistants));
@@ -293,11 +303,6 @@ final class ProgramPdfController extends ControllerBase {
         $html .= '</tbody></table></section>';
       }
     }
-    $html .= '<div class="summary">';
-    foreach ($summary as $label => $value) {
-      $html .= '<div class="summary-row"><span class="summary-label">'.$escape($label).':</span><span class="summary-value">'.$escape($value ?: '-').'</span></div>';
-    }
-    $html .= '<div class="created">Készült: &nbsp;<strong>'.$escape(date('Y.m.d H:i')).'</strong></div></div>';
     return $html;
   }
 }
