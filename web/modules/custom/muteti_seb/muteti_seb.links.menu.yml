@@ -19,6 +19,13 @@ muteti_seb.departments:
   parent: system.admin_content
   weight: 21
 
+muteti_seb.day_types:
+  title: 'Napfajták'
+  description: 'Az osztályok napfajtái és előjegyzési cellái.'
+  route_name: muteti_seb.day_type_content
+  parent: system.admin_content
+  weight: 22
+
 muteti_seb.departments_main:
   title: 'Osztályok beállítása'
   description: 'Osztályok, működési módok és modulok beállítása.'
