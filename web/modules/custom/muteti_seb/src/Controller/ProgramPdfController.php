@@ -246,7 +246,7 @@ final class ProgramPdfController extends ControllerBase {
       .patient{width:17%}.diagnosis{width:17%}.operation{width:17%}
       .anaesth{width:11%}.operator{width:17%}.assistants{width:18%}
       .empty{padding:8px;text-align:center}
-      .summary{position:fixed;left:0;right:0;bottom:-20mm;width:100%;border-collapse:collapse;table-layout:auto;background:#fff}
+      .summary{position:fixed;left:0;right:0;bottom:0;width:100%;border-collapse:collapse;table-layout:auto;background:#fff}
       .summary td{border:0;padding:0 4px 0 0;line-height:1.2}
       .summary-label{width:21%;font-weight:700;white-space:nowrap}
       .summary-value{width:59%}
