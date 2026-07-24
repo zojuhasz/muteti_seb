@@ -1,0 +1,52 @@
+<div class="muteti-site">
+  <header class="muteti-site-header" role="banner">
+    <div class="muteti-site-brand">
+      {{ page.header }}
+    </div>
+
+    {% if page.primary_menu %}
+      <button
+        class="muteti-menu-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="muteti-primary-navigation"
+      >
+        <span class="muteti-menu-toggle__icon" aria-hidden="true"></span>
+        <span class="visually-hidden">{{ 'Menü'|t }}</span>
+      </button>
+      <nav id="muteti-primary-navigation" class="muteti-primary-navigation" aria-label="{{ 'Főmenü'|t }}">
+        {{ page.primary_menu }}
+      </nav>
+    {% endif %}
+  </header>
+
+  {% if page.highlighted %}
+    <div class="muteti-highlighted">
+      {{ page.highlighted }}
+    </div>
+  {% endif %}
+
+  {% if page.help %}
+    <div class="muteti-help">
+      {{ page.help }}
+    </div>
+  {% endif %}
+
+  {% if page.breadcrumb %}
+    <div class="muteti-breadcrumb">
+      {{ page.breadcrumb }}
+    </div>
+  {% endif %}
+
+  <main class="muteti-main" role="main">
+    <a id="main-content" tabindex="-1"></a>
+    {{ page.content }}
+  </main>
+
+  {% if page.footer %}
+    <footer class="muteti-site-footer">
+      {{ page.footer }}
+    </footer>
+  {% endif %}
+</div>
+
