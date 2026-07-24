@@ -684,6 +684,13 @@ function muteti_seb_update_11026(): void {
 }
 
 /**
+ * Displays every day-type field on the full content page.
+ */
+function muteti_seb_update_11027(): void {
+  muteti_seb_ensure_day_type_content_type();
+}
+
+/**
  * Creates the Drupal Napfajták content type and its fields.
  */
 function muteti_seb_ensure_day_type_content_type(): void {
@@ -785,6 +792,40 @@ function muteti_seb_ensure_day_type_content_type(): void {
     ->setComponent('field_muteti_daytype_slots', ['type' => 'string_textarea', 'weight' => 30])
     ->setComponent('field_muteti_daytype_from', ['type' => 'string_textfield', 'weight' => 40])
     ->setComponent('field_muteti_daytype_until', ['type' => 'string_textfield', 'weight' => 50])
+    ->save();
+
+  $view_display = \Drupal::service('entity_display.repository')->getViewDisplay('node', $bundle, 'default');
+  $view_display
+    ->setComponent('field_muteti_daytype_department', [
+      'type' => 'string',
+      'label' => 'above',
+      'weight' => 0,
+    ])
+    ->setComponent('field_muteti_daytype_code', [
+      'type' => 'string',
+      'label' => 'above',
+      'weight' => 10,
+    ])
+    ->setComponent('field_muteti_daytype_weekdays', [
+      'type' => 'list_default',
+      'label' => 'above',
+      'weight' => 20,
+    ])
+    ->setComponent('field_muteti_daytype_slots', [
+      'type' => 'basic_string',
+      'label' => 'above',
+      'weight' => 30,
+    ])
+    ->setComponent('field_muteti_daytype_from', [
+      'type' => 'string',
+      'label' => 'above',
+      'weight' => 40,
+    ])
+    ->setComponent('field_muteti_daytype_until', [
+      'type' => 'string',
+      'label' => 'above',
+      'weight' => 50,
+    ])
     ->save();
 }
 
