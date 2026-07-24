@@ -340,13 +340,18 @@ while ($appointment = $appointments->fetchObject()) {
   if (!in_array($anaesth, $allowed_anaesth, TRUE)) {
     $anaesth = '';
   }
+  $legacy_care_type = mb_strtolower(trim((string) $appointment->egynapos), 'UTF-8');
+  $care_type = str_contains($legacy_care_type, 'egynap')
+    ? 'one_day'
+    : (str_contains($legacy_care_type, 'aznap') ? 'same_day' : 'normal');
   $created = strtotime((string) $appointment->stamp) ?: time();
   $fields = [
     'legacy_id' => $legacy_id,
     'department' => $department,
     'admission_date' => $admission_date,
     'slot_type' => $slot_type,
-    'aznm' => (int) !empty($appointment->egynapos),
+    'aznm' => $department === 'Urológia' ? 0 : (int) !empty($appointment->egynapos),
+    'care_type' => $department === 'Urológia' ? $care_type : 'normal',
     'patient_name' => trim($appointment->nev),
     'birth_date' => $valid_date($appointment->szuldat),
     'taj' => trim($appointment->taj),
