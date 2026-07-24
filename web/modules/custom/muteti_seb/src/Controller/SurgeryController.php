@@ -255,7 +255,7 @@ final class SurgeryController extends ControllerBase {
         'Szabadnap' => $previous_on_call->doctor_name ?? '',
         'Egyéb távollevők' => $absent,
         'Telefonos' => $today_on_call->doctor_name_2 ?? '',
-        'Flór Ferenc KH-ban' => $away,
+        'Idegen intézményben' => $away,
       ];
     }
     else {
