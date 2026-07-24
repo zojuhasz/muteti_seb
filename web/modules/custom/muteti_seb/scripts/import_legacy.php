@@ -332,8 +332,13 @@ while ($appointment = $appointments->fetchObject()) {
   $legacy_room = trim((string) $appointment->muto);
   $operating_room = $legacy_room !== '' && $legacy_room !== '0' ? $legacy_room : NULL;
   $notes = trim((string) $appointment->egyeb);
-  if (!empty($appointment->anaesth)) {
-    $notes .= ($notes === '' ? '' : "\n\n") . 'Anesztézia: ' . trim($appointment->anaesth);
+  $anaesth = trim((string) $appointment->anaesth);
+  $allowed_anaesth = [
+    'Local', 'i.v. narc.', 'i.v. Laryng', 'Spinal',
+    'ITN', 'ITN+EDA', 'I.v. + N. obt blokad',
+  ];
+  if (!in_array($anaesth, $allowed_anaesth, TRUE)) {
+    $anaesth = '';
   }
   $created = strtotime((string) $appointment->stamp) ?: time();
   $fields = [
@@ -353,6 +358,7 @@ while ($appointment = $appointments->fetchObject()) {
     'mesh' => trim($appointment->halo),
     'laterality' => trim($appointment->oldalisag),
     'blood_type' => trim($appointment->vercsop),
+    'anaesth' => $anaesth ?: NULL,
     'notes' => $notes,
     'doctor_id' => $doctor_id_by_name[$normalize_name($appointment->orvos)] ?? NULL,
     'assistant1_id' => $doctor_id_by_name[$normalize_name($appointment->assz1)] ?? NULL,
