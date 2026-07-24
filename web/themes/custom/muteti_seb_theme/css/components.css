@@ -1,0 +1,172 @@
+.muteti-site-brand .site-branding {
+  margin: 0;
+  padding: 0;
+}
+
+.muteti-site-brand .site-branding__name,
+.muteti-site-brand .site-branding__name a {
+  color: #fff;
+  font-size: .92rem;
+  font-weight: 800;
+  line-height: 42px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.muteti-site-brand .site-branding__logo,
+.muteti-site-brand .site-branding__slogan {
+  display: none;
+}
+
+.muteti-primary-navigation .menu,
+.muteti-primary-navigation ul {
+  display: flex;
+  min-width: 0;
+  align-items: stretch;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.muteti-primary-navigation .menu-item {
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+.muteti-primary-navigation a {
+  display: flex;
+  align-items: center;
+  padding: 0 .62rem;
+  border-left: 1px solid rgba(255, 255, 255, .12);
+  color: #fff;
+  font-size: .76rem;
+  font-weight: 700;
+  line-height: 42px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.muteti-primary-navigation a:hover,
+.muteti-primary-navigation a:focus,
+.muteti-primary-navigation a.is-active {
+  background: rgba(255, 255, 255, .14);
+  color: #fff;
+}
+
+.muteti-menu-toggle {
+  display: none;
+  width: 42px;
+  height: 42px;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+}
+
+.muteti-menu-toggle__icon,
+.muteti-menu-toggle__icon::before,
+.muteti-menu-toggle__icon::after {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: currentColor;
+  content: "";
+}
+
+.muteti-menu-toggle__icon {
+  position: relative;
+}
+
+.muteti-menu-toggle__icon::before {
+  position: absolute;
+  top: -7px;
+}
+
+.muteti-menu-toggle__icon::after {
+  position: absolute;
+  top: 7px;
+}
+
+.muteti-main h1,
+.muteti-main .page-title {
+  margin: 0 0 .45rem;
+  color: #173f60;
+  font-size: 1.18rem;
+  line-height: 1.2;
+}
+
+.muteti-main h2 {
+  margin: .65rem 0 .35rem;
+  font-size: 1rem;
+}
+
+.muteti-main .block {
+  margin-bottom: .45rem;
+}
+
+.tabs {
+  margin: 0 0 .45rem;
+  font-size: .76rem;
+}
+
+.tabs ul {
+  margin: 0;
+}
+
+.messages {
+  margin: .45rem 0;
+  padding: .55rem .75rem;
+}
+
+table {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea {
+  max-width: 100%;
+}
+
+.form-item {
+  margin-top: .45rem;
+  margin-bottom: .45rem;
+}
+
+.form-actions {
+  margin-top: .65rem;
+  margin-bottom: .65rem;
+}
+
+@media (max-width: 860px) {
+  .muteti-menu-toggle {
+    display: block;
+  }
+
+  .muteti-primary-navigation .menu,
+  .muteti-primary-navigation ul,
+  .muteti-primary-navigation .menu-item {
+    display: block;
+    width: 100%;
+  }
+
+  .muteti-primary-navigation a {
+    display: block;
+    padding: .65rem .8rem;
+    border: 0;
+    border-bottom: 1px solid #d7e0e7;
+    color: var(--muteti-blue-900);
+    line-height: 1.2;
+  }
+
+  .muteti-primary-navigation a:hover,
+  .muteti-primary-navigation a:focus,
+  .muteti-primary-navigation a.is-active {
+    background: var(--muteti-blue-100);
+    color: var(--muteti-blue-900);
+  }
+}
+
