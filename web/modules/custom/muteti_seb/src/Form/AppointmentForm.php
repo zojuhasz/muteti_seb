@@ -89,7 +89,40 @@ final class AppointmentForm extends FormBase {
     $form['patient_name']=['#type'=>'textfield','#title'=>$this->t('Beteg neve @code',['@code'=>date('n-j',strtotime($date)).'-'.$slot]),'#required'=>TRUE,'#default_value'=>$a->patient_name ?? ''];
     $form['birth_date']=['#type'=>'date','#title'=>$this->t('Születési dátum'),'#default_value'=>$a->birth_date ?? ''];
     foreach (['taj'=>'TAJ','contact'=>'Elérhetőség','ward_room'=>'Kórterem','diagnosis'=>'Diagnózis','operation_name'=>'Műtét'] as $key=>$label) $form[$key]=['#type'=>'textfield','#title'=>$this->t($label),'#required'=>in_array($key,['diagnosis','operation_name']), '#default_value'=>$a->{$key} ?? ''];
-    foreach (['laparoscope'=>'Laparoszkóp','mesh'=>'Háló','laterality'=>'Oldaliság','blood_type'=>'Vércsoport'] as $key=>$label) $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>['?'=>'?','Igen'=>'Igen','Nem'=>'Nem','Bal'=>'Bal','Jobb'=>'Jobb','A+'=>'A+','A-'=>'A-','B+'=>'B+','B-'=>'B-','0+'=>'0+','0-'=>'0-','AB+'=>'AB+','AB-'=>'AB-'],'#default_value'=>$a->{$key} ?? '?'];
+    $yes_no_options = ['Igen' => 'Igen', 'Nem' => 'Nem'];
+    foreach (['laparoscope' => 'Laparoszkóp', 'mesh' => 'Háló'] as $key => $label) {
+      $current = (string) ($a->{$key} ?? '');
+      $form[$key] = [
+        '#type' => 'select',
+        '#title' => $this->t($label),
+        '#options' => $yes_no_options,
+        '#empty_option' => '-',
+        '#default_value' => isset($yes_no_options[$current]) ? $current : '',
+      ];
+    }
+    $laterality_options = ['D' => 'D', 'S' => 'S', 'U' => 'U', 'N' => 'N'];
+    $current_laterality = (string) ($a->laterality ?? '');
+    $form['laterality'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Oldaliság'),
+      '#options' => $laterality_options,
+      '#empty_option' => '-',
+      '#default_value' => isset($laterality_options[$current_laterality]) ? $current_laterality : '',
+    ];
+    $blood_options = [
+      'A+' => 'A+', 'A-' => 'A-',
+      'B+' => 'B+', 'B-' => 'B-',
+      'AB+' => 'AB+', 'AB-' => 'AB-',
+      '0+' => '0+', '0-' => '0-',
+    ];
+    $current_blood_type = (string) ($a->blood_type ?? '');
+    $form['blood_type'] = [
+      '#type' => 'select',
+      '#title' => $this->t('Vércsoport'),
+      '#options' => $blood_options,
+      '#empty_option' => '-',
+      '#default_value' => isset($blood_options[$current_blood_type]) ? $current_blood_type : '',
+    ];
     $form['anaesth'] = [
       '#type' => 'select',
       '#title' => 'Anaesth',
