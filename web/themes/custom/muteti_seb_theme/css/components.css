@@ -90,6 +90,39 @@
   top: 7px;
 }
 
+.muteti-account-navigation {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-left: auto;
+}
+
+.muteti-account-navigation .block {
+  margin: 0;
+}
+
+.muteti-logout-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: .25rem .65rem;
+  border: 1px solid rgba(255, 255, 255, .65);
+  border-radius: .32rem;
+  background: rgba(255, 255, 255, .1);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 800;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.muteti-logout-link:hover,
+.muteti-logout-link:focus {
+  background: #fff;
+  color: var(--muteti-blue-900);
+}
+
 .muteti-main h1,
 .muteti-main .page-title {
   margin: 0 0 .45rem;
@@ -146,6 +179,11 @@ textarea {
     display: block;
   }
 
+  .muteti-account-navigation {
+    order: 2;
+    margin-left: 0;
+  }
+
   .muteti-primary-navigation .menu,
   .muteti-primary-navigation ul,
   .muteti-primary-navigation .menu-item {
@@ -169,4 +207,3 @@ textarea {
     color: var(--muteti-blue-900);
   }
 }
-
