@@ -33,7 +33,7 @@ foreach ($rows as $row) {
   $ids = $storage->getQuery()
     ->accessCheck(FALSE)
     ->condition('type', 'muteti_oncology_treatment')
-    ->condition('field_muteti_treatment_legacy_nid', $legacy_nid)
+    ->condition('field_muteti_treat_legacy_nid', $legacy_nid)
     ->range(0, 1)
     ->execute();
   $node = $ids ? $storage->load(reset($ids)) : NULL;
@@ -41,7 +41,7 @@ foreach ($rows as $row) {
     $node = $storage->create([
       'type' => 'muteti_oncology_treatment',
       'uid' => 1,
-      'field_muteti_treatment_legacy_nid' => $legacy_nid,
+      'field_muteti_treat_legacy_nid' => $legacy_nid,
     ]);
     $created++;
   }
@@ -57,10 +57,10 @@ $disabled = 0;
 $managed_ids = $storage->getQuery()
   ->accessCheck(FALSE)
   ->condition('type', 'muteti_oncology_treatment')
-  ->exists('field_muteti_treatment_legacy_nid')
+  ->exists('field_muteti_treat_legacy_nid')
   ->execute();
 foreach ($storage->loadMultiple($managed_ids) as $node) {
-  $legacy_nid = (int) $node->get('field_muteti_treatment_legacy_nid')->value;
+  $legacy_nid = (int) $node->get('field_muteti_treat_legacy_nid')->value;
   if ($legacy_nid > 0 && !in_array($legacy_nid, $source_ids, TRUE) && $node->isPublished()) {
     $node->setUnpublished();
     $node->save();
