@@ -1,0 +1,19 @@
+langcode: hu
+status: true
+dependencies:
+  theme:
+    - muteti_seb_theme
+id: muteti_seb_theme_primary_tasks
+theme: muteti_seb_theme
+region: content
+weight: -10
+provider: null
+plugin: local_tasks_block
+settings:
+  id: local_tasks_block
+  label: Elsődleges fülek
+  label_display: '0'
+  provider: core
+  primary: true
+  secondary: true
+visibility: {  }
