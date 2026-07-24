@@ -18,6 +18,12 @@
         {{ page.primary_menu }}
       </nav>
     {% endif %}
+
+    {% if page.account_menu %}
+      <div class="muteti-account-navigation">
+        {{ page.account_menu }}
+      </div>
+    {% endif %}
   </header>
 
   {% if page.highlighted %}
@@ -49,4 +55,3 @@
     </footer>
   {% endif %}
 </div>
-
