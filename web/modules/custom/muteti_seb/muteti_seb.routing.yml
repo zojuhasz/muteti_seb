@@ -10,9 +10,9 @@ muteti_seb.appointment:
   path: '/muteti/elojegyzes/{date}/{slot}'
   defaults:
     _form: '\Drupal\muteti_seb\Form\AppointmentForm'
-    _title: 'Beteg felvitele'
+    _title: 'Beteg adatai'
   requirements:
-    _permission: 'create surgery appointment'
+    _permission: 'view surgery schedule'
     date: '\d{4}-\d{2}-\d{2}'
 
 muteti_seb.surgery:
