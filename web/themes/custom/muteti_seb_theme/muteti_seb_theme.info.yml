@@ -1,0 +1,17 @@
+name: Műtéti rendszer – kompakt
+type: theme
+description: Kompakt, teljes szélességű Drupal 11 alkalmazássmink a műtéti előjegyzési rendszerhez.
+package: Egyedi
+base theme: false
+core_version_requirement: ^11
+libraries:
+  - muteti_seb_theme/global
+regions:
+  header: Fejléc
+  primary_menu: Főmenü
+  highlighted: Kiemelt
+  help: Súgó
+  breadcrumb: Útvonal
+  content: Tartalom
+  footer: Lábléc
+
