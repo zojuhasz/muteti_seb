@@ -31,6 +31,7 @@ muteti_seb.assignment:
   methods: [POST]
   requirements:
     _permission: 'assign operating room'
+    _csrf_token: 'TRUE'
 
 muteti_seb.day_type:
   path: '/muteti/api/day-type'
@@ -124,6 +125,14 @@ muteti_seb.day_type_content:
   defaults:
     _controller: '\Drupal\muteti_seb\Controller\DayTypeNodeController::listing'
     _title: 'Napfajták'
+  requirements:
+    _permission: 'administer surgery system'
+
+muteti_seb.oncology_treatment_content:
+  path: '/admin/content/muteti-onkologiai-kezelesek'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\OncologyTreatmentController::listing'
+    _title: 'Onkológiai kezelések'
   requirements:
     _permission: 'administer surgery system'
 
