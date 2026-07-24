@@ -58,6 +58,22 @@ final class AppointmentForm extends FormBase {
     $form['birth_date']=['#type'=>'date','#title'=>$this->t('Születési dátum'),'#default_value'=>$a->birth_date ?? ''];
     foreach (['taj'=>'TAJ','contact'=>'Elérhetőség','ward_room'=>'Kórterem','diagnosis'=>'Diagnózis','operation_name'=>'Műtét'] as $key=>$label) $form[$key]=['#type'=>'textfield','#title'=>$this->t($label),'#required'=>in_array($key,['diagnosis','operation_name']), '#default_value'=>$a->{$key} ?? ''];
     foreach (['laparoscope'=>'Laparoszkóp','mesh'=>'Háló','laterality'=>'Oldaliság','blood_type'=>'Vércsoport'] as $key=>$label) $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>['?'=>'?','Igen'=>'Igen','Nem'=>'Nem','Bal'=>'Bal','Jobb'=>'Jobb','A+'=>'A+','A-'=>'A-','B+'=>'B+','B-'=>'B-','0+'=>'0+','0-'=>'0-','AB+'=>'AB+','AB-'=>'AB-'],'#default_value'=>$a->{$key} ?? '?'];
+    $anaesth_options = [
+      'Local' => 'Local',
+      'i.v. narc.' => 'i.v. narc.',
+      'i.v. Laryng' => 'i.v. Laryng',
+      'Spinal' => 'Spinal',
+      'ITN' => 'ITN',
+      'ITN+EDA' => 'ITN+EDA',
+      'I.v. + N. obt blokad' => 'I.v. + N. obt blokad',
+    ];
+    $form['anaesth'] = [
+      '#type' => 'select',
+      '#title' => 'Anaesth',
+      '#options' => $anaesth_options,
+      '#empty_option' => '-',
+      '#default_value' => $a->anaesth ?? '',
+    ];
     $form['notes']=['#type'=>'textarea','#title'=>$this->t('Egyéb info'),'#default_value'=>$a->notes ?? ''];
     foreach (['doctor_id'=>'Orvos','assistant1_id'=>'Asszisztens 1','assistant2_id'=>'Asszisztens 2','assistant3_id'=>'Asszisztens 3'] as $key=>$label) $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>$doctors,'#default_value'=>$a->{$key} ?? 0];
     $form['actions']=['#type'=>'actions']; $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mentés'),'#button_type'=>'primary']; return $form;
@@ -82,7 +98,7 @@ final class AppointmentForm extends FormBase {
       ];
     }
     else {
-      foreach (['aznm','patient_name','birth_date','taj','contact','ward_room','diagnosis','operation_name','laparoscope','mesh','laterality','blood_type','notes','doctor_id','assistant1_id','assistant2_id','assistant3_id'] as $key) $fields[$key]=$v[$key] ?: NULL;
+      foreach (['aznm','patient_name','birth_date','taj','contact','ward_room','diagnosis','operation_name','laparoscope','mesh','laterality','blood_type','anaesth','notes','doctor_id','assistant1_id','assistant2_id','assistant3_id'] as $key) $fields[$key]=$v[$key] ?: NULL;
       $fields['aznm'] = (int) ($v['aznm'] ?? 0);
     }
     $fields['changed']=\Drupal::time()->getRequestTime();
