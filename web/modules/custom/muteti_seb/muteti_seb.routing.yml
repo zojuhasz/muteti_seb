@@ -31,7 +31,6 @@ muteti_seb.assignment:
   methods: [POST]
   requirements:
     _permission: 'assign operating room'
-    _csrf_token: 'TRUE'
 
 muteti_seb.day_type:
   path: '/muteti/api/day-type'
