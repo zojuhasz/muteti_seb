@@ -7,4 +7,5 @@ dependencies:
   - drupal:file
   - drupal:image
   - drupal:node
+  - drupal:options
   - drupal:phpass
