@@ -246,11 +246,11 @@ final class ProgramPdfController extends ControllerBase {
       .patient{width:17%}.diagnosis{width:17%}.operation{width:17%}
       .anaesth{width:11%}.operator{width:17%}.assistants{width:18%}
       .empty{padding:8px;text-align:center}
-      .summary{position:fixed;left:0;right:0;bottom:0;width:100%;border-collapse:collapse;table-layout:auto;background:#fff}
-      .summary td{border:0;padding:0 4px 0 0;line-height:1.2}
-      .summary-label{width:21%;font-weight:700;white-space:nowrap}
-      .summary-value{width:59%}
-      .created{width:20%;text-align:right;vertical-align:bottom!important;white-space:nowrap}
+      .summary{position:fixed;left:0;right:0;bottom:0;height:18mm;background:#fff;font-size:8px;line-height:1.2}
+      .summary-row{display:block;white-space:nowrap}
+      .summary-label{display:inline-block;width:21%;font-weight:700}
+      .summary-value{display:inline-block;width:57%;white-space:normal;vertical-align:top}
+      .created{position:absolute;right:0;bottom:0;text-align:right;white-space:nowrap}
       .created strong{font-size:9px}
     </style>';
     $html .= '<h1>'.$escape($department).'</h1>';
@@ -293,16 +293,11 @@ final class ProgramPdfController extends ControllerBase {
         $html .= '</tbody></table></section>';
       }
     }
-    $html .= '<table class="summary"><tbody>';
-    $summary_count = count($summary);
-    foreach ($summary as $index => $value) {
-      $html .= '<tr><td class="summary-label">'.$escape($index).':</td><td class="summary-value">'.$escape($value ?: '-').'</td>';
-      if ($index === array_key_first($summary)) {
-        $html .= '<td class="created" rowspan="'.$summary_count.'">Készült: &nbsp;<strong>'.$escape(date('Y.m.d H:i')).'</strong></td>';
-      }
-      $html .= '</tr>';
+    $html .= '<div class="summary">';
+    foreach ($summary as $label => $value) {
+      $html .= '<div class="summary-row"><span class="summary-label">'.$escape($label).':</span><span class="summary-value">'.$escape($value ?: '-').'</span></div>';
     }
-    $html .= '</tbody></table>';
+    $html .= '<div class="created">Készült: &nbsp;<strong>'.$escape(date('Y.m.d H:i')).'</strong></div></div>';
     return $html;
   }
 }
