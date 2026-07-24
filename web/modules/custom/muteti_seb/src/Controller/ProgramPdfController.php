@@ -155,6 +155,9 @@ final class ProgramPdfController extends ControllerBase {
     return new Response($pdf->output(), 200, [
       'Content-Type' => 'application/pdf',
       'Content-Disposition' => 'inline; filename="muteti-program-'.$date.'.pdf"',
+      'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma' => 'no-cache',
+      'Expires' => '0',
     ]);
   }
 
@@ -227,7 +230,7 @@ final class ProgramPdfController extends ControllerBase {
       trim((string) ($on_call->doctor_name_2 ?? '')),
     ])));
     $html = '<meta charset="utf-8"><style>
-      @page{margin:11mm 9mm 12mm}
+      @page{margin:11mm 9mm 28mm}
       body{font-family:DejaVu Sans,sans-serif;color:#000;font-size:8px;margin:0}
       h1{font-size:14px;line-height:1.05;margin:0;font-weight:700}
       h2{font-size:14px;line-height:1.05;margin:1px 0 2px;font-weight:700}
@@ -243,7 +246,7 @@ final class ProgramPdfController extends ControllerBase {
       .patient{width:17%}.diagnosis{width:17%}.operation{width:17%}
       .anaesth{width:11%}.operator{width:17%}.assistants{width:18%}
       .empty{padding:8px;text-align:center}
-      .summary{margin-top:8mm;width:100%;border-collapse:collapse;table-layout:auto;page-break-inside:avoid}
+      .summary{position:fixed;left:0;right:0;bottom:-20mm;width:100%;border-collapse:collapse;table-layout:auto;background:#fff}
       .summary td{border:0;padding:0 4px 0 0;line-height:1.2}
       .summary-label{width:21%;font-weight:700;white-space:nowrap}
       .summary-value{width:59%}
