@@ -137,11 +137,12 @@ final class AppointmentForm extends FormBase {
   }
 
   public function submitForm(array &$form, FormStateInterface $form_state): void {
+    $v=$form_state->getValues(); $fields=[];
+    $slot = (string) ($v['slot'] ?? '');
     $required_permission = $this->appointment ? 'edit surgery appointment' : 'create surgery appointment';
-    if (!$this->currentUser()->hasPermission($required_permission)) {
+    if (!$this->currentUser()->hasPermission($required_permission) || !$this->canManageSlot($slot)) {
       throw new AccessDeniedHttpException();
     }
-    $v=$form_state->getValues(); $fields=[];
     $department = (string) $v['department'];
     $mode = DepartmentMode::get($department);
     if ($mode === 'onko') {
@@ -192,7 +193,8 @@ final class AppointmentForm extends FormBase {
 
   private function applyAccessMode(array $form): array {
     $required_permission = $this->appointment ? 'edit surgery appointment' : 'create surgery appointment';
-    if ($this->currentUser()->hasPermission($required_permission)) {
+    $slot = (string) ($form['slot']['#value'] ?? '');
+    if ($this->currentUser()->hasPermission($required_permission) && $this->canManageSlot($slot)) {
       return $form;
     }
     unset($form['actions']);
@@ -206,5 +208,13 @@ final class AppointmentForm extends FormBase {
       '#markup' => '<p><strong>Csak megtekintés.</strong></p>',
     ];
     return $form;
+  }
+
+  private function canManageSlot(string $slot): bool {
+    if (!in_array($slot, ['S-1', 'S-2'], TRUE)) {
+      return TRUE;
+    }
+    $roles = $this->currentUser()->getRoles();
+    return in_array('muteti_orvos2', $roles, TRUE) || in_array('muteti_boss', $roles, TRUE);
   }
 }
