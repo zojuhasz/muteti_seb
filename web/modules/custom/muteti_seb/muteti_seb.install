@@ -676,6 +676,14 @@ function muteti_seb_update_11025(): void {
 }
 
 /**
+ * Repairs day-type nodes created without their schedule values.
+ */
+function muteti_seb_update_11026(): void {
+  muteti_seb_ensure_day_type_content_type();
+  muteti_seb_seed_day_type_nodes();
+}
+
+/**
  * Creates the Drupal Napfajták content type and its fields.
  */
 function muteti_seb_ensure_day_type_content_type(): void {
@@ -853,18 +861,37 @@ function muteti_seb_seed_day_type_nodes(): void {
     ->execute();
   foreach ($departments as $department) {
     foreach ($by_mode[$department->mode] ?? [] as [$code, $weekdays, $slots, $from, $until]) {
-      $query = $node_storage->getQuery()
+      $candidate_ids = $node_storage->getQuery()
         ->accessCheck(FALSE)
         ->condition('type', 'muteti_day_type_definition')
         ->condition('field_muteti_daytype_department', $department->name)
-        ->condition('field_muteti_daytype_code', $code);
-      $from === ''
-        ? $query->notExists('field_muteti_daytype_from')
-        : $query->condition('field_muteti_daytype_from', $from);
-      $until === ''
-        ? $query->notExists('field_muteti_daytype_until')
-        : $query->condition('field_muteti_daytype_until', $until);
-      if ($query->range(0, 1)->execute()) {
+        ->condition('field_muteti_daytype_code', $code)
+        ->execute();
+      $existing = NULL;
+      foreach ($node_storage->loadMultiple($candidate_ids) as $candidate) {
+        $candidate_from = trim((string) $candidate->get('field_muteti_daytype_from')->value);
+        $candidate_until = trim((string) $candidate->get('field_muteti_daytype_until')->value);
+        if ($candidate_from === $from && $candidate_until === $until) {
+          $existing = $candidate;
+          break;
+        }
+      }
+      if ($existing) {
+        $changed = FALSE;
+        if ($slots !== '' && trim((string) $existing->get('field_muteti_daytype_slots')->value) === '') {
+          $existing->set('field_muteti_daytype_slots', [['value' => $slots]]);
+          $changed = TRUE;
+        }
+        if ($weekdays && $existing->get('field_muteti_daytype_weekdays')->isEmpty()) {
+          $existing->set('field_muteti_daytype_weekdays', array_map(
+            static fn(int $day): array => ['value' => (string) $day],
+            $weekdays
+          ));
+          $changed = TRUE;
+        }
+        if ($changed) {
+          $existing->save();
+        }
         continue;
       }
       $title = $department->name . ' – ' . $code;
@@ -882,7 +909,7 @@ function muteti_seb_seed_day_type_nodes(): void {
           static fn(int $day): array => ['value' => (string) $day],
           $weekdays
         ),
-        'field_muteti_daytype_slots' => $slots,
+        'field_muteti_daytype_slots' => [['value' => $slots]],
         'field_muteti_daytype_from' => $from ?: NULL,
         'field_muteti_daytype_until' => $until ?: NULL,
       ])->save();
