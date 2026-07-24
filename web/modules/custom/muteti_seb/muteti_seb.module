@@ -60,7 +60,22 @@ function muteti_seb_login_redirect_submit(array &$form, FormStateInterface $form
  * Drupal administration source of truth.
  */
 function muteti_seb_entity_presave(EntityInterface $entity): void {
-  if (!$entity instanceof NodeInterface || $entity->bundle() !== 'muteti_doctor') {
+  if (!$entity instanceof NodeInterface) {
+    return;
+  }
+  if ($entity->bundle() === 'muteti_day_type_definition') {
+    $department = trim((string) $entity->get('field_muteti_daytype_department')->value);
+    $code = trim((string) $entity->get('field_muteti_daytype_code')->value);
+    $from = trim((string) $entity->get('field_muteti_daytype_from')->value);
+    $until = trim((string) $entity->get('field_muteti_daytype_until')->value);
+    $title = $department . ' – ' . $code;
+    if ($from !== '' || $until !== '') {
+      $title .= ' (' . ($from ?: 'kezdet') . ' – ' . ($until ?: 'folyamatos') . ')';
+    }
+    $entity->setTitle($title);
+    return;
+  }
+  if ($entity->bundle() !== 'muteti_doctor') {
     return;
   }
   $database = \Drupal::database();
@@ -116,6 +131,28 @@ function muteti_seb_form_alter(array &$form, FormStateInterface $form_state, str
       $names = \Drupal::database()->select('muteti_department_config', 'd')->fields('d', ['name'])->orderBy('name')->execute()->fetchCol();
       $form['field_muteti_article_department']['widget'][0]['value']['#type'] = 'select';
       $form['field_muteti_article_department']['widget'][0]['value']['#options'] = ['all' => 'Minden osztály'] + array_combine($names, $names);
+    }
+    return;
+  }
+  if ($entity instanceof NodeInterface && $entity->bundle() === 'muteti_day_type_definition') {
+    if (isset($form['field_muteti_daytype_department']['widget'][0]['value'])) {
+      $names = \Drupal::database()->select('muteti_department_config', 'd')->fields('d', ['name'])->orderBy('name')->execute()->fetchCol();
+      $form['field_muteti_daytype_department']['widget'][0]['value']['#type'] = 'select';
+      $form['field_muteti_daytype_department']['widget'][0]['value']['#options'] = array_combine($names, $names);
+    }
+    foreach (['field_muteti_daytype_from', 'field_muteti_daytype_until'] as $field_name) {
+      if (isset($form[$field_name]['widget'][0]['value'])) {
+        $form[$field_name]['widget'][0]['value']['#type'] = 'date';
+      }
+    }
+    if (isset($form['field_muteti_daytype_slots']['widget'][0]['value'])) {
+      $form['field_muteti_daytype_slots']['widget'][0]['value']['#description'] =
+        'A cellatípusokat % jellel válassza el. Üres helyet két egymást követő % jellel lehet megadni.';
+      $form['field_muteti_daytype_slots']['widget'][0]['value']['#rows'] = 5;
+    }
+    if (isset($form['title']['widget'][0]['value'])) {
+      $form['title']['widget'][0]['value']['#default_value'] = $entity->label() ?: 'Automatikus napfajtanév';
+      $form['title']['widget'][0]['value']['#description'] = 'Mentéskor automatikusan az osztály és a napfajta jele alapján készül el.';
     }
     return;
   }
