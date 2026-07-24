@@ -25,25 +25,44 @@ final class AppointmentForm extends FormBase {
     $doctors=['0'=>'-']+$this->database->select('muteti_doctor','d')->fields('d',['id','name'])->condition('department',$department)->condition('active',1)->orderBy('name')->execute()->fetchAllKeyed();
     $mode = DepartmentMode::get($department);
     if ($mode === 'onko') {
-      $treatments = $this->database->select('muteti_appointment', 'a')
-        ->distinct()
-        ->fields('a', ['operation_name'])
-        ->condition('department', $department)
-        ->condition('operation_name', '', '<>')
-        ->isNotNull('operation_name')
-        ->orderBy('operation_name')
-        ->execute()
-        ->fetchCol();
+      $treatment_storage = $this->entityTypeManager()->getStorage('node');
+      $treatment_ids = $treatment_storage->getQuery()
+        ->accessCheck(FALSE)
+        ->condition('type', 'muteti_oncology_treatment')
+        ->condition('status', 1)
+        ->sort('title')
+        ->execute();
+      $treatments = [];
+      foreach ($treatment_storage->loadMultiple($treatment_ids) as $treatment) {
+        $name = trim((string) $treatment->label());
+        if ($name !== '') {
+          $treatments[] = $name;
+        }
+      }
+      // Keep the form usable until the database update has created and
+      // populated the treatment content type.
+      if (!$treatments) {
+        $treatments = $this->database->select('muteti_appointment', 'a')
+          ->distinct()
+          ->fields('a', ['operation_name'])
+          ->condition('department', $department)
+          ->condition('operation_name', '', '<>')
+          ->isNotNull('operation_name')
+          ->orderBy('operation_name')
+          ->execute()
+          ->fetchCol();
+      }
       if (!empty($a->operation_name) && !in_array($a->operation_name, $treatments, TRUE)) {
         $treatments[] = $a->operation_name;
-        sort($treatments, SORT_NATURAL | SORT_FLAG_CASE);
       }
+      $treatments = array_values(array_unique(array_filter(array_map('trim', $treatments))));
+      sort($treatments, SORT_NATURAL | SORT_FLAG_CASE);
       $form['operation_name'] = [
         '#type' => 'select',
         '#title' => $this->t('Kezelés'),
         '#required' => TRUE,
         '#empty_option' => $this->t('- Kezelés kiválasztása -'),
-        '#options' => array_combine($treatments, $treatments),
+        '#options' => $treatments ? array_combine($treatments, $treatments) : [],
         '#default_value' => $a->operation_name ?? '',
       ];
       $form['patient_name']=['#type'=>'textfield','#title'=>$this->t('Beteg neve @code',['@code'=>date('n-j',strtotime($date)).'-'.$slot]),'#required'=>TRUE,'#default_value'=>$a->patient_name ?? ''];
