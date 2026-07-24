@@ -4,6 +4,7 @@ namespace Drupal\muteti_seb\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\muteti_seb\Service\Schedule;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -12,13 +13,28 @@ use Symfony\Component\HttpFoundation\Request;
 
 final class DayTypeController extends ControllerBase {
 
-  public function __construct(private readonly Connection $database) {}
+  public function __construct(
+    private readonly Connection $database,
+    private readonly CsrfTokenGenerator $csrf,
+  ) {}
 
   public static function create(ContainerInterface $container): static {
-    return new static($container->get('database'));
+    return new static(
+      $container->get('database'),
+      $container->get('csrf_token'),
+    );
   }
 
   public function update(Request $request): JsonResponse {
+    if (!$this->csrf->validate(
+      (string) $request->query->get('token', ''),
+      'muteti_day_type_update'
+    )) {
+      return new JsonResponse([
+        'ok' => FALSE,
+        'error' => 'A biztonsági token lejárt. Töltse újra az oldalt.',
+      ], 403);
+    }
     $data = json_decode($request->getContent(), TRUE);
     $date = (string) ($data['date'] ?? '');
     $day_type = (string) ($data['day_type'] ?? '');
