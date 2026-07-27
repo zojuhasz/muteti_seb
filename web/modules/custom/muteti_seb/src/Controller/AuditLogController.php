@@ -25,23 +25,52 @@ final class AuditLogController extends ControllerBase {
   public function listing(): array {
     $entries = $this->database->select('muteti_audit_log', 'l')
       ->fields('l')
+      ->orderBy('created', 'DESC')
       ->orderBy('id', 'DESC')
       ->range(0, 1000)
-      ->execute();
-    $items = [];
+      ->execute()
+      ->fetchAll();
+    $days = [];
     foreach ($entries as $entry) {
-      $parts = array_filter([
-        $entry->username,
-        $entry->department,
-        $entry->appointment_date,
-        $entry->slot_type,
-        $entry->patient_name,
-        $entry->patient_reference,
-        $entry->action,
-        date('Y-m-d H:i:s', (int) $entry->created),
-        '('.$entry->id.')',
-      ], static fn($value): bool => (string) $value !== '');
-      $items[] = ['#markup' => Html::escape(implode(' ', $parts))];
+      $day = date('Y-m-d', (int) $entry->created);
+      $days[$day]['entries'][] = $entry;
+      $department = mb_strtolower(trim((string) $entry->department), 'UTF-8');
+      $department_key = match ($department) {
+        'sebészet', 'sebeszet' => 'seb',
+        'urológia', 'urologia' => 'urol',
+        'onkoradiológia', 'onkoradiologia', 'onkorad' => 'onko',
+        default => NULL,
+      };
+      if ($department_key) {
+        $days[$day]['counts'][$department_key] = ($days[$day]['counts'][$department_key] ?? 0) + 1;
+      }
+    }
+    $items = [];
+    foreach ($days as $day => $group) {
+      foreach ($group['entries'] as $entry) {
+        $parts = array_filter([
+          $entry->username,
+          $entry->department,
+          $entry->appointment_date,
+          $entry->slot_type,
+          $entry->patient_name,
+          $entry->patient_reference,
+          $entry->action,
+          date('Y-m-d H:i:s', (int) $entry->created),
+          '('.$entry->id.')',
+        ], static fn($value): bool => (string) $value !== '');
+        $items[] = ['#markup' => Html::escape(implode(' ', $parts))];
+      }
+      $counts = $group['counts'] ?? [];
+      $summary = sprintf(
+        'Napi záróösszesítés: Sebészet: %d, Urológia: %d, Onkorad: %d',
+        $counts['seb'] ?? 0,
+        $counts['urol'] ?? 0,
+        $counts['onko'] ?? 0,
+      );
+      $items[] = [
+        '#markup' => '<span class="muteti-audit-daily-summary">'.Html::escape($summary).'</span>',
+      ];
     }
     return [
       '#attached' => ['library' => ['muteti_seb/surgery_board']],
