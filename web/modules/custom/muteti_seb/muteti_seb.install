@@ -92,11 +92,14 @@ function muteti_seb_schema(): array {
       'department' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
       'appointment_date' => ['type' => 'varchar', 'length' => 10, 'not null' => TRUE],
       'slot_type' => ['type' => 'varchar', 'length' => 30, 'not null' => TRUE],
+      'patient_name' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE, 'default' => ''],
       'patient_reference' => ['type' => 'varchar', 'length' => 50, 'not null' => FALSE],
       'action' => ['type' => 'varchar', 'length' => 100, 'not null' => TRUE],
       'created' => ['type' => 'int', 'not null' => TRUE],
+      'legacy_key' => ['type' => 'varchar', 'length' => 64, 'not null' => FALSE],
     ],
     'primary key' => ['id'],
+    'unique keys' => ['legacy_key' => ['legacy_key']],
     'indexes' => ['created' => ['created'], 'user_id' => ['user_id']],
   ];
   $schema['muteti_on_call'] = [
@@ -722,6 +725,31 @@ function muteti_seb_update_11028(): void {
  */
 function muteti_seb_update_11029(): void {
   muteti_seb_ensure_oncology_treatment_content_type();
+}
+
+/**
+ * Extends the audit log for rerunnable Drupal 7 history imports.
+ */
+function muteti_seb_update_11030(): void {
+  $schema = \Drupal::database()->schema();
+  if (!$schema->fieldExists('muteti_audit_log', 'patient_name')) {
+    $schema->addField('muteti_audit_log', 'patient_name', [
+      'type' => 'varchar',
+      'length' => 100,
+      'not null' => TRUE,
+      'default' => '',
+    ]);
+  }
+  if (!$schema->fieldExists('muteti_audit_log', 'legacy_key')) {
+    $schema->addField('muteti_audit_log', 'legacy_key', [
+      'type' => 'varchar',
+      'length' => 64,
+      'not null' => FALSE,
+    ]);
+  }
+  if (!$schema->indexExists('muteti_audit_log', 'legacy_key')) {
+    $schema->addUniqueKey('muteti_audit_log', 'legacy_key', ['legacy_key']);
+  }
 }
 
 /**
