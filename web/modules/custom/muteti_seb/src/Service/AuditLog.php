@@ -18,9 +18,11 @@ final class AuditLog {
       'department' => $department,
       'appointment_date' => $date,
       'slot_type' => $slot,
+      'patient_name' => '',
       'patient_reference' => trim((string) $patientReference),
       'action' => $action,
       'created' => \Drupal::time()->getRequestTime(),
+      'legacy_key' => NULL,
     ])->execute();
   }
 
