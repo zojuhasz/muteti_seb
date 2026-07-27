@@ -13,8 +13,20 @@ use Drupal\Core\Database\Database;
 
 $source = Database::getConnection('default', 'd7_live');
 $storage = \Drupal::entityTypeManager()->getStorage('node');
-$rows = $source->select('node', 'n')
-  ->fields('n', ['nid', 'title', 'status'])
+$query = $source->select('node', 'n');
+$query->leftJoin(
+  'field_data_field_id_',
+  'duration_field',
+  "duration_field.entity_type = 'node' AND duration_field.bundle = 'kezel_s' AND duration_field.entity_id = n.nid AND duration_field.deleted = 0",
+);
+$query->leftJoin(
+  'taxonomy_term_data',
+  'duration_term',
+  'duration_term.tid = duration_field.field_id__tid',
+);
+$query->fields('n', ['nid', 'title', 'status']);
+$query->addField('duration_term', 'name', 'duration');
+$rows = $query
   ->condition('type', 'kezel_s')
   ->orderBy('nid')
   ->execute()
@@ -49,6 +61,7 @@ foreach ($rows as $row) {
     $updated++;
   }
   $node->setTitle($title);
+  $node->set('field_muteti_treatment_duration', trim((string) ($row->duration ?? '')));
   $node->setPublished((bool) $row->status);
   $node->save();
 }
