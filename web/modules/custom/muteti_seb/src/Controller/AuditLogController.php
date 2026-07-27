@@ -35,6 +35,7 @@ final class AuditLogController extends ControllerBase {
         $entry->department,
         $entry->appointment_date,
         $entry->slot_type,
+        $entry->patient_name,
         $entry->patient_reference,
         $entry->action,
         date('Y-m-d H:i:s', (int) $entry->created),
