@@ -20,6 +20,7 @@ final class OncologyTreatmentController extends ControllerBase {
     foreach ($storage->loadMultiple($ids) as $node) {
       $rows[] = [
         $node->label(),
+        $node->get('field_muteti_treatment_duration')->value ?: '–',
         $node->isPublished() ? 'Igen' : 'Nem',
         Link::fromTextAndUrl('Módosítás', Url::fromRoute('entity.node.edit_form', [
           'node' => $node->id(),
@@ -41,7 +42,7 @@ final class OncologyTreatmentController extends ControllerBase {
       ],
       'table' => [
         '#type' => 'table',
-        '#header' => ['Kezelés/gyógyszer', 'Közzétéve', 'Művelet'],
+        '#header' => ['Kezelés/gyógyszer', 'Időtartam', 'Közzétéve', 'Művelet'],
         '#rows' => $rows,
         '#empty' => 'Még nincs onkológiai kezelés felvéve.',
         '#cache' => ['tags' => ['node_list:muteti_oncology_treatment']],
