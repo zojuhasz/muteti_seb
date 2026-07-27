@@ -59,3 +59,6 @@ require __DIR__.'/import_away.php';
 // Refresh the legacy audit history from 2026 onward.
 putenv('MUTETI_SOURCE=d7_live');
 require __DIR__.'/import_audit_log.php';
+
+// Refresh oncology treatments and their D7 duration classification.
+require __DIR__.'/import_oncology_treatments.php';
