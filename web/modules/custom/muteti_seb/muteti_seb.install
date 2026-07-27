@@ -753,6 +753,13 @@ function muteti_seb_update_11030(): void {
 }
 
 /**
+ * Adds the D7 treatment-duration classification to oncology treatments.
+ */
+function muteti_seb_update_11031(): void {
+  muteti_seb_ensure_oncology_treatment_content_type();
+}
+
+/**
  * Creates the Onkológiai kezelések content type and its fields.
  */
 function muteti_seb_ensure_oncology_treatment_content_type(): void {
@@ -786,11 +793,37 @@ function muteti_seb_ensure_oncology_treatment_content_type(): void {
     ])->save();
   }
 
+  $duration_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('node', 'field_muteti_treatment_duration');
+  if (!$duration_storage) {
+    $duration_storage = \Drupal\field\Entity\FieldStorageConfig::create([
+      'field_name' => 'field_muteti_treatment_duration',
+      'entity_type' => 'node',
+      'type' => 'string',
+      'cardinality' => 1,
+      'settings' => ['max_length' => 30],
+    ]);
+    $duration_storage->save();
+  }
+  if (!\Drupal\field\Entity\FieldConfig::loadByName('node', $bundle, 'field_muteti_treatment_duration')) {
+    \Drupal\field\Entity\FieldConfig::create([
+      'field_storage' => $duration_storage,
+      'bundle' => $bundle,
+      'label' => 'Időtartam',
+      'required' => FALSE,
+    ])->save();
+  }
+
   \Drupal::service('entity_display.repository')->getFormDisplay('node', $bundle, 'default')
     ->setComponent('title', ['type' => 'string_textfield', 'weight' => 0])
+    ->setComponent('field_muteti_treatment_duration', ['type' => 'string_textfield', 'weight' => 10])
     ->removeComponent('field_muteti_treat_legacy_nid')
     ->save();
   \Drupal::service('entity_display.repository')->getViewDisplay('node', $bundle, 'default')
+    ->setComponent('field_muteti_treatment_duration', [
+      'type' => 'string',
+      'label' => 'above',
+      'weight' => 10,
+    ])
     ->removeComponent('field_muteti_treat_legacy_nid')
     ->save();
 }
