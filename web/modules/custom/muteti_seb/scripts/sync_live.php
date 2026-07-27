@@ -55,3 +55,7 @@ require __DIR__.'/import_absences.php';
 // tables contain the same user and date.
 putenv('MUTETI_SOURCE=d7_live');
 require __DIR__.'/import_away.php';
+
+// Refresh the legacy audit history from 2026 onward.
+putenv('MUTETI_SOURCE=d7_live');
+require __DIR__.'/import_audit_log.php';
