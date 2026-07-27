@@ -582,6 +582,17 @@
 .muteti-audit-log { margin: 1rem 0; padding: 0; list-style: none; font: 13px/1.5 monospace; }
 .muteti-audit-log li { padding: .12rem .3rem; }
 .muteti-audit-log li:nth-child(odd) { background: #f2f5f8; }
+.muteti-audit-daily-summary {
+  display: block;
+  margin: .25rem 0 .55rem;
+  padding: .35rem .5rem;
+  border-top: 2px solid #5d7489;
+  border-bottom: 1px solid #b8c5d0;
+  background: #e1e9f0;
+  color: #183b5c;
+  font-family: system-ui, sans-serif;
+  font-weight: 800;
+}
 @media print {
   .muteti-log-actions, header, nav, footer, .tabs, .messages, .region-breadcrumb { display: none !important; }
   .muteti-audit-log { font-size: 10px; }
