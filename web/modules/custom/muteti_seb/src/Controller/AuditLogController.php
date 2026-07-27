@@ -6,6 +6,7 @@ use Drupal\Component\Utility\Html;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\Query\PagerSelectExtender;
 use Drupal\Core\Session\AccountInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -23,11 +24,13 @@ final class AuditLogController extends ControllerBase {
   }
 
   public function listing(): array {
-    $entries = $this->database->select('muteti_audit_log', 'l')
+    $query = $this->database->select('muteti_audit_log', 'l');
+    $entries = $query
+      ->extend(PagerSelectExtender::class)
       ->fields('l')
       ->orderBy('created', 'DESC')
       ->orderBy('id', 'DESC')
-      ->range(0, 1000)
+      ->limit(1000)
       ->execute()
       ->fetchAll();
     $days = [];
@@ -91,6 +94,7 @@ final class AuditLogController extends ControllerBase {
         '#empty' => 'A napló még üres.',
         '#attributes' => ['class' => ['muteti-audit-log']],
       ],
+      'pager' => ['#type' => 'pager'],
     ];
   }
 
