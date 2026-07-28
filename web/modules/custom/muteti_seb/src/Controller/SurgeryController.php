@@ -181,11 +181,10 @@ $card = function ($a) use ($doctors, $can_assign, $mode): array {
           .'<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name ?? '-').'</span>';
       }
       else {
-        $patient_content = (!empty($a->ward_room) ? '<strong>('.Html::escape($a->ward_room).')</strong> ' : '')
-          .'<strong>'.Html::escape($a->patient_name).'</strong>'
-          .'<br>TAJ: '.Html::escape($a->taj ?? '')
-          .'<br>'.Html::escape($a->operation_name)
-          .($staff ? '<br><span class="muteti-staff">'.implode(', ', array_map([Html::class, 'escape'], $staff)).'</span>' : '');
+        $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong>'
+          .'<br>Dg.: '.Html::escape($a->diagnosis ?? '')
+          .'<br>Műtét: '.Html::escape($a->operation_name ?? '')
+          .'<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name ?? '-').'</span>';
       }
       return [
         '#type' => 'container',
