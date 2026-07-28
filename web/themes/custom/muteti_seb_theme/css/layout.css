@@ -60,7 +60,7 @@
   font-size: .75rem;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 640px) {
   .muteti-site-header {
     position: relative;
     min-height: 42px;
