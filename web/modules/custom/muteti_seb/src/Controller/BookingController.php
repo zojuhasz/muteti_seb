@@ -308,6 +308,13 @@ final class BookingController extends ControllerBase {
               $patient_content .= '<br><span class="muteti-patient-notes">! '.nl2br(Html::escape($a->notes)).'</span>';
             }
           }
+          elseif ($mode === 'urol') {
+            $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong>'
+              .'<br>Dg.: '.Html::escape($a->diagnosis ?? '')
+              .'<br>Műtét: '.Html::escape($a->operation_name ?? '')
+              .'<br>Anaesth.: '.Html::escape($a->anaesth ?? '')
+              .'<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name ?? '-').'</span>';
+          }
           else {
             $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($doctor ? '<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name).'</span>' : '');
           }
