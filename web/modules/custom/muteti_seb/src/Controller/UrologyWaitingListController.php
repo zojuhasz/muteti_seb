@@ -52,12 +52,17 @@ final class UrologyWaitingListController extends ControllerBase {
     $patient_reference = (string) ($appointment->ward_room ?: $appointment->taj);
     if ($action === 'schedule') {
       $allowed_dates = [];
-      $today = new \DateTimeImmutable('today');
+      try {
+        $waiting_list_start = new \DateTimeImmutable((string) $appointment->admission_date);
+      }
+      catch (\Exception) {
+        return new JsonResponse(['ok' => FALSE, 'error' => 'A beteg befekvési dátuma érvénytelen.'], 400);
+      }
       for ($offset = 0; $offset < 4; $offset++) {
-        $allowed_dates[] = $today->modify('+'.$offset.' day')->format('Y-m-d');
+        $allowed_dates[] = $waiting_list_start->modify('+'.$offset.' day')->format('Y-m-d');
       }
       if (!in_array($date, $allowed_dates, TRUE)) {
-        return new JsonResponse(['ok' => FALSE, 'error' => 'Csak a mai nap vagy a következő három nap választható.'], 400);
+        return new JsonResponse(['ok' => FALSE, 'error' => 'Csak a befekvés napja vagy az azt követő három nap választható.'], 400);
       }
       $this->database->update('muteti_appointment')
         ->fields([
