@@ -120,6 +120,75 @@
           }
         });
       });
+      const waitingListButtons = once('muteti-urology-waitlist-main', '.muteti-urology-waitlist-button', context);
+      waitingListButtons.forEach((button) => {
+        button.addEventListener('click', async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const control = button.closest('.muteti-urology-waitlist-control');
+          if (button.dataset.action !== 'revoke') {
+            document.querySelectorAll('.muteti-urology-waitlist-control.is-open').forEach((item) => {
+              if (item !== control) item.classList.remove('is-open');
+            });
+            control?.classList.toggle('is-open');
+            return;
+          }
+          if (!window.confirm(button.title || 'Biztosan visszavonod a műtéti időpontot?')) return;
+          button.disabled = true;
+          try {
+            const response = await fetch(drupalSettings.mutetiSeb.urologyWaitingListEndpoint, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              credentials: 'same-origin',
+              body: JSON.stringify({
+                appointment_id: Number(button.dataset.appointmentId),
+                action: 'revoke'
+              })
+            });
+            const result = await readJson(response);
+            if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
+            window.location.reload();
+          }
+          catch (error) {
+            button.disabled = false;
+            window.alert(error.message || 'A műtéti időpont visszavonása sikertelen.');
+          }
+        });
+      });
+      const waitingListDates = once('muteti-urology-waitlist-date', '.muteti-urology-waitlist-date', context);
+      waitingListDates.forEach((button) => {
+        button.addEventListener('click', async (event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          button.disabled = true;
+          try {
+            const response = await fetch(drupalSettings.mutetiSeb.urologyWaitingListEndpoint, {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              credentials: 'same-origin',
+              body: JSON.stringify({
+                appointment_id: Number(button.dataset.appointmentId),
+                action: 'schedule',
+                date: button.dataset.date
+              })
+            });
+            const result = await readJson(response);
+            if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
+            window.location.reload();
+          }
+          catch (error) {
+            button.disabled = false;
+            window.alert(error.message || 'A várólistára helyezés sikertelen.');
+          }
+        });
+      });
+      once('muteti-urology-waitlist-close', 'body', context).forEach((body) => {
+        body.addEventListener('click', () => {
+          document.querySelectorAll('.muteti-urology-waitlist-control.is-open')
+            .forEach((item) => item.classList.remove('is-open'));
+        });
+      });
+
       const surgeryNavigationLinks = once('muteti-surgery-scroll', '.muteti-surgery-week-frame a', context);
       surgeryNavigationLinks.forEach((link) => {
         link.addEventListener('click', () => sessionStorage.setItem('mutetiSurgeryScrollY', String(window.scrollY)));
