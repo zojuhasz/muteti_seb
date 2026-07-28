@@ -42,6 +42,15 @@ muteti_seb.day_type:
     _permission: 'assign operating room'
     _csrf_token: 'TRUE'
 
+muteti_seb.urology_waiting_list:
+  path: '/muteti/api/urologiai-varolista'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\UrologyWaitingListController::update'
+  methods: [POST]
+  requirements:
+    _permission: 'manage urology waiting list'
+    _csrf_token: 'TRUE'
+
 muteti_seb.appointment_move:
   path: '/muteti/api/appointment-move'
   defaults:
