@@ -173,11 +173,25 @@ $card = function ($a) use ($doctors, $can_assign, $mode): array {
         }
         $attributes['style'] = $style;
       }
+      if ($mode === 'urol') {
+        $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong>'
+          .'<br>Dg.: '.Html::escape($a->diagnosis ?? '')
+          .'<br>Műtét: '.Html::escape($a->operation_name ?? '')
+          .'<br>Anaesth.: '.Html::escape($a->anaesth ?? '')
+          .'<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name ?? '-').'</span>';
+      }
+      else {
+        $patient_content = (!empty($a->ward_room) ? '<strong>('.Html::escape($a->ward_room).')</strong> ' : '')
+          .'<strong>'.Html::escape($a->patient_name).'</strong>'
+          .'<br>TAJ: '.Html::escape($a->taj ?? '')
+          .'<br>'.Html::escape($a->operation_name)
+          .($staff ? '<br><span class="muteti-staff">'.implode(', ', array_map([Html::class, 'escape'], $staff)).'</span>' : '');
+      }
       return [
         '#type' => 'container',
         '#attributes' => $attributes,
         'content' => [
-          '#markup' => (!empty($a->ward_room) ? '<strong>('.Html::escape($a->ward_room).')</strong> ' : '').'<strong>'.Html::escape($a->patient_name).'</strong><br>TAJ: '.Html::escape($a->taj ?? '').'<br>'.Html::escape($a->operation_name).($staff ? '<br><span class="muteti-staff">'.implode(', ', array_map([Html::class, 'escape'], $staff)).'</span>' : ''),
+          '#markup' => $patient_content,
         ],
       ];
     };
