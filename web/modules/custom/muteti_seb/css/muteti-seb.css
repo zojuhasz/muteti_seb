@@ -701,7 +701,9 @@
   background: #59f638;
   box-shadow: 0 3px 10px rgba(0, 0, 0, .24);
 }
-.muteti-urology-waitlist-control.is-open .muteti-urology-waitlist-menu {
+.muteti-urology-waitlist-control.is-open .muteti-urology-waitlist-menu,
+.muteti-urology-waitlist-control:hover .muteti-urology-waitlist-menu,
+.muteti-urology-waitlist-control:focus-within .muteti-urology-waitlist-menu {
   display: block;
 }
 .muteti-urology-waitlist-date {
