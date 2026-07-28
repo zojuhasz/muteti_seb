@@ -760,6 +760,17 @@ function muteti_seb_update_11031(): void {
 }
 
 /**
+ * Grants the urology waiting-list permission to doctors and bosses.
+ */
+function muteti_seb_update_11032(): void {
+  foreach (['muteti_orvos3', 'muteti_boss'] as $role_id) {
+    if ($role = Role::load($role_id)) {
+      $role->grantPermission('manage urology waiting list')->save();
+    }
+  }
+}
+
+/**
  * Creates the Onkológiai kezelések content type and its fields.
  */
 function muteti_seb_ensure_oncology_treatment_content_type(): void {
