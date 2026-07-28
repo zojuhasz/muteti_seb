@@ -31,16 +31,7 @@ final class BookingController extends ControllerBase {
     $can_move = $this->currentUser()->hasPermission('move surgery appointment');
     $can_manage_urology_waitlist = $mode === 'urol'
       && $this->currentUser()->hasPermission('manage urology waiting list');
-    $urology_waitlist_dates = [];
-    if ($can_manage_urology_waitlist) {
-      $waitlist_day_names = [1 => 'HÉTFŐ', 2 => 'KEDD', 3 => 'SZERDA', 4 => 'CSÜTÖRTÖK', 5 => 'PÉNTEK', 6 => 'SZOMBAT', 7 => 'VASÁRNAP'];
-      $waitlist_date = new DrupalDateTime('today');
-      for ($offset = 0; $offset < 4; $offset++) {
-        $candidate = clone $waitlist_date;
-        $candidate->modify('+'.$offset.' day');
-        $urology_waitlist_dates[$candidate->format('Y-m-d')] = $candidate->format('Y.m.d').' '.$waitlist_day_names[(int) $candidate->format('N')];
-      }
-    }
+    $waitlist_day_names = [1 => 'HÉTFŐ', 2 => 'KEDD', 3 => 'SZERDA', 4 => 'CSÜTÖRTÖK', 5 => 'PÉNTEK', 6 => 'SZOMBAT', 7 => 'VASÁRNAP'];
     $roles = $this->currentUser()->getRoles();
     $can_manage_restricted_slots = in_array('muteti_orvos2', $roles, TRUE) || in_array('muteti_boss', $roles, TRUE);
     $week = $request->query->get('week', 'now');
@@ -336,6 +327,18 @@ final class BookingController extends ControllerBase {
           $waitlist_date = trim((string) ($a->surgery_date ?? ''));
           $waitlist_menu = [];
           if ($can_manage_urology_waitlist && $waitlist_date === '') {
+            $urology_waitlist_dates = [];
+            try {
+              $waitlist_start = new DrupalDateTime((string) $a->admission_date);
+            }
+            catch (\Exception) {
+              $waitlist_start = new DrupalDateTime('today');
+            }
+            for ($offset = 0; $offset < 4; $offset++) {
+              $candidate = clone $waitlist_start;
+              $candidate->modify('+'.$offset.' day');
+              $urology_waitlist_dates[$candidate->format('Y-m-d')] = $candidate->format('Y.m.d').' '.$waitlist_day_names[(int) $candidate->format('N')];
+            }
             foreach ($urology_waitlist_dates as $candidate_date => $candidate_label) {
               $waitlist_menu['date_'.str_replace('-', '_', $candidate_date)] = [
                 '#type' => 'html_tag',
