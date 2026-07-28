@@ -29,6 +29,18 @@ final class BookingController extends ControllerBase {
     $can_create = $this->currentUser()->hasPermission('create surgery appointment');
     $can_edit = $this->currentUser()->hasPermission('edit surgery appointment');
     $can_move = $this->currentUser()->hasPermission('move surgery appointment');
+    $can_manage_urology_waitlist = $mode === 'urol'
+      && $this->currentUser()->hasPermission('manage urology waiting list');
+    $urology_waitlist_dates = [];
+    if ($can_manage_urology_waitlist) {
+      $waitlist_day_names = [1 => 'HÉTFŐ', 2 => 'KEDD', 3 => 'SZERDA', 4 => 'CSÜTÖRTÖK', 5 => 'PÉNTEK', 6 => 'SZOMBAT', 7 => 'VASÁRNAP'];
+      $waitlist_date = new DrupalDateTime('today');
+      for ($offset = 0; $offset < 4; $offset++) {
+        $candidate = clone $waitlist_date;
+        $candidate->modify('+'.$offset.' day');
+        $urology_waitlist_dates[$candidate->format('Y-m-d')] = $candidate->format('Y.m.d').' '.$waitlist_day_names[(int) $candidate->format('N')];
+      }
+    }
     $roles = $this->currentUser()->getRoles();
     $can_manage_restricted_slots = in_array('muteti_orvos2', $roles, TRUE) || in_array('muteti_boss', $roles, TRUE);
     $week = $request->query->get('week', 'now');
@@ -321,6 +333,24 @@ final class BookingController extends ControllerBase {
               .'<br>Műtét: '.Html::escape($a->operation_name ?? '')
               .'<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name ?? '-').'</span>';
           }
+          $waitlist_date = trim((string) ($a->surgery_date ?? ''));
+          $waitlist_menu = [];
+          if ($can_manage_urology_waitlist && $waitlist_date === '') {
+            foreach ($urology_waitlist_dates as $candidate_date => $candidate_label) {
+              $waitlist_menu['date_'.str_replace('-', '_', $candidate_date)] = [
+                '#type' => 'html_tag',
+                '#tag' => 'button',
+                '#value' => $candidate_label,
+                '#attributes' => [
+                  'type' => 'button',
+                  'class' => ['muteti-urology-waitlist-date'],
+                  'data-appointment-id' => (string) $a->id,
+                  'data-date' => $candidate_date,
+                  'title' => 'Várólistára helyezés: '.$candidate_label,
+                ],
+              ];
+            }
+          }
           $cell = [
             'patient' => [
               '#type' => 'container',
@@ -358,6 +388,37 @@ final class BookingController extends ControllerBase {
                     'aria-label' => 'Beteg törlése',
                   ],
                 ],
+              ] : [],
+              'waitlist' => $can_manage_urology_waitlist && trim((string) $a->patient_name) !== '' ? [
+                '#type' => 'container',
+                '#attributes' => ['class' => array_filter([
+                  'muteti-urology-waitlist-control',
+                  $waitlist_date !== '' ? 'is-selected' : NULL,
+                ])],
+                'button' => [
+                  '#type' => 'html_tag',
+                  '#tag' => 'button',
+                  '#value' => 'M',
+                  '#attributes' => [
+                    'type' => 'button',
+                    'class' => array_filter([
+                      'muteti-urology-waitlist-button',
+                      $waitlist_date !== '' ? 'is-selected' : NULL,
+                    ]),
+                    'data-appointment-id' => (string) $a->id,
+                    'data-action' => $waitlist_date !== '' ? 'revoke' : 'open',
+                    'title' => $waitlist_date !== ''
+                      ? 'Műtéti időpont ('.$waitlist_date.') visszavonása'
+                      : 'Műtéti várólista dátumának kiválasztása',
+                    'aria-label' => $waitlist_date !== ''
+                      ? 'Műtéti időpont ('.$waitlist_date.') visszavonása'
+                      : 'Műtéti várólista dátumának kiválasztása',
+                  ],
+                ],
+                'menu' => $waitlist_date === '' ? [
+                  '#type' => 'container',
+                  '#attributes' => ['class' => ['muteti-urology-waitlist-menu']],
+                ] + $waitlist_menu : [],
               ] : [],
               'content' => [
                 '#type' => 'container',
@@ -413,6 +474,7 @@ final class BookingController extends ControllerBase {
           'appointmentMoveEndpoint'=>Url::fromRoute('muteti_seb.appointment_move',[],['query'=>['token'=>$this->csrf->get('muteti/api/appointment-move')]])->toString(),
           'appointmentDeleteEndpoint'=>Url::fromRoute('muteti_seb.appointment_delete',[],['query'=>['token'=>$this->csrf->get('muteti/api/appointment-delete')]])->toString(),
           'dayTypeEndpoint'=>Url::fromRoute('muteti_seb.day_type',[],['query'=>['token'=>$this->csrf->get('muteti/api/day-type')]])->toString(),
+          'urologyWaitingListEndpoint'=>Url::fromRoute('muteti_seb.urology_waiting_list',[],['query'=>['token'=>$this->csrf->get('muteti/api/urologiai-varolista')]])->toString(),
         ]],
       ],
       '#cache'=>['max-age'=>0],
