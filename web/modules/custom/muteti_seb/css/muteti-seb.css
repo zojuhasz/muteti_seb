@@ -661,3 +661,67 @@
   background-size: 5px 7px;
   background-repeat: repeat-y;
 }
+
+
+/* Urology: explicit surgery-day waiting-list selector. */
+.muteti-urology-waitlist-control {
+  position: absolute;
+  top: .3rem;
+  right: .3rem;
+  z-index: 8;
+}
+.muteti-urology-waitlist-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  padding: 0;
+  border: 1px solid #111;
+  border-radius: 2px;
+  background: #43dc35;
+  color: #000;
+  font-size: .85rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+.muteti-urology-waitlist-button.is-selected {
+  background: #e43838;
+  color: #000;
+}
+.muteti-urology-waitlist-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + .2rem);
+  right: 0;
+  min-width: 13rem;
+  padding: .15rem;
+  border: 1px solid #198f19;
+  background: #59f638;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .24);
+}
+.muteti-urology-waitlist-control.is-open .muteti-urology-waitlist-menu {
+  display: block;
+}
+.muteti-urology-waitlist-date {
+  display: block;
+  width: 100%;
+  padding: .22rem .38rem;
+  border: 0;
+  background: transparent;
+  color: #000;
+  font-size: .82rem;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.muteti-urology-waitlist-date:hover,
+.muteti-urology-waitlist-date:focus {
+  background: rgba(255, 255, 255, .55);
+}
+.muteti-patient:has(.muteti-urology-waitlist-control) .muteti-patient-slot {
+  padding-right: 1.6rem;
+}
