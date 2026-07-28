@@ -31,7 +31,9 @@ final class SurgeryController extends ControllerBase {
     $availability_enabled = DepartmentMode::featureEnabled($department, 'availability_enabled');
     $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
     $can_assign = $this->currentUser()->hasPermission('assign operating room');
-    $can_manage_availability = $this->currentUser()->hasPermission('manage own doctor availability');
+    $can_manage_availability =
+  $this->currentUser()->hasPermission('manage own doctor availability')
+  && mb_strtolower($this->currentUser()->getAccountName(), 'UTF-8') !== 'tothzee';
     try {
       $monday = new DrupalDateTime($request->query->get('week', 'monday this week'));
     }
@@ -173,7 +175,7 @@ final class SurgeryController extends ControllerBase {
         'library' => ['muteti_seb/surgery_board', 'muteti_seb/availability'],
         'drupalSettings' => ['mutetiSeb' => [
           'endpoint' => Url::fromRoute('muteti_seb.assignment', [], ['query' => ['token' => $this->csrf->get('muteti/api/assignment')]])->toString(),
-          'availabilityEndpoint' => Url::fromRoute('muteti_seb.availability_update', [], ['query' => ['token' => $this->csrf->get('/muteti/api/tavollet')]])->toString(),
+          'availabilityEndpoint' => Url::fromRoute('muteti_seb.availability_update', [], ['query' => ['token' => $this->csrf->get('muteti/api/tavollet')]])->toString(),
         ]],
       ],
       '#cache' => ['max-age' => 0],
