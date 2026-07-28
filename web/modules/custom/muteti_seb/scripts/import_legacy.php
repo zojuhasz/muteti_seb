@@ -341,9 +341,13 @@ while ($appointment = $appointments->fetchObject()) {
     $anaesth = '';
   }
   $legacy_care_type = mb_strtolower(trim((string) $appointment->egynapos), 'UTF-8');
-  $care_type = str_contains($legacy_care_type, 'egynap')
-    ? 'one_day'
-    : (str_contains($legacy_care_type, 'aznap') ? 'same_day' : 'normal');
+  $care_type = ($legacy_care_type === '1'
+  || str_contains($legacy_care_type, 'egynap'))
+  ? 'one_day'
+  : (($legacy_care_type === '2'
+    || str_contains($legacy_care_type, 'aznap'))
+    ? 'same_day'
+    : 'normal');
   $created = strtotime((string) $appointment->stamp) ?: time();
   $fields = [
     'legacy_id' => $legacy_id,
