@@ -628,3 +628,7 @@
   background-size: 5px 7px;
   background-repeat: repeat-y;
 }
+.muteti-patient.is-care-one-day,
+.muteti-patient.is-care-same-day {
+  padding-left: .5rem;
+}
