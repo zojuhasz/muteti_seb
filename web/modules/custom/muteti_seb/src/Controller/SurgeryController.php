@@ -125,11 +125,36 @@ $mode = DepartmentMode::get($department);
       ];
     }
 
-    $waiting_query=$this->database->select('muteti_appointment','a')->fields('a')->condition('department',$department)->condition('admission_date',date('Y-m-d'),'<=')->condition('operation_name','','<>')->condition('operated',0);
-    $waiting_status=$waiting_query->orConditionGroup()->isNull('surgery_date');
-    $selected_unassigned=$waiting_query->andConditionGroup()->condition('surgery_date',$selected)->isNull('operating_room');
-    $waiting_query->condition($waiting_query->orConditionGroup()->condition($waiting_status)->condition($selected_unassigned));
-    $waiting=$waiting_query->orderBy('admission_date')->execute()->fetchAll();
+    if ($mode === 'urol') {
+      // Urology uses an explicit per-day waiting list. Only patients selected
+      // with the green M control on the booking page appear here.
+      $waiting_query = $this->database->select('muteti_appointment', 'a')
+        ->fields('a')
+        ->condition('department', $department)
+        ->condition('admission_date', $selected, '<=')
+        ->condition('operation_name', '', '<>')
+        ->condition('operated', 0)
+        ->condition('surgery_date', $selected)
+        ->isNull('operating_room');
+    }
+    else {
+      $waiting_query = $this->database->select('muteti_appointment', 'a')
+        ->fields('a')
+        ->condition('department', $department)
+        ->condition('admission_date', date('Y-m-d'), '<=')
+        ->condition('operation_name', '', '<>')
+        ->condition('operated', 0);
+      $waiting_status = $waiting_query->orConditionGroup()->isNull('surgery_date');
+      $selected_unassigned = $waiting_query->andConditionGroup()
+        ->condition('surgery_date', $selected)
+        ->isNull('operating_room');
+      $waiting_query->condition(
+        $waiting_query->orConditionGroup()
+          ->condition($waiting_status)
+          ->condition($selected_unassigned)
+      );
+    }
+    $waiting = $waiting_query->orderBy('admission_date')->execute()->fetchAll();
     $assigned=$this->database->select('muteti_appointment','a')->fields('a')->condition('department',$department)->condition('surgery_date',$selected)->orderBy('operating_room')->orderBy('surgery_order')->execute()->fetchAll();
     $doctor_ids=[];
     foreach(array_merge($waiting,$assigned) as $a) {
