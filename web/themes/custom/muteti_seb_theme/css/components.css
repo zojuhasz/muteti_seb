@@ -21,7 +21,11 @@
 .muteti-primary-navigation .menu,
 .muteti-primary-navigation ul {
   display: flex;
+  width: 100%;
   min-width: 0;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-content: center;
   align-items: stretch;
   gap: 0;
   margin: 0;
@@ -37,15 +41,18 @@
 
 .muteti-primary-navigation a {
   display: flex;
+  min-height: 42px;
   align-items: center;
-  padding: 0 .62rem;
+  justify-content: center;
+  padding: .2rem .45rem;
   border-left: 1px solid rgba(255, 255, 255, .12);
   color: #fff;
-  font-size: .76rem;
+  font-size: .69rem;
   font-weight: 700;
-  line-height: 42px;
+  line-height: 1.15;
+  text-align: center;
   text-decoration: none;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .muteti-primary-navigation a:hover,
@@ -174,7 +181,7 @@ textarea {
   margin-bottom: .65rem;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 640px) {
   .muteti-menu-toggle {
     display: block;
   }
