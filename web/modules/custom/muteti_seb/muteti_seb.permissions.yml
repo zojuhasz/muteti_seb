@@ -15,3 +15,6 @@ manage own doctor availability:
   title: 'Saját munka és távollét beállítása'
 view doctor availability:
   title: 'Orvosok havi távolléti listájának megtekintése'
+
+manage urology waiting list:
+  title: 'Urológiai műtéti várólista kezelése'
