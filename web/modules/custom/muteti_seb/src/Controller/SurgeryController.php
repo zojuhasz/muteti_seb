@@ -28,6 +28,7 @@ final class SurgeryController extends ControllerBase {
 
   public function week(Request $request): array {
     $department = UserDepartment::get($this->currentUser());
+$mode = DepartmentMode::get($department);
     $availability_enabled = DepartmentMode::featureEnabled($department, 'availability_enabled');
     $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
     $can_assign = $this->currentUser()->hasPermission('assign operating room');
@@ -137,7 +138,8 @@ final class SurgeryController extends ControllerBase {
       }
     }
     $doctors=$doctor_ids?$this->database->select('muteti_doctor','d')->fields('d')->condition('id',array_unique($doctor_ids),'IN')->execute()->fetchAllAssoc('id'):[];
-    $card = function ($a) use ($doctors, $can_assign): array {
+ 
+$card = function ($a) use ($doctors, $can_assign, $mode): array {
       $doctor = $doctors[$a->doctor_id] ?? NULL;
       $staff = [];
       foreach ([$a->doctor_id, $a->assistant1_id, $a->assistant2_id, $a->assistant3_id] as $staff_id) {
@@ -147,7 +149,16 @@ final class SurgeryController extends ControllerBase {
       }
       $staff = array_values(array_unique($staff));
       $attributes = [
-        'class' => array_filter(['muteti-drag-card', $a->aznm ? 'is-aznm' : NULL]),
+        'class' => array_filter([
+  'muteti-drag-card',
+  $a->aznm ? 'is-aznm' : NULL,
+  $mode === 'urol' && ($a->care_type ?? 'normal') === 'one_day'
+    ? 'is-care-one-day'
+    : NULL,
+  $mode === 'urol' && ($a->care_type ?? 'normal') === 'same_day'
+    ? 'is-care-same-day'
+    : NULL,
+]),
         'data-id' => (string) $a->id,
       ];
       if ($can_assign) {

@@ -632,3 +632,32 @@
 .muteti-patient.is-care-same-day {
   padding-left: .5rem;
 }
+.muteti-drag-card.is-care-one-day,
+.muteti-drag-card.is-care-same-day {
+  position: relative;
+  padding-left: 1.35rem;
+}
+
+.muteti-drag-card.is-care-one-day::before,
+.muteti-drag-card.is-care-same-day::before {
+  position: absolute;
+  z-index: 2;
+  top: 5px;
+  bottom: 5px;
+  left: 4px;
+  width: 5px;
+  border-radius: 3px;
+  content: "";
+  pointer-events: none;
+}
+
+.muteti-drag-card.is-care-one-day::before {
+  background: #d40000;
+}
+
+.muteti-drag-card.is-care-same-day::before {
+  background-image: radial-gradient(circle, #d40000 0 2px, transparent 2.2px);
+  background-position: center top;
+  background-size: 5px 7px;
+  background-repeat: repeat-y;
+}
