@@ -152,7 +152,7 @@ function muteti_seb_install(): void {
     'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
     'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
     'muteti_orvos3' => ['Orvos', ['view surgery schedule']],
-    'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability']],
+    'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability', 'manage urology waiting list']],
     'muteti_department_seb' => ['Osztály: Sebészet', []],
     'muteti_department_urol' => ['Osztály: Urológia', []],
     'muteti_department_onkorad' => ['Osztály: Onkoradiológia', []],
@@ -760,13 +760,25 @@ function muteti_seb_update_11031(): void {
 }
 
 /**
- * Grants the urology waiting-list permission to doctors and bosses.
+ * Grants the urology waiting-list permission to the Boss role.
  */
 function muteti_seb_update_11032(): void {
-  foreach (['muteti_orvos3', 'muteti_boss'] as $role_id) {
+  if ($role = Role::load('muteti_boss')) {
+    $role->grantPermission('manage urology waiting list')->save();
+  }
+}
+
+/**
+ * Removes the urology waiting-list permission from non-Boss doctor roles.
+ */
+function muteti_seb_update_11033(): void {
+  foreach (['muteti_orvos1', 'muteti_orvos2', 'muteti_orvos3'] as $role_id) {
     if ($role = Role::load($role_id)) {
-      $role->grantPermission('manage urology waiting list')->save();
+      $role->revokePermission('manage urology waiting list')->save();
     }
+  }
+  if ($role = Role::load('muteti_boss')) {
+    $role->grantPermission('manage urology waiting list')->save();
   }
 }
 
