@@ -263,7 +263,7 @@ final class BookingController extends ControllerBase {
         }
         else {
           $can_edit_slot = $can_edit && $can_manage_slot;
-          $edit = Link::fromTextAndUrl($can_edit_slot ? 'MóD.' : 'Néz', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
+          $edit = Link::fromTextAndUrl($can_edit_slot ? 'M' : 'Néz', Url::fromRoute('muteti_seb.appointment', ['date'=>$date,'slot'=>$slot]))->toRenderable();
           $edit['#attributes']['class'][] = 'muteti-edit-link';
           if (!$can_edit_slot) {
             $edit['#attributes']['class'][] = 'is-view-only';
