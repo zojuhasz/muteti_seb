@@ -47,8 +47,8 @@ final class BookingController extends ControllerBase {
       $on_call_rows = $this->database->select('muteti_on_call', 'u')->fields('u', ['date', 'doctor_name', 'doctor_name_2'])->condition('mode', $mode)->condition('date', [$start, $end], 'BETWEEN')->execute();
       foreach ($on_call_rows as $on_call_row) {
         $on_call[$on_call_row->date] = array_values(array_filter([
-          $on_call_row->doctor_name,
-          $mode === 'seb' ? $on_call_row->doctor_name_2 : '',
+          trim((string) $on_call_row->doctor_name),
+          trim((string) $on_call_row->doctor_name_2),
         ]));
       }
     }
