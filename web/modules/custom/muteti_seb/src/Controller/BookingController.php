@@ -312,11 +312,18 @@ final class BookingController extends ControllerBase {
             }
           }
           elseif ($mode === 'urol') {
+            $is_tvk = mb_strtoupper(trim((string) ($doctor->name ?? '')), 'UTF-8') === 'TVK';
             $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong>'
               .'<br>Dg.: '.Html::escape($a->diagnosis ?? '')
-              .'<br>Műtét: '.Html::escape($a->operation_name ?? '')
-              .'<br>Anaesth.: '.Html::escape($a->anaesth ?? '')
-              .'<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name ?? '-').'</span>';
+              .'<br>Műtét: '.Html::escape($a->operation_name ?? '');
+            if ($is_tvk) {
+              $patient_content .= '<br><span class="muteti-staff">TVK</span>';
+              $patient_attributes['class'][] = 'is-tvk';
+            }
+            else {
+              $patient_content .= '<br>Anaesth.: '.Html::escape($a->anaesth ?? '')
+                .'<br><span class="muteti-staff">Orvos: '.Html::escape($doctor->name ?? '-').'</span>';
+            }
           }
           else {
             $patient_content = '<strong>'.Html::escape($a->patient_name).'</strong>'
