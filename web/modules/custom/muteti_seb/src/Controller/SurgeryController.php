@@ -141,17 +141,20 @@ $mode = DepartmentMode::get($department);
       $waiting_query = $this->database->select('muteti_appointment', 'a')
         ->fields('a')
         ->condition('department', $department)
-        ->condition('admission_date', date('Y-m-d'), '<=')
+        ->condition('admission_date', $selected, '<=')
         ->condition('operation_name', '', '<>')
         ->condition('operated', 0);
-      $waiting_status = $waiting_query->orConditionGroup()->isNull('surgery_date');
-      $selected_unassigned = $waiting_query->andConditionGroup()
-        ->condition('surgery_date', $selected)
-        ->isNull('operating_room');
+
+      // Show every patient who has not yet been operated on. The only
+      // exception is a patient already assigned to an operating room on the
+      // selected day, because that patient is rendered in the room list.
       $waiting_query->condition(
         $waiting_query->orConditionGroup()
-          ->condition($waiting_status)
-          ->condition($selected_unassigned)
+          ->isNull('surgery_date')
+          ->condition('surgery_date', $selected, '<>')
+          ->isNull('operating_room')
+          ->condition('operating_room', '')
+          ->condition('operating_room', '0')
       );
     }
     $waiting = $waiting_query->orderBy('admission_date')->execute()->fetchAll();
