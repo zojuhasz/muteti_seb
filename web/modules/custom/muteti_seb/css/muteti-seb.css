@@ -897,20 +897,23 @@
   font-weight: 400;
 }
 
-/* Dark modification control. */
+/* Appointment modification icon. */
 .muteti-edit-link:not(.is-view-only) {
-  width: auto;
-  min-width: 1.35rem;
-  padding: 0 .28rem;
+  width: 1.2rem;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0;
+  overflow: hidden;
   border: 0;
   border-radius: 0;
   outline: 0;
   box-shadow: none;
-  background: #4a4a4a;
-  color: #fff;
-  font-size: .65rem;
-  font-weight: 400;
+  background: transparent url("../images/edit-appointment.png") center / contain no-repeat;
+  color: transparent;
+  font-size: 0;
+  line-height: 0;
+  text-indent: -9999px;
 }
 .muteti-patient-topbar .muteti-edit-link:not(.is-view-only) {
-  width: auto;
+  width: 1.2rem;
 }
