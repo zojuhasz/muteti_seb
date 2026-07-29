@@ -735,10 +735,10 @@
   .muteti-surgery-week-frame,
   .muteti-surgery-board {
     box-sizing: border-box;
-    width: 120%;
+    width: 140%;
     max-width: none;
-    margin-left: -10%;
-    margin-right: -10%;
+    margin-left: -20%;
+    margin-right: -20%;
   }
 }
 
