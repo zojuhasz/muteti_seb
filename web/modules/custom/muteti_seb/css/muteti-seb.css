@@ -882,3 +882,15 @@
 .muteti-day-card-name {
   margin-bottom: .2rem;
 }
+
+/* Red appointment move/delete action group. */
+.muteti-patient-actions {
+  border-color: #8f1010;
+  background: #c51616;
+  color: #fff;
+}
+.muteti-patient-actions .muteti-move-link,
+.muteti-patient-actions .muteti-delete-link,
+.muteti-patient-actions .muteti-action-separator {
+  color: #fff;
+}
