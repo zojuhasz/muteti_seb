@@ -861,7 +861,7 @@
 /* Compact date/day spacing in booking and surgery headers. */
 .muteti-heading-date,
 .muteti-day-card-date {
-  font-size: .6rem;
+  font-size: .68rem;
   line-height: 1;
 }
 .muteti-heading-day {
@@ -871,4 +871,14 @@
 .muteti-day-card-name {
   margin-top: .03rem;
   line-height: 1.05;
+}
+
+/* Compact surgery day cards vertically. */
+.muteti-day-card {
+  min-height: 0;
+  padding-top: .28rem;
+  padding-bottom: .28rem;
+}
+.muteti-day-card-name {
+  margin-bottom: .2rem;
 }
