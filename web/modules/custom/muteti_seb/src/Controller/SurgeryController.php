@@ -145,16 +145,25 @@ $mode = DepartmentMode::get($department);
         ->condition('operation_name', '', '<>')
         ->condition('operated', 0);
 
-      // Show every patient who has not yet been operated on. The only
-      // exception is a patient already assigned to an operating room on the
-      // selected day, because that patient is rendered in the room list.
+      // A patient belongs to the waiting list only while no surgery date has
+      // been assigned, or while assigned to the selected day without a room.
+      // This also keeps completed past room assignments out when the imported
+      // operated flag was not updated.
+      $without_surgery_date = $waiting_query->orConditionGroup()
+        ->isNull('surgery_date')
+        ->condition('surgery_date', '');
+      $selected_unassigned = $waiting_query->andConditionGroup()
+        ->condition('surgery_date', $selected)
+        ->condition(
+          $waiting_query->orConditionGroup()
+            ->isNull('operating_room')
+            ->condition('operating_room', '')
+            ->condition('operating_room', '0')
+        );
       $waiting_query->condition(
         $waiting_query->orConditionGroup()
-          ->isNull('surgery_date')
-          ->condition('surgery_date', $selected, '<>')
-          ->isNull('operating_room')
-          ->condition('operating_room', '')
-          ->condition('operating_room', '0')
+          ->condition($without_surgery_date)
+          ->condition($selected_unassigned)
       );
     }
     $waiting = $waiting_query->orderBy('admission_date')->execute()->fetchAll();
