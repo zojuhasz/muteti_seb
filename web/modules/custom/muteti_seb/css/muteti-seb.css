@@ -903,6 +903,9 @@
   min-width: 1.35rem;
   padding: 0 .28rem;
   border: 0;
+  border-radius: 0;
+  outline: 0;
+  box-shadow: none;
   background: #4a4a4a;
   color: #fff;
   font-size: .65rem;
