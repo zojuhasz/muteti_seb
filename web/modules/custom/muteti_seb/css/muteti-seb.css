@@ -727,3 +727,40 @@
 .muteti-patient:has(.muteti-urology-waitlist-control) .muteti-patient-slot {
   padding-right: 1.6rem;
 }
+
+
+/* Wider weekly layouts inside Olivero. */
+@media (min-width: 1001px) {
+  #muteti-booking-table,
+  .muteti-surgery-week-frame,
+  .muteti-surgery-board {
+    box-sizing: border-box;
+    width: 120%;
+    max-width: none;
+    margin-left: -10%;
+    margin-right: -10%;
+  }
+}
+
+/* More compact patient text in both weekly views. */
+.muteti-booking-table {
+  font-size: .72rem;
+}
+.muteti-patient-content {
+  font-size: .7rem;
+  line-height: 1.12;
+}
+.muteti-drag-card {
+  font-size: .82rem;
+  line-height: 1.18;
+}
+
+@media (max-width: 1000px) {
+  #muteti-booking-table,
+  .muteti-surgery-week-frame,
+  .muteti-surgery-board {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
