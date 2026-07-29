@@ -358,71 +358,75 @@ final class BookingController extends ControllerBase {
             'patient' => [
               '#type' => 'container',
               '#attributes' => $patient_attributes,
-              'edit' => $edit,
-              'slot' => [
-                '#markup' => '<div class="muteti-patient-slot">'.Html::escape($slot).'</div>',
-              ],
-              'actions' => $can_move && $can_manage_slot ? [
+              'topbar' => [
                 '#type' => 'container',
-                '#attributes' => ['class' => ['muteti-patient-actions']],
-                'move' => $can_move ? [
-                  '#type' => 'html_tag',
-                  '#tag' => 'button',
-                  '#value' => 'áth',
-                  '#attributes' => [
-                    'type' => 'button',
-                    'class' => ['muteti-move-link', 'is-source'],
-                    'data-move-id' => (string) $a->id,
-                    'data-move-patient' => $a->patient_name,
-                    'title' => 'Áthelyezés',
+                '#attributes' => ['class' => ['muteti-patient-topbar']],
+                'edit' => $edit,
+                'slot' => [
+                  '#markup' => '<div class="muteti-patient-slot">'.Html::escape($slot).'</div>',
+                ],
+                'actions' => $can_move && $can_manage_slot ? [
+                  '#type' => 'container',
+                  '#attributes' => ['class' => ['muteti-patient-actions']],
+                  'move' => $can_move ? [
+                    '#type' => 'html_tag',
+                    '#tag' => 'button',
+                    '#value' => 'áth',
+                    '#attributes' => [
+                      'type' => 'button',
+                      'class' => ['muteti-move-link', 'is-source'],
+                      'data-move-id' => (string) $a->id,
+                      'data-move-patient' => $a->patient_name,
+                      'title' => 'Áthelyezés',
+                    ],
+                  ] : [],
+                  'separator' => ['#markup' => '<span class="muteti-action-separator">|</span>'],
+                  'delete' => [
+                    '#type' => 'html_tag',
+                    '#tag' => 'button',
+                    '#value' => '0',
+                    '#attributes' => [
+                      'type' => 'button',
+                      'class' => ['muteti-delete-link'],
+                      'data-delete-id' => (string) $a->id,
+                      'data-delete-patient' => $a->patient_name,
+                      'title' => 'Beteg törlése',
+                      'aria-label' => 'Beteg törlése',
+                    ],
                   ],
                 ] : [],
-                'separator' => ['#markup' => '<span class="muteti-action-separator">|</span>'],
-                'delete' => [
-                  '#type' => 'html_tag',
-                  '#tag' => 'button',
-                  '#value' => '0',
-                  '#attributes' => [
-                    'type' => 'button',
-                    'class' => ['muteti-delete-link'],
-                    'data-delete-id' => (string) $a->id,
-                    'data-delete-patient' => $a->patient_name,
-                    'title' => 'Beteg törlése',
-                    'aria-label' => 'Beteg törlése',
-                  ],
-                ],
-              ] : [],
-              'waitlist' => $can_manage_urology_waitlist && trim((string) $a->patient_name) !== '' ? [
-                '#type' => 'container',
-                '#attributes' => ['class' => array_filter([
-                  'muteti-urology-waitlist-control',
-                  $waitlist_date !== '' ? 'is-selected' : NULL,
-                ])],
-                'button' => [
-                  '#type' => 'html_tag',
-                  '#tag' => 'button',
-                  '#value' => 'M',
-                  '#attributes' => [
-                    'type' => 'button',
-                    'class' => array_filter([
-                      'muteti-urology-waitlist-button',
-                      $waitlist_date !== '' ? 'is-selected' : NULL,
-                    ]),
-                    'data-appointment-id' => (string) $a->id,
-                    'data-action' => $waitlist_date !== '' ? 'revoke' : 'open',
-                    'title' => $waitlist_date !== ''
-                      ? 'Műtéti időpont ('.$waitlist_date.') visszavonása'
-                      : 'Műtéti várólista dátumának kiválasztása',
-                    'aria-label' => $waitlist_date !== ''
-                      ? 'Műtéti időpont ('.$waitlist_date.') visszavonása'
-                      : 'Műtéti várólista dátumának kiválasztása',
-                  ],
-                ],
-                'menu' => $waitlist_date === '' ? [
+                'waitlist' => $can_manage_urology_waitlist && trim((string) $a->patient_name) !== '' ? [
                   '#type' => 'container',
-                  '#attributes' => ['class' => ['muteti-urology-waitlist-menu']],
-                ] + $waitlist_menu : [],
-              ] : [],
+                  '#attributes' => ['class' => array_filter([
+                    'muteti-urology-waitlist-control',
+                    $waitlist_date !== '' ? 'is-selected' : NULL,
+                  ])],
+                  'button' => [
+                    '#type' => 'html_tag',
+                    '#tag' => 'button',
+                    '#value' => 'M',
+                    '#attributes' => [
+                      'type' => 'button',
+                      'class' => array_filter([
+                        'muteti-urology-waitlist-button',
+                        $waitlist_date !== '' ? 'is-selected' : NULL,
+                      ]),
+                      'data-appointment-id' => (string) $a->id,
+                      'data-action' => $waitlist_date !== '' ? 'revoke' : 'open',
+                      'title' => $waitlist_date !== ''
+                        ? 'Műtéti időpont ('.$waitlist_date.') visszavonása'
+                        : 'Műtéti várólista dátumának kiválasztása',
+                      'aria-label' => $waitlist_date !== ''
+                        ? 'Műtéti időpont ('.$waitlist_date.') visszavonása'
+                        : 'Műtéti várólista dátumának kiválasztása',
+                    ],
+                  ],
+                  'menu' => $waitlist_date === '' ? [
+                    '#type' => 'container',
+                    '#attributes' => ['class' => ['muteti-urology-waitlist-menu']],
+                  ] + $waitlist_menu : [],
+                ] : [],
+              ],
               'content' => [
                 '#type' => 'container',
                 '#attributes' => ['class' => ['muteti-patient-content']],
