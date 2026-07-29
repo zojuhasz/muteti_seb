@@ -317,7 +317,6 @@ final class BookingController extends ControllerBase {
               .'<br>Dg.: '.Html::escape($a->diagnosis ?? '')
               .'<br>Műtét: '.Html::escape($a->operation_name ?? '');
             if ($is_tvk) {
-              $patient_content .= '<br><span class="muteti-staff">TVK</span>';
               $patient_attributes['class'][] = 'is-tvk';
             }
             else {
