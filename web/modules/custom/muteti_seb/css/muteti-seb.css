@@ -826,3 +826,34 @@
 .muteti-patient:has(.muteti-urology-waitlist-control) .muteti-patient-slot {
   padding-right: 0;
 }
+
+
+/* Landscape phone: fit all seven booking days. */
+@media (orientation: landscape) and (max-width: 1000px) {
+  #muteti-booking-table {
+    box-sizing: border-box;
+    width: calc(100vw - 1rem);
+    max-width: none;
+    margin-left: calc(50% - 50vw + .5rem);
+    margin-right: 0;
+  }
+  .muteti-booking-table {
+    min-width: 0;
+    font-size: .64rem;
+  }
+  .muteti-booking-table th {
+    padding: .4rem .18rem;
+  }
+  .muteti-booking-column-cell {
+    padding: .08rem;
+  }
+  .muteti-heading-date {
+    font-size: .68rem;
+  }
+  .muteti-heading-day {
+    font-size: .64rem;
+  }
+  .muteti-patient-content {
+    font-size: .62rem;
+  }
+}
