@@ -153,6 +153,7 @@ function muteti_seb_install(): void {
     'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
     'muteti_orvos3' => ['Orvos', ['view surgery schedule']],
     'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability', 'manage urology waiting list']],
+    'muteti_local' => ['local', []],
     'muteti_department_seb' => ['Osztály: Sebészet', []],
     'muteti_department_urol' => ['Osztály: Urológia', []],
     'muteti_department_onkorad' => ['Osztály: Onkoradiológia', []],
@@ -780,6 +781,17 @@ function muteti_seb_update_11033(): void {
   if ($role = Role::load('muteti_boss')) {
     $role->grantPermission('manage urology waiting list')->save();
   }
+}
+
+/**
+ * Creates the IP-restricted local role.
+ */
+function muteti_seb_update_11034(): void {
+  $role = Role::load('muteti_local') ?? Role::create([
+    'id' => 'muteti_local',
+    'label' => 'local',
+  ]);
+  $role->save();
 }
 
 /**
