@@ -10,12 +10,35 @@ use Drupal\muteti_seb\Service\DepartmentMode;
  * Implements hook_preprocess_menu().
  */
 function muteti_seb_preprocess_menu(array &$variables): void {
-  if (DepartmentMode::get(UserDepartment::get(\Drupal::currentUser())) !== 'onko') {
+  $account = \Drupal::currentUser();
+  $roles = $account->getRoles();
+
+  if (in_array('muteti_local', $roles, TRUE) && ($variables['menu_name'] ?? '') === 'main') {
+    $variables['#cache']['contexts'][] = 'user.roles';
+    muteti_seb_keep_local_surgery_links($variables['items']);
+    return;
+  }
+
+  if (DepartmentMode::get(UserDepartment::get($account)) !== 'onko') {
     return;
   }
 
   $variables['#cache']['contexts'][] = 'user.roles';
   muteti_seb_remove_oncology_surgery_links($variables['items']);
+}
+
+/**
+ * Keeps only surgery allocation and logout links for local users.
+ */
+function muteti_seb_keep_local_surgery_links(array &$items): void {
+  foreach ($items as $key => &$item) {
+    $route = isset($item['url']) && $item['url']->isRouted()
+      ? $item['url']->getRouteName()
+      : '';
+    if (!in_array($route, ['muteti_seb.surgery', 'user.logout'], TRUE)) {
+      unset($items[$key]);
+    }
+  }
 }
 
 /**
@@ -48,9 +71,16 @@ function muteti_seb_form_user_login_form_alter(array &$form, FormStateInterface 
  * Sends application users to their department-aware booking page after login.
  */
 function muteti_seb_login_redirect_submit(array &$form, FormStateInterface $form_state): void {
-  if (!\Drupal::request()->query->has('destination')) {
-    $form_state->setRedirect('muteti_seb.home');
+  if (\Drupal::request()->query->has('destination')) {
+    return;
   }
+
+  if (in_array('muteti_local', \Drupal::currentUser()->getRoles(), TRUE)) {
+    $form_state->setRedirect('muteti_seb.surgery');
+    return;
+  }
+
+  $form_state->setRedirect('muteti_seb.home');
 }
 
 /**
