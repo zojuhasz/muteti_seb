@@ -21,8 +21,8 @@ final class LocalNetworkAccessSubscriber implements EventSubscriberInterface {
    */
   private const ALLOWED_NETWORKS = [
     '192.168.40.0/24',
-    '172.16.0.0/24',
-    '100.68.0.0/24',
+    '172.16.0.0/16',
+    '100.68.0.0/16',
   ];
 
   /**
