@@ -28,7 +28,7 @@ final class LocalNetworkAccessSubscriber implements EventSubscriberInterface {
   /**
    * Routes needed to view and operate the surgical allocation page.
    */
-  private const ALLOWED_ROUTES = [
+  private const MUTOS_ALLOWED_ROUTES = [
     'muteti_seb.surgery',
     'muteti_seb.program_pdf',
     'muteti_seb.assignment',
@@ -53,29 +53,36 @@ final class LocalNetworkAccessSubscriber implements EventSubscriberInterface {
       return;
     }
 
-    if (!in_array('muteti_local', $this->currentUser->getRoles(), TRUE)) {
+    $roles = $this->currentUser->getRoles();
+    $is_local = in_array('muteti_local', $roles, TRUE);
+    $is_mutos = in_array('muteti_mutos', $roles, TRUE);
+    if (!$is_local && !$is_mutos) {
       return;
     }
 
     $request = $event->getRequest();
 
-    // Keep logout available even when the current network is not permitted.
-    if ($request->getPathInfo() === '/user/logout') {
+    // Keep logout available even when another local/mutos rule denies access.
+    if (str_starts_with($request->getPathInfo(), '/user/logout')) {
       return;
     }
 
-    $client_ip = (string) $request->getClientIp();
-    if (!IpUtils::checkIp($client_ip, self::ALLOWED_NETWORKS)) {
-      throw new AccessDeniedHttpException(
-        'A local szerepkörrel ez az oldal csak az engedélyezett belső hálózatokról érhető el.'
-      );
+    if ($is_local) {
+      $client_ip = (string) $request->getClientIp();
+      if (!IpUtils::checkIp($client_ip, self::ALLOWED_NETWORKS)) {
+        throw new AccessDeniedHttpException(
+          'A local szerepkörrel ez az oldal csak az engedélyezett belső hálózatokról érhető el.'
+        );
+      }
     }
 
-    $route_name = (string) $request->attributes->get('_route');
-    if ($route_name !== '' && !in_array($route_name, self::ALLOWED_ROUTES, TRUE)) {
-      throw new AccessDeniedHttpException(
-        'A local szerepkör kizárólag a műtéti beosztást érheti el.'
-      );
+    if ($is_mutos) {
+      $route_name = (string) $request->attributes->get('_route');
+      if ($route_name !== '' && !in_array($route_name, self::MUTOS_ALLOWED_ROUTES, TRUE)) {
+        throw new AccessDeniedHttpException(
+          'A mutos szerepkör kizárólag a műtéti beosztást érheti el.'
+        );
+      }
     }
   }
 
