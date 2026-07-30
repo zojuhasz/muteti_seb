@@ -26,6 +26,19 @@ final class LocalNetworkAccessSubscriber implements EventSubscriberInterface {
   ];
 
   /**
+   * Routes needed to view and operate the surgical allocation page.
+   */
+  private const ALLOWED_ROUTES = [
+    'muteti_seb.surgery',
+    'muteti_seb.program_pdf',
+    'muteti_seb.assignment',
+    'muteti_seb.day_type',
+    'muteti_seb.availability_update',
+    'muteti_seb.daily_info',
+    'user.logout',
+  ];
+
+  /**
    * Constructs the access subscriber.
    */
   public function __construct(
@@ -55,6 +68,13 @@ final class LocalNetworkAccessSubscriber implements EventSubscriberInterface {
     if (!IpUtils::checkIp($client_ip, self::ALLOWED_NETWORKS)) {
       throw new AccessDeniedHttpException(
         'A local szerepkörrel ez az oldal csak az engedélyezett belső hálózatokról érhető el.'
+      );
+    }
+
+    $route_name = (string) $request->attributes->get('_route');
+    if ($route_name !== '' && !in_array($route_name, self::ALLOWED_ROUTES, TRUE)) {
+      throw new AccessDeniedHttpException(
+        'A local szerepkör kizárólag a műtéti beosztást érheti el.'
       );
     }
   }
