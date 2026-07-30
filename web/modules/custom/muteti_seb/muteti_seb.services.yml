@@ -1,0 +1,6 @@
+services:
+  muteti_seb.local_network_access_subscriber:
+    class: Drupal\muteti_seb\EventSubscriber\LocalNetworkAccessSubscriber
+    arguments: ['@current_user']
+    tags:
+      - { name: event_subscriber }
