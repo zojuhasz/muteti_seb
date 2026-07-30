@@ -13,9 +13,9 @@ function muteti_seb_preprocess_menu(array &$variables): void {
   $account = \Drupal::currentUser();
   $roles = $account->getRoles();
 
-  if (in_array('muteti_local', $roles, TRUE) && ($variables['menu_name'] ?? '') === 'main') {
+  if (in_array('muteti_mutos', $roles, TRUE) && ($variables['menu_name'] ?? '') === 'main') {
     $variables['#cache']['contexts'][] = 'user.roles';
-    muteti_seb_keep_local_surgery_links($variables['items']);
+    muteti_seb_keep_mutos_surgery_links($variables['items']);
     return;
   }
 
@@ -28,9 +28,9 @@ function muteti_seb_preprocess_menu(array &$variables): void {
 }
 
 /**
- * Keeps only surgery allocation and logout links for local users.
+ * Keeps only surgery allocation and logout links for mutos users.
  */
-function muteti_seb_keep_local_surgery_links(array &$items): void {
+function muteti_seb_keep_mutos_surgery_links(array &$items): void {
   foreach ($items as $key => &$item) {
     $route = isset($item['url']) && $item['url']->isRouted()
       ? $item['url']->getRouteName()
@@ -75,7 +75,7 @@ function muteti_seb_login_redirect_submit(array &$form, FormStateInterface $form
     return;
   }
 
-  if (in_array('muteti_local', \Drupal::currentUser()->getRoles(), TRUE)) {
+  if (in_array('muteti_mutos', \Drupal::currentUser()->getRoles(), TRUE)) {
     $form_state->setRedirect('muteti_seb.surgery');
     return;
   }
