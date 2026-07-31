@@ -268,7 +268,7 @@ $card = function ($a) use ($doctors, $can_assign, $mode): array {
       'top' => [
         '#type' => 'container',
         '#attributes' => ['class' => ['muteti-daily-heading']],
-        'title' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($selected).' – műtéti beosztás</h2>'],
+        'title' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($selected).' – műtéti beosztás <small class="muteti-drag-hint">(az áthelyezés húzogatással történik)</small></h2>'],
         'pdf' => [
           '#type' => 'link',
           '#title' => [
