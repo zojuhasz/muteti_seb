@@ -192,7 +192,8 @@
   width: 100%;
 }
 .muteti-patient-search-table {
-  min-width: 980px;
+  min-width: 720px;
+  table-layout: fixed;
   font-size: .78rem;
 }
 .muteti-patient-search-table th,
@@ -207,6 +208,12 @@
   white-space: nowrap;
   font-size: .72rem;
 }
+.muteti-search-date { width: 5.8rem; }
+.muteti-search-department { width: 8rem; }
+.muteti-search-patient { width: 11rem; overflow-wrap: anywhere; }
+.muteti-search-identifier { width: 8rem; overflow-wrap: anywhere; }
+.muteti-search-slot { width: 6.5rem; overflow-wrap: anywhere; }
+.muteti-search-doctor { width: 11rem; overflow-wrap: anywhere; }
 .muteti-search-period {
   font-size: .7rem;
   font-weight: 800;
