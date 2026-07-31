@@ -345,10 +345,12 @@ final class ProgramPdfController extends ControllerBase {
         ->execute()
         ->fetchObject();
       $on_call_names = array_values(array_filter(array_unique([
-        trim((string) ($on_call->doctor_name ?? '')),
-        trim((string) ($on_call->doctor_name_2 ?? '')),
+        trim((string) ($on_call->doctor_name ?? ''), " \t\n\r\0\x0B,;"),
+        trim((string) ($on_call->doctor_name_2 ?? ''), " \t\n\r\0\x0B,;"),
       ])));
-      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.on-call{margin:2px 0 0;font-size:10px;font-weight:700}.room{font-size:24px;color:#777;margin-top:7px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}.created{margin-top:2px;text-align:right;white-space:nowrap}.created strong{font-size:12px}</style><h1>'.$escape($department).' - '.$escape($parsed->format('Y.m.d')).'</h1>';
+      $weekdays = [1 => 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
+      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0;font-size:14px;line-height:1.05;font-weight:700}h2{margin:1px 0 2px;color:#aaa;font-size:24px;line-height:1.05;font-weight:700}.on-call{margin:0;font-size:10px;font-weight:700}.room{font-size:24px;color:#777;margin-top:7px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}.created{margin-top:2px;text-align:right;white-space:nowrap}.created strong{font-size:12px}</style><h1>'.$escape($department).'</h1>';
+      $html .= '<h2>'.$escape($parsed->format('Y.m.d')).' '.$escape($weekdays[(int) $parsed->format('N')]).'</h2>';
       $html .= '<div class="on-call">Ügyelet: '.$escape($on_call_names ? implode(', ', $on_call_names) : '-').'</div>';
       $current = NULL;
       foreach ($rows as $appointment) {
@@ -438,7 +440,7 @@ final class ProgramPdfController extends ControllerBase {
    */
   private function urologyProgramHtml(string $department, string $date, \DateTimeImmutable $parsed, array $rows, array $doctors): string {
     $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $weekdays = [1 => 'HÉTFŐ', 'KEDD', 'SZERDA', 'CSÜTÖRTÖK', 'PÉNTEK', 'SZOMBAT', 'VASÁRNAP'];
+    $weekdays = [1 => 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
     $on_call = $this->database->select('muteti_on_call', 'u')
       ->fields('u', ['doctor_name', 'doctor_name_2'])
       ->condition('mode', 'urol')
@@ -495,14 +497,14 @@ final class ProgramPdfController extends ControllerBase {
     uksort($rooms, static fn(string $left, string $right): int => strnatcasecmp($left, $right));
 
     $on_call_names = array_values(array_filter(array_unique([
-      trim((string) ($on_call->doctor_name ?? '')),
-      trim((string) ($on_call->doctor_name_2 ?? '')),
+      trim((string) ($on_call->doctor_name ?? ''), " \t\n\r\0\x0B,;"),
+      trim((string) ($on_call->doctor_name_2 ?? ''), " \t\n\r\0\x0B,;"),
     ])));
     $html = '<meta charset="utf-8"><style>
       @page{margin:11mm 9mm 12mm}
       body{font-family:DejaVu Sans,sans-serif;color:#000;font-size:11px;margin:0}
-      h1{font-size:18px;line-height:1.05;margin:0;font-weight:700}
-      h2{font-size:18px;line-height:1.05;margin:1px 0 3px;font-weight:700}
+      h1{font-size:14px;line-height:1.05;margin:0;font-weight:700}
+      h2{font-size:24px;line-height:1.05;margin:1px 0 2px;color:#aaa;font-weight:700}
       .on-call{font-size:10px;font-weight:700;margin:0 0 8px}
       .room{margin:0 0 10mm;page-break-inside:avoid}
       .room-title{border:1px solid #111;border-bottom:0;font-size:15px;padding:3px 5px;font-weight:400}
