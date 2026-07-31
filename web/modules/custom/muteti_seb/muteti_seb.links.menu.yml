@@ -41,7 +41,7 @@ muteti_seb.departments_main:
   weight: 90
 
 muteti_seb.audit_log:
-  title: 'Műtéti napló'
+  title: 'Napló'
   description: 'A saját osztály előjegyzésein végzett műveletek nyomtatható naplója.'
   route_name: muteti_seb.audit_log
   menu_name: main
