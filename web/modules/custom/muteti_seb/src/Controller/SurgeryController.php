@@ -192,6 +192,7 @@ $card = function ($a) use ($doctors, $can_assign, $mode): array {
       $attributes = [
         'class' => array_filter([
   'muteti-drag-card',
+  $can_assign ? 'is-draggable' : NULL,
   $a->aznm ? 'is-aznm' : NULL,
   $mode === 'urol' && ($a->care_type ?? 'normal') === 'one_day'
     ? 'is-care-one-day'
