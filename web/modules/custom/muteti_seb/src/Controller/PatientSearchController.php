@@ -24,7 +24,7 @@ final class PatientSearchController extends ControllerBase {
   public function search(Request $request): array {
     $account = $this->currentUser();
     $department = UserDepartment::get($account);
-    $global_search = mb_strtolower($account->getAccountName(), 'UTF-8') === 'user1';
+    $global_search = $account->hasPermission('administer surgery system');
     $is_oncology = DepartmentMode::get($department) === 'onko';
     $term = trim((string) $request->query->get('q', $request->query->get('query', '')));
     $build = [
