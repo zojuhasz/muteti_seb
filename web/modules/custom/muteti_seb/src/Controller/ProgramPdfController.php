@@ -178,20 +178,12 @@ final class ProgramPdfController extends ControllerBase {
     $is_boss = in_array('muteti_boss', $account->getRoles(), TRUE);
 
     $query = $this->database->select('muteti_appointment', 'a');
-    $query->leftJoin('muteti_doctor', 'd', 'd.id = a.doctor_id');
-    $query->fields('a', [
-      'admission_date',
-      'slot_type',
-      'patient_name',
-      'taj',
-      'operation_name',
-      'notes',
-      'doctor_id',
-    ]);
-    $query->addField('d', 'name', 'doctor_name');
+    $query->addField('a', 'operation_name', 'treatment_name');
+    $query->addExpression('COUNT(a.id)', 'treatment_count');
     $query->condition('a.department', $department);
     $query->condition('a.admission_date', [$start, $end], 'BETWEEN');
-    $query->condition('a.patient_name', '', '<>');
+    $query->condition('a.operation_name', '', '<>');
+    $query->isNotNull('a.operation_name');
     if (!$is_boss) {
       $doctor_ids = $this->database->select('muteti_doctor', 'd')
         ->fields('d', ['id'])
@@ -207,50 +199,42 @@ final class ProgramPdfController extends ControllerBase {
       }
     }
     $rows = $query
-      ->orderBy('a.admission_date')
-      ->orderBy('a.slot_type')
-      ->orderBy('a.patient_name')
+      ->groupBy('a.operation_name')
+      ->orderBy('treatment_count', 'DESC')
+      ->orderBy('a.operation_name')
       ->execute()
       ->fetchAll();
 
     $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
     $scope = $is_boss ? 'Az osztály összes betege' : 'Saját betegek';
     $html = '<meta charset="utf-8"><style>
-      @page{margin:12mm 10mm 13mm}
-      body{font-family:DejaVu Sans,sans-serif;color:#111;font-size:9px;margin:0}
+      @page{margin:15mm 16mm 16mm}
+      body{font-family:DejaVu Sans,sans-serif;color:#111;font-size:11px;margin:0}
       h1{font-size:18px;margin:0 0 2px}
       h2{font-size:13px;margin:0 0 2px}
-      .range{margin:0 0 9px;color:#475569}
+      .range{margin:0 0 10px;color:#475569}
       table{width:100%;border-collapse:collapse;table-layout:fixed}
       thead{display:table-header-group}
       tr{page-break-inside:avoid}
-      th,td{border:1px solid #9aa8b6;padding:3px 4px;vertical-align:top;line-height:1.18;overflow-wrap:anywhere}
+      th,td{border:1px solid #9aa8b6;padding:5px 7px;line-height:1.2}
       th{background:#dce8f2;text-align:left}
       tbody tr:nth-child(even){background:#f4f7fa}
-      .date{width:9%}.slot{width:8%}.patient{width:22%}.treatment{width:24%}.doctor{width:17%}.notes{width:20%}
+      .treatment{width:82%}.count{width:18%;text-align:right}
       .empty{text-align:center;padding:18px}
       .created{margin-top:7px;text-align:right;font-size:8px}
     </style>';
-    $html .= '<h1>Onkoradiológiai lekérdezés</h1>';
+    $html .= '<h1>Onkoradiológiai kezelések összesítése</h1>';
     $html .= '<h2>'.$escape($label).' - '.$escape($scope).'</h2>';
     $html .= '<div class="range">'.$escape((new \DateTimeImmutable($start))->format('Y.m.d')).' - '.$escape((new \DateTimeImmutable($end))->format('Y.m.d')).'</div>';
-    $html .= '<table><thead><tr><th class="date">Dátum</th><th class="slot">Cella</th><th class="patient">Beteg / Kórlap</th><th class="treatment">Kezelés</th><th class="doctor">Orvos</th><th class="notes">Megjegyzés</th></tr></thead><tbody>';
+    $html .= '<table><thead><tr><th class="treatment">Kezelés</th><th class="count">Darabszám</th></tr></thead><tbody>';
     if (!$rows) {
-      $html .= '<tr><td class="empty" colspan="6">Ebben az időszakban nincs megjeleníthető beteg.</td></tr>';
+      $html .= '<tr><td class="empty" colspan="2">Ebben az időszakban nincs megjeleníthető kezelés.</td></tr>';
     }
     else {
       foreach ($rows as $row) {
-        $patient = trim((string) $row->patient_name);
-        if (trim((string) $row->taj) !== '') {
-          $patient .= ' /'.trim((string) $row->taj).'/';
-        }
         $html .= '<tr>';
-        $html .= '<td>'.$escape((new \DateTimeImmutable($row->admission_date))->format('Y.m.d')).'</td>';
-        $html .= '<td>'.$escape($row->slot_type).'</td>';
-        $html .= '<td><strong>'.$escape($patient).'</strong></td>';
-        $html .= '<td>'.$escape($row->operation_name).'</td>';
-        $html .= '<td>'.$escape($row->doctor_name ?? '').'</td>';
-        $html .= '<td>'.$escape($row->notes).'</td>';
+        $html .= '<td>'.$escape($row->treatment_name).'</td>';
+        $html .= '<td class="count"><strong>'.(int) $row->treatment_count.'</strong></td>';
         $html .= '</tr>';
       }
     }
@@ -259,7 +243,7 @@ final class ProgramPdfController extends ControllerBase {
 
     $pdf = new Dompdf(['isRemoteEnabled' => FALSE]);
     $pdf->loadHtml($html, 'UTF-8');
-    $pdf->setPaper('A4', 'landscape');
+    $pdf->setPaper('A4', 'portrait');
     $pdf->render();
     return new Response($pdf->output(), 200, [
       'Content-Type' => 'application/pdf',
