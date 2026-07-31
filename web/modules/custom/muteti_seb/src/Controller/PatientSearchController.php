@@ -85,19 +85,18 @@ final class PatientSearchController extends ControllerBase {
       $week = (new \DateTimeImmutable($result->admission_date))
         ->modify('monday this week')
         ->format('Y-m-d');
+      $booking_query = ['week' => $week];
       if ($global_search) {
-        $patient = ['#markup' => Html::escape($result->patient_name)];
+        $booking_query['department'] = (string) $result->department;
       }
-      else {
-        $patient = Link::fromTextAndUrl(
-          $result->patient_name,
-          Url::fromRoute('muteti_seb.booking', [], [
-            'query' => ['week' => $week],
-            'fragment' => 'muteti-appointment-'.$result->id,
-          ])
-        )->toRenderable();
-        $patient['#attributes']['title'] = 'Megmutatás az előjegyzési táblában';
-      }
+      $patient = Link::fromTextAndUrl(
+        $result->patient_name,
+        Url::fromRoute('muteti_seb.booking', [], [
+          'query' => $booking_query,
+          'fragment' => 'muteti-appointment-'.$result->id,
+        ])
+      )->toRenderable();
+      $patient['#attributes']['title'] = 'Megmutatás az előjegyzési táblában';
       $row = [
         ['data' => Html::escape($result->admission_date), 'class' => ['muteti-search-date']],
       ];
