@@ -6,6 +6,8 @@ edit surgery appointment:
   title: 'Műtéti előjegyzés módosítása'
 move surgery appointment:
   title: 'Műtéti előjegyzés áthelyezése és duplikálása'
+manage basic oncology appointments:
+  title: 'Onkoradiológiai előjegyzések kezelése alap Orvosként'
 assign operating room:
   title: 'Betegek műtőbe osztása és sorrendezése'
 administer surgery system:
