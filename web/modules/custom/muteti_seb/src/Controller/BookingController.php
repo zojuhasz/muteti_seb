@@ -169,7 +169,9 @@ final class BookingController extends ControllerBase {
           'on_call' => in_array($mode, ['seb', 'urol'], TRUE) ? [
             '#markup' => '<span class="muteti-heading-on-call" title="Ügyeletes orvos">'.(!empty($on_call[$date]) ? implode('<br>', array_map([Html::class, 'escape'], $on_call[$date])) : '—').'</span>',
           ] : [],
-          'day_type' => [
+          'day_type' => $mode === 'onko' && !$can_change_day_type ? [
+            '#markup' => '<span class="muteti-day-type-readonly" title="Onkoradiológián csak Boss módosíthat napfajtát.">'.Html::escape($type).'</span>',
+          ] : [
             '#type' => 'select',
             '#title' => $this->t('Napfajta'),
             '#title_display' => 'invisible',
@@ -183,9 +185,7 @@ final class BookingController extends ControllerBase {
               'data-previous-value' => $type,
               'title' => $occupied
                 ? $this->t('A napfajta már nem módosítható, mert van előjegyzett beteg.')
-                : (!$can_change_day_type && $mode === 'onko'
-                  ? $this->t('Onkoradiológián csak Boss módosíthat napfajtát.')
-                  : $this->t('Napfajta módosítása')),
+                : $this->t('Napfajta módosítása'),
             ],
           ],
           'away_strip' => $away_enabled ? [
