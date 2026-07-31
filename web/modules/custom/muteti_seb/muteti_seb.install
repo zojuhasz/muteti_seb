@@ -151,7 +151,7 @@ function muteti_seb_install(): void {
     'muteti_view' => ['Betekintő', ['view surgery schedule']],
     'muteti_orvos1' => ['Orvos1', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
     'muteti_orvos2' => ['Orvos2', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'manage own doctor availability', 'view doctor availability']],
-    'muteti_orvos3' => ['Orvos', ['view surgery schedule']],
+    'muteti_orvos3' => ['Orvos', ['view surgery schedule', 'create surgery appointment']],
     'muteti_boss' => ['Boss', ['view surgery schedule', 'create surgery appointment', 'edit surgery appointment', 'move surgery appointment', 'assign operating room', 'administer surgery system', 'manage own doctor availability', 'view doctor availability', 'manage urology waiting list']],
     'muteti_local' => ['local', ['view surgery schedule']],
     'muteti_mutos' => ['mutos', ['view surgery schedule']],
@@ -818,6 +818,15 @@ function muteti_seb_update_11036(): void {
   ]);
   $role->grantPermission('view surgery schedule');
   $role->save();
+}
+
+/**
+ * Allows the basic Orvos role to create non-restricted Surgery appointments.
+ */
+function muteti_seb_update_11037(): void {
+  if ($role = Role::load('muteti_orvos3')) {
+    $role->grantPermission('create surgery appointment')->save();
+  }
 }
 
 /**
