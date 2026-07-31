@@ -131,12 +131,12 @@ final class ProgramPdfController extends ControllerBase {
     }
     else {
       $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room-line{margin-top:7px;white-space:nowrap;page-break-after:avoid}.room{display:inline-block;font-size:24px;color:#777;line-height:1}.room-time{display:inline-block;margin-left:7px;font-size:10px;font-weight:700;vertical-align:baseline}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}</style><h1>'.$escape($department).'</h1><h2>'.$escape($date).'</h2>';
+      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:18px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}</style><h1>'.$escape($department).'</h1><h2>'.$escape($date).'</h2>';
       $current = NULL;
       foreach ($rows as $appointment) {
         if ($current !== $appointment->operating_room) {
           $current = $appointment->operating_room;
-          $html .= '<div class="room-line"><span class="room">'.$escape($current).'</span><span class="room-time">MŰTŐ 08:30</span></div>';
+          $html .= '<div class="room">'.$escape($current).'</div><small>MŰTŐ 08:30</small>';
         }
         $assistants = [];
         foreach (['assistant1_id', 'assistant2_id', 'assistant3_id'] as $field) {
