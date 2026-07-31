@@ -935,3 +935,30 @@
 .muteti-patient-topbar .muteti-edit-link:not(.is-view-only) {
   width: 1.2rem;
 }
+
+.muteti-oncology-report-groups {
+  width: min(100%, 28rem);
+}
+.muteti-oncology-report-group {
+  margin: 0 0 1.2rem;
+}
+.muteti-oncology-report-item {
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  min-height: 1.8rem;
+}
+.muteti-oncology-report-link {
+  color: #075a9c;
+  text-decoration: none;
+  font-size: 1rem;
+}
+.muteti-oncology-report-link:hover,
+.muteti-oncology-report-link:focus {
+  text-decoration: underline;
+}
+.muteti-oncology-report-icon {
+  display: block;
+  width: 1.1rem;
+  height: 1.1rem;
+}
