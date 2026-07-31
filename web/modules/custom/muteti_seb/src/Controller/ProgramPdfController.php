@@ -200,8 +200,7 @@ final class ProgramPdfController extends ControllerBase {
     }
     $rows = $query
       ->groupBy('a.operation_name')
-      ->orderBy('treatment_count', 'DESC')
-      ->orderBy('a.operation_name')
+      ->orderBy('a.operation_name', 'ASC')
       ->execute()
       ->fetchAll();
 
