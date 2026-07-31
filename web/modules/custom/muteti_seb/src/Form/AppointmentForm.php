@@ -250,7 +250,7 @@ final class AppointmentForm extends FormBase {
     if ($basic_doctor_limited) {
       if ($permission === 'create surgery appointment') {
         return $this->currentUser()->hasPermission($permission)
-          && in_array($mode, ['seb', 'onko'], TRUE);
+          && in_array($mode, ['seb', 'urol', 'onko'], TRUE);
       }
       return $permission === 'edit surgery appointment'
         && $mode === 'onko'
