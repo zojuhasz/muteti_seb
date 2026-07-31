@@ -512,7 +512,7 @@
 .muteti-surgery-page > .muteti-surgery-board { margin-top: 1rem; }
 .muteti-daily-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
 .muteti-daily-heading .muteti-panel-title { margin: 0; }
-.muteti-drag-hint { font-size: .68em; font-weight: 400; color: #5f6f7f; white-space: nowrap; }
+.muteti-drag-hint { font-size: .55em; font-weight: 400 !important; color: #5f6f7f; white-space: nowrap; }
 .muteti-daily-heading > a { padding: .55rem .85rem; border: 1px solid #b8c4d3; border-radius: .45rem; background: #fff; color: #174a7e; text-decoration: none; font-weight: 700; }
 .muteti-daily-heading > a.muteti-program-pdf-link { display: inline-flex; padding: .2rem; line-height: 0; }
 .muteti-program-pdf-icon { display: block; width: 28px; height: 28px; }
