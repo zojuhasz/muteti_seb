@@ -283,7 +283,7 @@ final class AvailabilityController extends ControllerBase {
       @page{margin:14mm}body{font-family:DejaVu Sans,sans-serif;color:#172b3a;font-size:10px}
       h1{margin:0 0 4px;font-size:18px}h2{margin:0 0 16px;color:#536b7d;font-size:13px}
       table{width:100%;border-collapse:collapse}th{padding:7px;background:#dce8f2;text-align:left}
-      td{padding:6px;border-bottom:1px solid #d5dde5}.date{font-size:8px}.day{font-size:9px;font-weight:700}.weekend{color:#c62828}.day-type{font-size:8px;font-weight:700}.doctor{display:inline-block;margin:1px 2px;padding:3px 5px;border:1px solid #bbc5ce;border-radius:3px;font-size:8px;font-weight:700;line-height:1.1}.footer{margin-top:18px;text-align:right;color:#667;font-size:8px}
+      td{padding:6px;border-bottom:1px solid #d5dde5}.date{font-size:8px}.day{font-size:9px;font-weight:700}.weekend{color:#c62828}.day-type{font-size:8px;font-weight:700}.doctor{display:inline-block;margin:1px 2px;padding:3px 5px;border:1px solid #bbc5ce;border-radius:3px;font-size:8px;font-weight:700;line-height:1.1}.footer{margin-top:18px;text-align:right;color:#c2c8ce;font-size:8px}
     </style><h1>'.$escape($department).' – '.$escape($report_label).'</h1><h2>'.$escape($month).'</h2><table><thead><tr><th>Dátum</th><th>Nap</th><th>Naptípus</th><th>Orvos</th></tr></thead><tbody>';
 
     $absences = $this->database->select('muteti_doctor_availability', 'a')
