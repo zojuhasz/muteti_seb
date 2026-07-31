@@ -569,9 +569,9 @@
   border: 1px solid rgba(30, 54, 76, .22);
   border-radius: .45rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, .1);
-  cursor: grab;
 }
-.muteti-drag-card:active { cursor: grabbing; }
+.muteti-drag-card.is-draggable { cursor: grab; }
+.muteti-drag-card.is-draggable:active { cursor: grabbing; }
 .muteti-drag-card.is-aznm { border-left: 4px solid #c00; }
 .muteti-dropzone.is-over { outline: 3px solid #3478d4; background: #eef5ff; }
 .muteti-doctor-table { width: 100%; margin: 0; }
