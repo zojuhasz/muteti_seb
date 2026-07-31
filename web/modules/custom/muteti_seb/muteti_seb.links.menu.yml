@@ -67,3 +67,10 @@ muteti_seb.patient_search:
   route_name: muteti_seb.patient_search
   menu_name: main
   weight: 32
+
+muteti_seb.oncology_reports:
+  title: 'Lekérdezés'
+  description: 'Onkoradiológiai időszakos beteglisták PDF-ben.'
+  route_name: muteti_seb.oncology_reports
+  menu_name: main
+  weight: 33
