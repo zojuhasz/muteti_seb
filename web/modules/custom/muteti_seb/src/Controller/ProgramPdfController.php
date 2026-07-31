@@ -71,7 +71,7 @@ final class ProgramPdfController extends ControllerBase {
       .brand{border-bottom:1.5px solid #111;padding:0 0 8px;font-size:16px;font-weight:700;letter-spacing:.5px}.brand small{display:block;font-size:11px;font-weight:400}
       h1{margin:30px 0 22px;font-size:18px}.group{margin:14px 0 2px;color:#c7c7c7;font-size:27px;font-weight:700;line-height:1;page-break-after:avoid}
       table{width:100%;border-collapse:collapse;table-layout:fixed}tr{page-break-inside:avoid}tr:nth-child(odd){background:#dce8fa}td{padding:2px 4px;vertical-align:top;line-height:1.15}
-      .patient{width:36%;font-weight:700}.treatment{width:46%;font-style:italic}.notes{width:18%;font-weight:700}.footer{margin-top:24px;text-align:right;font-size:8px;color:#555}
+      .patient{width:36%;font-weight:700}.treatment{width:46%;font-style:italic}.notes{width:18%;font-weight:700}.footer{margin-top:24px;text-align:right;font-size:8px;color:#c2c8ce}
     </style><div class="brand">Uzsoki Utcai Kórház<small>Onkotherápia</small></div>';
     $html .= '<h1>'.$escape($date).', '.$days[(int) $parsed->format('N')].'</h1>';
     foreach ($groups as $group => $group_rows) {
@@ -219,7 +219,7 @@ final class ProgramPdfController extends ControllerBase {
       tbody tr:nth-child(even){background:#f4f7fa}
       .treatment{width:82%}.count{width:18%;text-align:right}
       .empty{text-align:center;padding:18px}
-      .created{margin-top:7px;text-align:right;font-size:8px}
+      .created{margin-top:7px;text-align:right;font-size:8px;color:#c2c8ce}
     </style>';
     $html .= '<h1>Kemoterápiás kezelések</h1>';
     $html .= '<div class="range">'.$escape((new \DateTimeImmutable($start))->format('Y.m.d')).' - '.$escape((new \DateTimeImmutable($end))->format('Y.m.d')).'</div>';
@@ -349,7 +349,7 @@ final class ProgramPdfController extends ControllerBase {
         trim((string) ($on_call->doctor_name_2 ?? ''), " \t\n\r\0\x0B,;"),
       ])));
       $weekdays = [1 => 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'];
-      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0;font-size:14px;line-height:1.05;font-weight:700}h2{margin:1px 0 2px;color:#aaa;font-size:24px;line-height:1.05;font-weight:700}.on-call{margin:0;font-size:10px;font-weight:700}.room{font-size:24px;color:#777;margin-top:7px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}.created{margin-top:2px;text-align:right;white-space:nowrap}.created strong{font-size:12px}</style><h1>'.$escape($department).'</h1>';
+      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0;font-size:14px;line-height:1.05;font-weight:700}h2{margin:1px 0 2px;color:#aaa;font-size:24px;line-height:1.05;font-weight:700}.on-call{margin:0;font-size:10px;font-weight:700}.room{font-size:24px;color:#777;margin-top:7px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}.created{margin-top:2px;text-align:right;white-space:nowrap;color:#c2c8ce}.created strong{font-size:12px}</style><h1>'.$escape($department).'</h1>';
       $html .= '<h2>'.$escape($parsed->format('Y.m.d')).' '.$escape($weekdays[(int) $parsed->format('N')]).'</h2>';
       $html .= '<div class="on-call">Ügyelet: '.$escape($on_call_names ? implode(', ', $on_call_names) : '-').'</div>';
       $current = NULL;
@@ -521,7 +521,7 @@ final class ProgramPdfController extends ControllerBase {
       .summary-row{display:block;white-space:nowrap}
       .summary-label{display:inline-block;width:21%;font-weight:700}
       .summary-value{display:inline-block;width:57%;white-space:normal;vertical-align:top}
-      .created{margin-top:2px;text-align:right;white-space:nowrap}
+      .created{margin-top:2px;text-align:right;white-space:nowrap;color:#c2c8ce}
       .created strong{font-size:12px}
     </style>';
     $html .= '<h1>'.$escape($department).'</h1>';
