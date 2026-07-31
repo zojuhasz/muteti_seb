@@ -2,8 +2,10 @@
 
 namespace Drupal\muteti_seb\Controller;
 
+use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\AuditLog;
@@ -19,10 +21,13 @@ final class AppointmentMoveController extends ControllerBase {
     return new static($container->get('database'));
   }
 
+  public function access(AccountInterface $account): AccessResult {
+    $department = UserDepartment::get($account);
+    return AccessResult::allowedIf($this->canMoveAppointmentsInDepartment($department, $account))
+      ->addCacheContexts(['user.roles']);
+  }
+
   public function move(Request $request): JsonResponse {
-    if (!$this->currentUser()->hasPermission('move surgery appointment')) {
-      return new JsonResponse(['ok' => FALSE, 'error' => 'Nincs jogosultságod az áthelyezéshez.'], 403);
-    }
     $data = json_decode($request->getContent(), TRUE);
     $appointment_id = (int) ($data['appointment_id'] ?? 0);
     $date = (string) ($data['date'] ?? '');
@@ -124,10 +129,6 @@ final class AppointmentMoveController extends ControllerBase {
   }
 
   public function delete(Request $request): JsonResponse {
-    if (!$this->currentUser()->hasPermission('move surgery appointment')) {
-      return new JsonResponse(['ok' => FALSE, 'error' => 'Nincs jogosultságod a törléshez.'], 403);
-    }
-
     $data = json_decode($request->getContent(), TRUE);
     $appointment_id = (int) ($data['appointment_id'] ?? 0);
     if (!$appointment_id) {
@@ -162,14 +163,19 @@ final class AppointmentMoveController extends ControllerBase {
     return new JsonResponse(['ok' => TRUE]);
   }
 
-  private function canMoveAppointmentsInDepartment(string $department): bool {
-    $roles = $this->currentUser()->getRoles();
+  private function canMoveAppointmentsInDepartment(string $department, ?AccountInterface $account = NULL): bool {
+    $account ??= $this->currentUser();
+    $roles = $account->getRoles();
     $has_higher_doctor_role = (bool) array_intersect(
       ['muteti_orvos1', 'muteti_orvos2', 'muteti_boss'],
       $roles
     );
     $basic_doctor_limited = in_array('muteti_orvos3', $roles, TRUE) && !$has_higher_doctor_role;
-    return !$basic_doctor_limited || DepartmentMode::get($department) === 'onko';
+    if (!$basic_doctor_limited) {
+      return $account->hasPermission('move surgery appointment');
+    }
+    return DepartmentMode::get($department) === 'onko'
+      && $account->hasPermission('manage basic oncology appointments');
   }
 
   private function canManageSlot(string $slot): bool {
