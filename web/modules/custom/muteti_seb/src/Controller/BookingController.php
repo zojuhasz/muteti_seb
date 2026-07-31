@@ -51,7 +51,7 @@ final class BookingController extends ControllerBase {
     $can_change_day_type = $this->currentUser()->hasPermission('assign operating room')
       && ($mode !== 'onko' || in_array('muteti_boss', $roles, TRUE));
     $can_create = $this->currentUser()->hasPermission('create surgery appointment')
-      && (!$basic_doctor_limited || in_array($mode, ['seb', 'onko'], TRUE));
+      && (!$basic_doctor_limited || in_array($mode, ['seb', 'urol', 'onko'], TRUE));
     $has_basic_oncology_management = $basic_doctor_limited
       && $mode === 'onko'
       && $this->currentUser()->hasPermission('manage basic oncology appointments');
