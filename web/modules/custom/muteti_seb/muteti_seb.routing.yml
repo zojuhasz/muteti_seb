@@ -88,6 +88,25 @@ muteti_seb.oncology_booking_pdf:
     _custom_access: '\Drupal\muteti_seb\Controller\ProgramPdfController::oncologyAccess'
     date: '\d{4}-\d{2}-\d{2}'
 
+muteti_seb.oncology_reports:
+  path: '/muteti/onkologia/lekerdezes'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\ProgramPdfController::oncologyReportMenu'
+    _title: 'Lekérdezés'
+  requirements:
+    _permission: 'view surgery schedule'
+    _custom_access: '\Drupal\muteti_seb\Controller\ProgramPdfController::oncologyAccess'
+
+muteti_seb.oncology_report_pdf:
+  path: '/muteti/onkologia/lekerdezes/{period}/pdf'
+  defaults:
+    _controller: '\Drupal\muteti_seb\Controller\ProgramPdfController::oncologyReportPdf'
+    _title: 'Onkoradiológiai lekérdezés PDF'
+  requirements:
+    _permission: 'view surgery schedule'
+    _custom_access: '\Drupal\muteti_seb\Controller\ProgramPdfController::oncologyAccess'
+    period: 'next_week|this_week|past_week|next_month|this_month|past_month|this_year|past_year'
+
 muteti_seb.departments:
   path: '/admin/content/muteti-osztalyok'
   defaults:
