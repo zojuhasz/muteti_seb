@@ -33,9 +33,11 @@ final class BookingController extends ControllerBase {
     );
     $basic_doctor_limited = in_array('muteti_orvos3', $roles, TRUE) && !$has_higher_doctor_role;
     $can_create = $this->currentUser()->hasPermission('create surgery appointment')
-      && (!$basic_doctor_limited || $mode === 'seb');
-    $can_edit = $this->currentUser()->hasPermission('edit surgery appointment');
-    $can_move = $this->currentUser()->hasPermission('move surgery appointment');
+      && (!$basic_doctor_limited || in_array($mode, ['seb', 'onko'], TRUE));
+    $can_edit = $this->currentUser()->hasPermission('edit surgery appointment')
+      && (!$basic_doctor_limited || $mode === 'onko');
+    $can_move = $this->currentUser()->hasPermission('move surgery appointment')
+      && (!$basic_doctor_limited || $mode === 'onko');
     $can_manage_urology_waitlist = $mode === 'urol'
       && $this->currentUser()->hasPermission('manage urology waiting list');
     $waitlist_day_names = [1 => 'HÉTFŐ', 2 => 'KEDD', 3 => 'SZERDA', 4 => 'CSÜTÖRTÖK', 5 => 'PÉNTEK', 6 => 'SZOMBAT', 7 => 'VASÁRNAP'];
