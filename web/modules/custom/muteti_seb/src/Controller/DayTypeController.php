@@ -6,6 +6,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Access\CsrfTokenGenerator;
 use Drupal\muteti_seb\Service\Schedule;
+use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -49,6 +50,15 @@ final class DayTypeController extends ControllerBase {
     $date = (string) ($data['date'] ?? '');
     $day_type = (string) ($data['day_type'] ?? '');
     $department = UserDepartment::get($account);
+    if (
+      DepartmentMode::get($department) === 'onko'
+      && !in_array('muteti_boss', $account->getRoles(), TRUE)
+    ) {
+      return new JsonResponse([
+        'ok' => FALSE,
+        'error' => 'Onkoradiológián csak Boss módosíthat napfajtát.',
+      ], 403);
+    }
 
     $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
     if (!$parsed || $parsed->format('Y-m-d') !== $date) {
