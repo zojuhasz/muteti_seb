@@ -5,6 +5,7 @@ namespace Drupal\muteti_seb\Controller;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\muteti_seb\Service\UserDepartment;
+use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\AuditLog;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -28,6 +29,9 @@ final class AppointmentMoveController extends ControllerBase {
     $slot = trim((string) ($data['slot'] ?? ''));
     $mode = (string) ($data['mode'] ?? 'move');
     $department = UserDepartment::get($this->currentUser());
+    if (!$this->canMoveAppointmentsInDepartment($department)) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'Nincs jogosultságod az áthelyezéshez ezen az osztályon.'], 403);
+    }
 
     $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
     if (!$appointment_id || !$parsed || $parsed->format('Y-m-d') !== $date || $slot === '' || mb_strlen($slot) > 20 || !in_array($mode, ['move', 'duplicate'], TRUE)) {
@@ -131,6 +135,9 @@ final class AppointmentMoveController extends ControllerBase {
     }
 
     $department = UserDepartment::get($this->currentUser());
+    if (!$this->canMoveAppointmentsInDepartment($department)) {
+      return new JsonResponse(['ok' => FALSE, 'error' => 'Nincs jogosultságod a törléshez ezen az osztályon.'], 403);
+    }
     $appointment = $this->database->select('muteti_appointment', 'a')
       ->fields('a', ['id', 'admission_date', 'slot_type', 'ward_room', 'taj'])
       ->condition('id', $appointment_id)
@@ -153,6 +160,16 @@ final class AppointmentMoveController extends ControllerBase {
     AuditLog::write('törlés', $department, $appointment->admission_date, $appointment->slot_type, (string) ($appointment->ward_room ?: $appointment->taj));
 
     return new JsonResponse(['ok' => TRUE]);
+  }
+
+  private function canMoveAppointmentsInDepartment(string $department): bool {
+    $roles = $this->currentUser()->getRoles();
+    $has_higher_doctor_role = (bool) array_intersect(
+      ['muteti_orvos1', 'muteti_orvos2', 'muteti_boss'],
+      $roles
+    );
+    $basic_doctor_limited = in_array('muteti_orvos3', $roles, TRUE) && !$has_higher_doctor_role;
+    return !$basic_doctor_limited || DepartmentMode::get($department) === 'onko';
   }
 
   private function canManageSlot(string $slot): bool {
