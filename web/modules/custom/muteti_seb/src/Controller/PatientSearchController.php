@@ -105,7 +105,7 @@ final class PatientSearchController extends ControllerBase {
       'table' => [
         '#type' => 'table',
         '#header' => [
-          'Megjelenés dátuma',
+          'Dátum',
           'Beteg neve',
           $is_oncology ? 'Kórlap' : 'TAJ',
           'Cellatípus',
