@@ -338,7 +338,18 @@ final class ProgramPdfController extends ControllerBase {
     }
     else {
       $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:7px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}.created{margin-top:2px;text-align:right;white-space:nowrap}.created strong{font-size:12px}</style><h1>'.$escape($department).' - '.$escape($parsed->format('Y.m.d')).'</h1>';
+      $on_call = $this->database->select('muteti_on_call', 'u')
+        ->fields('u', ['doctor_name', 'doctor_name_2'])
+        ->condition('mode', $mode)
+        ->condition('date', $date)
+        ->execute()
+        ->fetchObject();
+      $on_call_names = array_values(array_filter(array_unique([
+        trim((string) ($on_call->doctor_name ?? '')),
+        trim((string) ($on_call->doctor_name_2 ?? '')),
+      ])));
+      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.on-call{margin:2px 0 0;font-size:10px;font-weight:700}.room{font-size:24px;color:#777;margin-top:7px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}.created{margin-top:2px;text-align:right;white-space:nowrap}.created strong{font-size:12px}</style><h1>'.$escape($department).' - '.$escape($parsed->format('Y.m.d')).'</h1>';
+      $html .= '<div class="on-call">Ügyelet: '.$escape($on_call_names ? implode(', ', $on_call_names) : '-').'</div>';
       $current = NULL;
       foreach ($rows as $appointment) {
         if ($current !== $appointment->operating_room) {
