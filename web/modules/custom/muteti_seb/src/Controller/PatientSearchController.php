@@ -48,12 +48,7 @@ final class PatientSearchController extends ControllerBase {
       'admission_date',
       'slot_type',
       'patient_name',
-      'birth_date',
       'taj',
-      'ward_room',
-      'operation_name',
-      'surgery_date',
-      'operating_room',
     ]);
     $query->addField('d', 'name', 'doctor_name');
     $query->condition('a.department', $department);
@@ -78,12 +73,8 @@ final class PatientSearchController extends ControllerBase {
       ->execute()
       ->fetchAll();
 
-    $today = date('Y-m-d');
     $rows = [];
     foreach ($results as $result) {
-      $period = $result->admission_date < $today
-        ? 'Múlt'
-        : ($result->admission_date > $today ? 'Jövő' : 'Ma');
       $week = (new \DateTimeImmutable($result->admission_date))
         ->modify('monday this week')
         ->format('Y-m-d');
@@ -97,18 +88,10 @@ final class PatientSearchController extends ControllerBase {
       $patient['#attributes']['title'] = 'Megmutatás az előjegyzési táblában';
       $rows[] = [
         ['data' => Html::escape($result->admission_date), 'class' => ['muteti-search-date']],
-        [
-          'data' => Html::escape($period),
-          'class' => ['muteti-search-period', 'is-'.strtolower($period === 'Jövő' ? 'future' : ($period === 'Múlt' ? 'past' : 'today'))],
-        ],
         ['data' => $patient],
-        Html::escape($result->birth_date ?? ''),
         Html::escape($result->taj ?? ''),
         Html::escape($result->slot_type),
-        Html::escape($result->operation_name),
         Html::escape($result->doctor_name ?? ''),
-        Html::escape($result->surgery_date ?? ''),
-        Html::escape($result->operating_room ?? ''),
       ];
     }
 
@@ -122,16 +105,11 @@ final class PatientSearchController extends ControllerBase {
       'table' => [
         '#type' => 'table',
         '#header' => [
-          'Befekvés',
-          'Időszak',
+          'Megjelenés dátuma',
           'Beteg neve',
-          'Születési dátum',
           $is_oncology ? 'Kórlap' : 'TAJ',
           'Cellatípus',
-          'Műtét',
-          'Orvos',
-          'Műtéti dátum',
-          'Műtő',
+          'Orvos neve',
         ],
         '#rows' => $rows,
         '#empty' => 'Nincs találat a saját osztály előjegyzéseiben.',
