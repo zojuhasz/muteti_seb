@@ -839,6 +839,21 @@ function muteti_seb_update_11038(): void {
 }
 
 /**
+ * Shortens the operating-room allocation main-menu label.
+ */
+function muteti_seb_update_11039(): void {
+  $storage = \Drupal::entityTypeManager()->getStorage('menu_link_content');
+  $ids = $storage->getQuery()
+    ->accessCheck(FALSE)
+    ->condition('menu_name', 'main')
+    ->condition('title', 'Műtők beosztása')
+    ->execute();
+  foreach ($storage->loadMultiple($ids) as $menu_link) {
+    $menu_link->set('title', 'Műtők')->save();
+  }
+}
+
+/**
  * Creates the Onkológiai kezelések content type and its fields.
  */
 function muteti_seb_ensure_oncology_treatment_content_type(): void {
