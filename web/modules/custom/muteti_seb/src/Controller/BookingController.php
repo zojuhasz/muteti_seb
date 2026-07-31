@@ -227,7 +227,7 @@ final class BookingController extends ControllerBase {
             '#attributes' => ['class' => ['muteti-empty-slot']],
             'slot' => $slot_link,
           ];
-          if ($can_move && $can_manage_slot && !$placeholder) {
+          if ($can_move && $can_manage_slot) {
             $empty_cell['actions'] = [
               '#type' => 'container',
               '#attributes' => ['class' => ['muteti-empty-slot-actions']],
