@@ -243,16 +243,20 @@ final class AppointmentForm extends FormBase {
     if (!$this->currentUser()->hasPermission($permission)) {
       return FALSE;
     }
-    if ($permission !== 'create surgery appointment') {
-      return TRUE;
-    }
     $roles = $this->currentUser()->getRoles();
     $has_higher_doctor_role = (bool) array_intersect(
       ['muteti_orvos1', 'muteti_orvos2', 'muteti_boss'],
       $roles
     );
     $basic_doctor_limited = in_array('muteti_orvos3', $roles, TRUE) && !$has_higher_doctor_role;
-    return !$basic_doctor_limited || DepartmentMode::get($department) === 'seb';
+    if (!$basic_doctor_limited) {
+      return TRUE;
+    }
+    $mode = DepartmentMode::get($department);
+    if ($permission === 'create surgery appointment') {
+      return in_array($mode, ['seb', 'onko'], TRUE);
+    }
+    return $permission === 'edit surgery appointment' && $mode === 'onko';
   }
 
   private function canManageSlot(string $slot): bool {
