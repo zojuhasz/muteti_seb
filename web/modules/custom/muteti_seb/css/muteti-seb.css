@@ -481,6 +481,23 @@
   text-align: center;
   cursor: pointer;
 }
+.muteti-day-type-readonly {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 110px;
+  min-height: 1.45rem;
+  margin: .18rem auto 0;
+  padding: .28rem .4rem;
+  border-radius: 999px;
+  background-color: #647789;
+  color: #fff;
+  font-size: .66rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+  cursor: default;
+}
 .muteti-day-heading .form-item { margin: .15rem 0 0; }
 .muteti-day-heading.is-locked .muteti-day-type-select { cursor: not-allowed; opacity: .65; }
 .muteti-away-strip {
