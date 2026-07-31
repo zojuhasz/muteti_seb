@@ -3,10 +3,13 @@
 namespace Drupal\muteti_seb\Controller;
 
 use Dompdf\Dompdf;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Access\AccessResult;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Link;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\Core\Url;
 use Drupal\muteti_seb\Service\Schedule;
 use Drupal\muteti_seb\Service\DepartmentMode;
 use Drupal\muteti_seb\Service\UserDepartment;
@@ -92,6 +95,220 @@ final class ProgramPdfController extends ControllerBase {
       'Content-Type' => 'application/pdf',
       'Content-Disposition' => 'inline; filename="onkologia-kezeles-'.$date.'.pdf"',
     ]);
+  }
+
+  public function oncologyReportMenu(): array {
+    $groups = [
+      [
+        ['next_week', 'Következő hét'],
+        ['this_week', 'E hét'],
+        ['past_week', 'Múlt hét'],
+      ],
+      [
+        ['next_month', 'Következő hónap'],
+        ['this_month', 'E hónap'],
+        ['past_month', 'Múlt hónap'],
+      ],
+      [
+        ['this_year', 'Ezév'],
+        ['past_year', 'Múlt év'],
+      ],
+    ];
+    $build = [
+      '#attached' => ['library' => ['muteti_seb/surgery_board']],
+      '#cache' => ['max-age' => 0],
+      'title' => [
+        '#markup' => '<h2 class="muteti-panel-title">Lekérdezés</h2>',
+      ],
+      'groups' => [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['muteti-oncology-report-groups']],
+      ],
+    ];
+    foreach ($groups as $group_index => $items) {
+      $group = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['muteti-oncology-report-group']],
+      ];
+      foreach ($items as [$period, $label]) {
+        $link = Link::fromTextAndUrl(
+          $label,
+          Url::fromRoute('muteti_seb.oncology_report_pdf', ['period' => $period])
+        )->toRenderable();
+        $link['#attributes'] = [
+          'class' => ['muteti-oncology-report-link'],
+          'target' => '_blank',
+          'rel' => 'noopener',
+          'title' => $label.' PDF',
+        ];
+        $group[$period] = [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['muteti-oncology-report-item']],
+          'link' => $link,
+          'icon' => [
+            '#theme' => 'image',
+            '#uri' => base_path().'modules/custom/muteti_seb/images/pdf-icon.svg',
+            '#alt' => 'PDF',
+            '#attributes' => ['class' => ['muteti-oncology-report-icon']],
+          ],
+        ];
+      }
+      $build['groups']['group_'.$group_index] = $group;
+    }
+    return $build;
+  }
+
+  public function oncologyReportPdf(string $period): Response {
+    $range = $this->oncologyReportPeriod($period);
+    if (!$range) {
+      return new Response('Érvénytelen lekérdezési időszak.', 400);
+    }
+    [$label, $start, $end] = $range;
+    $account = $this->currentUser();
+    $department = UserDepartment::get($account);
+    $is_boss = in_array('muteti_boss', $account->getRoles(), TRUE);
+
+    $query = $this->database->select('muteti_appointment', 'a');
+    $query->leftJoin('muteti_doctor', 'd', 'd.id = a.doctor_id');
+    $query->fields('a', [
+      'admission_date',
+      'slot_type',
+      'patient_name',
+      'taj',
+      'operation_name',
+      'notes',
+      'doctor_id',
+    ]);
+    $query->addField('d', 'name', 'doctor_name');
+    $query->condition('a.department', $department);
+    $query->condition('a.admission_date', [$start, $end], 'BETWEEN');
+    $query->condition('a.patient_name', '', '<>');
+    if (!$is_boss) {
+      $doctor_ids = $this->database->select('muteti_doctor', 'd')
+        ->fields('d', ['id'])
+        ->condition('user_id', (int) $account->id())
+        ->condition('department', $department)
+        ->execute()
+        ->fetchCol();
+      if ($doctor_ids) {
+        $query->condition('a.doctor_id', array_map('intval', $doctor_ids), 'IN');
+      }
+      else {
+        $query->condition('a.id', 0);
+      }
+    }
+    $rows = $query
+      ->orderBy('a.admission_date')
+      ->orderBy('a.slot_type')
+      ->orderBy('a.patient_name')
+      ->execute()
+      ->fetchAll();
+
+    $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $scope = $is_boss ? 'Az osztály összes betege' : 'Saját betegek';
+    $html = '<meta charset="utf-8"><style>
+      @page{margin:12mm 10mm 13mm}
+      body{font-family:DejaVu Sans,sans-serif;color:#111;font-size:9px;margin:0}
+      h1{font-size:18px;margin:0 0 2px}
+      h2{font-size:13px;margin:0 0 2px}
+      .range{margin:0 0 9px;color:#475569}
+      table{width:100%;border-collapse:collapse;table-layout:fixed}
+      thead{display:table-header-group}
+      tr{page-break-inside:avoid}
+      th,td{border:1px solid #9aa8b6;padding:3px 4px;vertical-align:top;line-height:1.18;overflow-wrap:anywhere}
+      th{background:#dce8f2;text-align:left}
+      tbody tr:nth-child(even){background:#f4f7fa}
+      .date{width:9%}.slot{width:8%}.patient{width:22%}.treatment{width:24%}.doctor{width:17%}.notes{width:20%}
+      .empty{text-align:center;padding:18px}
+      .created{margin-top:7px;text-align:right;font-size:8px}
+    </style>';
+    $html .= '<h1>Onkoradiológiai lekérdezés</h1>';
+    $html .= '<h2>'.$escape($label).' - '.$escape($scope).'</h2>';
+    $html .= '<div class="range">'.$escape((new \DateTimeImmutable($start))->format('Y.m.d')).' - '.$escape((new \DateTimeImmutable($end))->format('Y.m.d')).'</div>';
+    $html .= '<table><thead><tr><th class="date">Dátum</th><th class="slot">Cella</th><th class="patient">Beteg / Kórlap</th><th class="treatment">Kezelés</th><th class="doctor">Orvos</th><th class="notes">Megjegyzés</th></tr></thead><tbody>';
+    if (!$rows) {
+      $html .= '<tr><td class="empty" colspan="6">Ebben az időszakban nincs megjeleníthető beteg.</td></tr>';
+    }
+    else {
+      foreach ($rows as $row) {
+        $patient = trim((string) $row->patient_name);
+        if (trim((string) $row->taj) !== '') {
+          $patient .= ' /'.trim((string) $row->taj).'/';
+        }
+        $html .= '<tr>';
+        $html .= '<td>'.$escape((new \DateTimeImmutable($row->admission_date))->format('Y.m.d')).'</td>';
+        $html .= '<td>'.$escape($row->slot_type).'</td>';
+        $html .= '<td><strong>'.$escape($patient).'</strong></td>';
+        $html .= '<td>'.$escape($row->operation_name).'</td>';
+        $html .= '<td>'.$escape($row->doctor_name ?? '').'</td>';
+        $html .= '<td>'.$escape($row->notes).'</td>';
+        $html .= '</tr>';
+      }
+    }
+    $html .= '</tbody></table>';
+    $html .= '<div class="created">Készült: <strong>'.$escape(date('Y.m.d H:i')).'</strong></div>';
+
+    $pdf = new Dompdf(['isRemoteEnabled' => FALSE]);
+    $pdf->loadHtml($html, 'UTF-8');
+    $pdf->setPaper('A4', 'landscape');
+    $pdf->render();
+    return new Response($pdf->output(), 200, [
+      'Content-Type' => 'application/pdf',
+      'Content-Disposition' => 'inline; filename="onkologia-lekerdezes-'.$period.'.pdf"',
+      'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma' => 'no-cache',
+      'Expires' => '0',
+    ]);
+  }
+
+  /**
+   * @return array{0: string, 1: string, 2: string}|null
+   */
+  private function oncologyReportPeriod(string $period): ?array {
+    $today = new \DateTimeImmutable('today');
+    return match ($period) {
+      'next_week' => [
+        'Következő hét',
+        $today->modify('monday next week')->format('Y-m-d'),
+        $today->modify('sunday next week')->format('Y-m-d'),
+      ],
+      'this_week' => [
+        'E hét',
+        $today->modify('monday this week')->format('Y-m-d'),
+        $today->modify('sunday this week')->format('Y-m-d'),
+      ],
+      'past_week' => [
+        'Múlt hét',
+        $today->modify('monday last week')->format('Y-m-d'),
+        $today->modify('sunday last week')->format('Y-m-d'),
+      ],
+      'next_month' => [
+        'Következő hónap',
+        $today->modify('first day of next month')->format('Y-m-d'),
+        $today->modify('last day of next month')->format('Y-m-d'),
+      ],
+      'this_month' => [
+        'E hónap',
+        $today->modify('first day of this month')->format('Y-m-d'),
+        $today->modify('last day of this month')->format('Y-m-d'),
+      ],
+      'past_month' => [
+        'Múlt hónap',
+        $today->modify('first day of last month')->format('Y-m-d'),
+        $today->modify('last day of last month')->format('Y-m-d'),
+      ],
+      'this_year' => [
+        'Ezév',
+        $today->setDate((int) $today->format('Y'), 1, 1)->format('Y-m-d'),
+        $today->setDate((int) $today->format('Y'), 12, 31)->format('Y-m-d'),
+      ],
+      'past_year' => [
+        'Múlt év',
+        $today->setDate((int) $today->format('Y') - 1, 1, 1)->format('Y-m-d'),
+        $today->setDate((int) $today->format('Y') - 1, 12, 31)->format('Y-m-d'),
+      ],
+      default => NULL,
+    };
   }
 
   public function pdf(string $date): Response {
