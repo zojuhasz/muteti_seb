@@ -53,18 +53,32 @@ final class AppointmentMoveController extends ControllerBase {
       return new JsonResponse(['ok' => TRUE]);
     }
 
-    $occupied = (bool) $this->database->select('muteti_appointment', 'a')
+    $destination = $this->database->select('muteti_appointment', 'a')
+      ->fields('a')
       ->condition('department', $department)
       ->condition('admission_date', $date)
       ->condition('slot_type', $slot)
-      ->countQuery()
       ->execute()
-      ->fetchField();
-    if ($occupied) {
-      return new JsonResponse(['ok' => FALSE, 'error' => 'A kiválasztott célhely időközben foglalttá vált.'], 409);
+      ->fetchObject();
+    $placeholder_id = 0;
+    if ($destination) {
+      $placeholder = trim((string) $destination->patient_name) === ''
+        && trim((string) $destination->operation_name) === ''
+        && empty($destination->doctor_id);
+      if (!$placeholder) {
+        return new JsonResponse(['ok' => FALSE, 'error' => 'A kiválasztott célhely időközben foglalttá vált.'], 409);
+      }
+      $placeholder_id = (int) $destination->id;
     }
 
+    $transaction = $this->database->startTransaction();
     try {
+      if ($placeholder_id) {
+        $this->database->delete('muteti_appointment')
+          ->condition('id', $placeholder_id)
+          ->condition('department', $department)
+          ->execute();
+      }
       $patient_reference = (string) ($source->ward_room ?: $source->taj);
       AuditLog::write('áthelyezés felvesz', $department, $source->admission_date, $source->slot_type, $patient_reference);
       $destination_fields = [
@@ -94,7 +108,11 @@ final class AppointmentMoveController extends ControllerBase {
       }
       AuditLog::write($mode === 'duplicate' ? 'áthelyezés duplikálással lerak' : 'áthelyezés lerak', $department, $date, $slot, $patient_reference);
     }
-    catch (\Throwable) {
+    catch (\Throwable $error) {
+      $transaction->rollBack();
+      \Drupal::logger('muteti_seb')->error('Appointment move failed: @message', [
+        '@message' => $error->getMessage(),
+      ]);
       return new JsonResponse(['ok' => FALSE, 'error' => 'A célhely már foglalt, az áthelyezés nem történt meg.'], 409);
     }
 
