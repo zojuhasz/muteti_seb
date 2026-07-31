@@ -57,7 +57,7 @@ muteti_seb.appointment_move:
     _controller: '\Drupal\muteti_seb\Controller\AppointmentMoveController::move'
   methods: [POST]
   requirements:
-    _permission: 'move surgery appointment'
+    _custom_access: '\Drupal\muteti_seb\Controller\AppointmentMoveController::access'
     _csrf_token: 'TRUE'
 
 muteti_seb.appointment_delete:
@@ -66,7 +66,7 @@ muteti_seb.appointment_delete:
     _controller: '\Drupal\muteti_seb\Controller\AppointmentMoveController::delete'
   methods: [POST]
   requirements:
-    _permission: 'move surgery appointment'
+    _custom_access: '\Drupal\muteti_seb\Controller\AppointmentMoveController::access'
     _csrf_token: 'TRUE'
 
 muteti_seb.program_pdf:
