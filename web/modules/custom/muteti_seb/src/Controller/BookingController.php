@@ -32,6 +32,8 @@ final class BookingController extends ControllerBase {
       $roles
     );
     $basic_doctor_limited = in_array('muteti_orvos3', $roles, TRUE) && !$has_higher_doctor_role;
+    $can_change_day_type = $this->currentUser()->hasPermission('assign operating room')
+      && ($mode !== 'onko' || in_array('muteti_boss', $roles, TRUE));
     $can_create = $this->currentUser()->hasPermission('create surgery appointment')
       && (!$basic_doctor_limited || in_array($mode, ['seb', 'onko'], TRUE));
     $has_basic_oncology_management = $basic_doctor_limited
@@ -174,12 +176,16 @@ final class BookingController extends ControllerBase {
             '#options' => array_combine(Schedule::departmentDayTypes($department), Schedule::departmentDayTypes($department)),
             '#default_value' => $type,
             '#value' => $type,
-            '#disabled' => $occupied || !$this->currentUser()->hasPermission('assign operating room'),
+            '#disabled' => $occupied || !$can_change_day_type,
             '#attributes' => [
               'class' => ['muteti-day-type-select'],
               'data-date' => $date,
               'data-previous-value' => $type,
-              'title' => $occupied ? $this->t('A napfajta már nem módosítható, mert van előjegyzett beteg.') : $this->t('Napfajta módosítása'),
+              'title' => $occupied
+                ? $this->t('A napfajta már nem módosítható, mert van előjegyzett beteg.')
+                : (!$can_change_day_type && $mode === 'onko'
+                  ? $this->t('Onkoradiológián csak Boss módosíthat napfajtát.')
+                  : $this->t('Napfajta módosítása')),
             ],
           ],
           'away_strip' => $away_enabled ? [
