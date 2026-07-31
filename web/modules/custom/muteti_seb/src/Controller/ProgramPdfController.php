@@ -131,10 +131,8 @@ final class ProgramPdfController extends ControllerBase {
         '#attributes' => ['class' => ['muteti-oncology-report-group']],
       ];
       foreach ($items as [$period, $label]) {
-        $link = Link::fromTextAndUrl(
-          $label,
-          Url::fromRoute('muteti_seb.oncology_report_pdf', ['period' => $period])
-        )->toRenderable();
+        $report_url = Url::fromRoute('muteti_seb.oncology_report_pdf', ['period' => $period]);
+        $link = Link::fromTextAndUrl($label, $report_url)->toRenderable();
         $link['#attributes'] = [
           'class' => ['muteti-oncology-report-link'],
           'target' => '_blank',
@@ -146,10 +144,21 @@ final class ProgramPdfController extends ControllerBase {
           '#attributes' => ['class' => ['muteti-oncology-report-item']],
           'link' => $link,
           'icon' => [
-            '#theme' => 'image',
-            '#uri' => base_path().'modules/custom/muteti_seb/images/pdf-icon.svg',
-            '#alt' => 'PDF',
-            '#attributes' => ['class' => ['muteti-oncology-report-icon']],
+            '#type' => 'link',
+            '#title' => [
+              '#theme' => 'image',
+              '#uri' => base_path().'modules/custom/muteti_seb/images/pdf-icon.svg',
+              '#alt' => 'PDF',
+              '#attributes' => ['class' => ['muteti-oncology-report-icon']],
+            ],
+            '#url' => $report_url,
+            '#attributes' => [
+              'class' => ['muteti-oncology-report-icon-link'],
+              'target' => '_blank',
+              'rel' => 'noopener',
+              'title' => $label.' PDF',
+              'aria-label' => $label.' PDF',
+            ],
           ],
         ];
       }
