@@ -42,10 +42,10 @@ muteti_seb.departments_main:
 
 muteti_seb.audit_log:
   title: 'Műtéti napló'
-  description: 'Az előjegyzéseken végzett műveletek nyomtatható naplója.'
+  description: 'A saját osztály előjegyzésein végzett műveletek nyomtatható naplója.'
   route_name: muteti_seb.audit_log
-  parent: system.admin_reports
-  weight: 20
+  menu_name: main
+  weight: 34
 
 muteti_seb.availability_month:
   title: 'Szabadságok'
