@@ -26,13 +26,19 @@ final class BookingController extends ControllerBase {
     $department = UserDepartment::get($this->currentUser());
     $mode = DepartmentMode::get($department);
     $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
-    $can_create = $this->currentUser()->hasPermission('create surgery appointment');
+    $roles = $this->currentUser()->getRoles();
+    $has_higher_doctor_role = (bool) array_intersect(
+      ['muteti_orvos1', 'muteti_orvos2', 'muteti_boss'],
+      $roles
+    );
+    $basic_doctor_limited = in_array('muteti_orvos3', $roles, TRUE) && !$has_higher_doctor_role;
+    $can_create = $this->currentUser()->hasPermission('create surgery appointment')
+      && (!$basic_doctor_limited || $mode === 'seb');
     $can_edit = $this->currentUser()->hasPermission('edit surgery appointment');
     $can_move = $this->currentUser()->hasPermission('move surgery appointment');
     $can_manage_urology_waitlist = $mode === 'urol'
       && $this->currentUser()->hasPermission('manage urology waiting list');
     $waitlist_day_names = [1 => 'HÉTFŐ', 2 => 'KEDD', 3 => 'SZERDA', 4 => 'CSÜTÖRTÖK', 5 => 'PÉNTEK', 6 => 'SZOMBAT', 7 => 'VASÁRNAP'];
-    $roles = $this->currentUser()->getRoles();
     $can_manage_restricted_slots = in_array('muteti_orvos2', $roles, TRUE) || in_array('muteti_boss', $roles, TRUE);
     $week = $request->query->get('week', 'now');
     try { $monday = new DrupalDateTime($week === 'now' ? 'monday this week' : $week); }
