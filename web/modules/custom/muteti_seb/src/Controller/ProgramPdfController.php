@@ -205,7 +205,6 @@ final class ProgramPdfController extends ControllerBase {
       ->fetchAll();
 
     $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    $scope = $is_boss ? 'Az osztály összes betege' : 'Saját betegek';
     $html = '<meta charset="utf-8"><style>
       @page{margin:15mm 16mm 16mm}
       body{font-family:DejaVu Sans,sans-serif;color:#111;font-size:11px;margin:0}
@@ -222,8 +221,7 @@ final class ProgramPdfController extends ControllerBase {
       .empty{text-align:center;padding:18px}
       .created{margin-top:7px;text-align:right;font-size:8px}
     </style>';
-    $html .= '<h1>Onkoradiológiai kezelések összesítése</h1>';
-    $html .= '<h2>'.$escape($label).' - '.$escape($scope).'</h2>';
+    $html .= '<h1>Kemoterápiás kezelések</h1>';
     $html .= '<div class="range">'.$escape((new \DateTimeImmutable($start))->format('Y.m.d')).' - '.$escape((new \DateTimeImmutable($end))->format('Y.m.d')).'</div>';
     $html .= '<table><thead><tr><th class="treatment">Kezelés</th><th class="count">Darabszám</th></tr></thead><tbody>';
     if (!$rows) {
