@@ -167,11 +167,11 @@ final class AppointmentForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void {
     $v=$form_state->getValues(); $fields=[];
     $slot = (string) ($v['slot'] ?? '');
+    $department = (string) $v['department'];
     $required_permission = $this->appointment ? 'edit surgery appointment' : 'create surgery appointment';
-    if (!$this->currentUser()->hasPermission($required_permission) || !$this->canManageSlot($slot)) {
+    if (!$this->hasAppointmentPermission($required_permission, $department) || !$this->canManageSlot($slot)) {
       throw new AccessDeniedHttpException();
     }
-    $department = (string) $v['department'];
     $mode = DepartmentMode::get($department);
     if ($mode === 'onko') {
       $fields = [
@@ -222,7 +222,8 @@ final class AppointmentForm extends FormBase {
   private function applyAccessMode(array $form): array {
     $required_permission = $this->appointment ? 'edit surgery appointment' : 'create surgery appointment';
     $slot = (string) ($form['slot']['#value'] ?? '');
-    if ($this->currentUser()->hasPermission($required_permission) && $this->canManageSlot($slot)) {
+    $department = (string) ($form['department']['#value'] ?? '');
+    if ($this->hasAppointmentPermission($required_permission, $department) && $this->canManageSlot($slot)) {
       return $form;
     }
     unset($form['actions']);
@@ -236,6 +237,22 @@ final class AppointmentForm extends FormBase {
       '#markup' => '<p><strong>Csak megtekintés.</strong></p>',
     ];
     return $form;
+  }
+
+  private function hasAppointmentPermission(string $permission, string $department): bool {
+    if (!$this->currentUser()->hasPermission($permission)) {
+      return FALSE;
+    }
+    if ($permission !== 'create surgery appointment') {
+      return TRUE;
+    }
+    $roles = $this->currentUser()->getRoles();
+    $has_higher_doctor_role = (bool) array_intersect(
+      ['muteti_orvos1', 'muteti_orvos2', 'muteti_boss'],
+      $roles
+    );
+    $basic_doctor_limited = in_array('muteti_orvos3', $roles, TRUE) && !$has_higher_doctor_role;
+    return !$basic_doctor_limited || DepartmentMode::get($department) === 'seb';
   }
 
   private function canManageSlot(string $slot): bool {
