@@ -8,6 +8,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Database\Query\PagerSelectExtender;
 use Drupal\Core\Session\AccountInterface;
+use Drupal\muteti_seb\Service\UserDepartment;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 final class AuditLogController extends ControllerBase {
@@ -19,12 +20,20 @@ final class AuditLogController extends ControllerBase {
   }
 
   public function access(AccountInterface $account): AccessResult {
-    $allowed = (int) $account->id() === 1 || mb_strtolower($account->getAccountName(), 'UTF-8') === 'jz';
-    return AccessResult::allowedIf($allowed)->addCacheContexts(['user']);
+    $allowed = $this->hasGlobalAccess($account)
+      || in_array('muteti_boss', $account->getRoles(), TRUE);
+    return AccessResult::allowedIf($allowed)
+      ->addCacheContexts(['user', 'user.roles']);
   }
 
   public function listing(): array {
+    $account = $this->currentUser();
+    $global_access = $this->hasGlobalAccess($account);
+    $department = UserDepartment::get($account);
     $query = $this->database->select('muteti_audit_log', 'l');
+    if (!$global_access) {
+      $query->condition('department', $department);
+    }
     $entries = $query
       ->extend(PagerSelectExtender::class)
       ->fields('l')
@@ -65,12 +74,18 @@ final class AuditLogController extends ControllerBase {
         $items[] = ['#markup' => Html::escape(implode(' ', $parts))];
       }
       $counts = $group['counts'] ?? [];
-      $summary = sprintf(
-        'Napi záróösszesítés: Sebészet: %d, Urológia: %d, Onkorad: %d',
-        $counts['seb'] ?? 0,
-        $counts['urol'] ?? 0,
-        $counts['onko'] ?? 0,
-      );
+      $summary = $global_access
+        ? sprintf(
+          'Napi záróösszesítés: Sebészet: %d, Urológia: %d, Onkorad: %d',
+          $counts['seb'] ?? 0,
+          $counts['urol'] ?? 0,
+          $counts['onko'] ?? 0,
+        )
+        : sprintf(
+          'Napi záróösszesítés: %s: %d',
+          $department,
+          count($group['entries']),
+        );
       $items[] = [
         '#markup' => '<span class="muteti-audit-daily-summary">'.Html::escape($summary).'</span>',
       ];
@@ -96,6 +111,11 @@ final class AuditLogController extends ControllerBase {
       ],
       'pager' => ['#type' => 'pager'],
     ];
+  }
+
+  private function hasGlobalAccess(AccountInterface $account): bool {
+    return (int) $account->id() === 1
+      || mb_strtolower($account->getAccountName(), 'UTF-8') === 'jz';
   }
 
 }
