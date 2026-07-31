@@ -131,7 +131,7 @@ final class ProgramPdfController extends ControllerBase {
     }
     else {
       $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:18px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}</style><h1>'.$escape($department).'</h1><h2>'.$escape($date).'</h2>';
+      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:18px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}</style><h1>'.$escape($department).'</h1><h2>'.$escape($date).'</h2>';
       $current = NULL;
       foreach ($rows as $appointment) {
         if ($current !== $appointment->operating_room) {
@@ -146,6 +146,56 @@ final class ProgramPdfController extends ControllerBase {
         }
         $html .= '<div class="patient"><div class="diag">Dg.: '.$escape($appointment->diagnosis).'</div><strong>('.$appointment->surgery_order.') '.$escape($appointment->patient_name).'</strong><br>Op.: '.$escape($appointment->operation_name).'<br><strong>'.$escape($doctors[$appointment->doctor_id] ?? '-').($assistants ? ', '.$escape(implode(', ', $assistants)) : '').'</strong></div>';
       }
+
+      $daily_info = $this->database->select('muteti_daily_info', 'i')
+        ->fields('i')
+        ->condition('department', $department)
+        ->condition('date', $date)
+        ->execute()
+        ->fetchObject();
+      $previous_date = $parsed->modify('-1 day')->format('Y-m-d');
+      $previous_on_call = $this->database->select('muteti_on_call', 'u')
+        ->fields('u', ['doctor_name', 'doctor_name_2'])
+        ->condition('mode', $mode)
+        ->condition('date', $previous_date)
+        ->execute()
+        ->fetchObject();
+      $status_names = function (string $status) use ($date, $department): string {
+        $query = $this->database->select('muteti_doctor_availability', 'a');
+        $query->join('muteti_doctor', 'd', 'd.user_id = a.user_id');
+        return implode(', ', $query->fields('d', ['name'])
+          ->condition('a.date', $date)
+          ->condition('a.status', $status)
+          ->condition('d.department', $department)
+          ->condition('d.active', 1)
+          ->orderBy('d.name')
+          ->execute()
+          ->fetchCol());
+      };
+      $absent = DepartmentMode::featureEnabled($department, 'availability_enabled')
+        ? $status_names('absent')
+        : trim((string) ($daily_info->other_absent ?? ''));
+      $free = array_filter([
+        trim((string) ($previous_on_call->doctor_name ?? '')),
+        trim((string) ($previous_on_call->doctor_name_2 ?? '')),
+      ]);
+      $acute = array_filter([
+        trim((string) ($daily_info->acute_1 ?? '')),
+        trim((string) ($daily_info->acute_2 ?? '')),
+      ]);
+      $summary = [
+        'Aznapi műtét felelős' => trim((string) ($daily_info->responsible ?? '')),
+        'Akut felelős' => implode(', ', $acute),
+        'Ambulancia' => trim((string) ($daily_info->ambulance ?? '')),
+        'Szabadnap' => implode(', ', $free),
+        'Egyéb távollevők' => $absent,
+      ];
+      $start_time = trim((string) ($daily_info->start_time ?? '')) ?: '08:30';
+      $html .= '<div class="daily-summary">';
+      foreach ($summary as $label => $value) {
+        $html .= '<div><strong>'.$escape($label).':</strong> '.($value !== '' ? $escape($value) : '&ndash;').'</div>';
+      }
+      $html .= '<div class="daily-summary-start"><strong>Műtétek kezdete:</strong> '.$escape($start_time).'</div></div>';
     }
 
     $pdf = new Dompdf(['isRemoteEnabled' => FALSE]);
