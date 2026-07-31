@@ -133,7 +133,7 @@ muteti_seb.department_edit:
     department: '\d+'
 
 muteti_seb.audit_log:
-  path: '/admin/reports/muteti-naplo'
+  path: '/muteti/naplo'
   defaults:
     _controller: '\Drupal\muteti_seb\Controller\AuditLogController::listing'
     _title: 'Műtéti előjegyzési napló'
