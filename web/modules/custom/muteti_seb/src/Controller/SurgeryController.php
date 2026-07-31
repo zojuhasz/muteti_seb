@@ -32,6 +32,10 @@ $mode = DepartmentMode::get($department);
     $availability_enabled = DepartmentMode::featureEnabled($department, 'availability_enabled');
     $away_enabled = DepartmentMode::featureEnabled($department, 'away_enabled');
     $can_assign = $this->currentUser()->hasPermission('assign operating room');
+    $show_drag_hint = (bool) array_intersect(
+      ['muteti_orvos1', 'muteti_orvos2', 'muteti_boss'],
+      $this->currentUser()->getRoles()
+    );
     $can_manage_availability =
   $this->currentUser()->hasPermission('manage own doctor availability')
   && mb_strtolower($this->currentUser()->getAccountName(), 'UTF-8') !== 'tothzee';
@@ -268,7 +272,7 @@ $card = function ($a) use ($doctors, $can_assign, $mode): array {
       'top' => [
         '#type' => 'container',
         '#attributes' => ['class' => ['muteti-daily-heading']],
-        'title' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($selected).' – műtéti beosztás <small class="muteti-drag-hint">(az áthelyezés húzogatással történik)</small></h2>'],
+        'title' => ['#markup' => '<h2 class="muteti-panel-title">'.Html::escape($selected).' – műtéti beosztás'.($show_drag_hint ? ' <small class="muteti-drag-hint">(az áthelyezés húzogatással történik)</small>' : '').'</h2>'],
         'pdf' => [
           '#type' => 'link',
           '#title' => [
