@@ -131,7 +131,7 @@ final class ProgramPdfController extends ControllerBase {
     }
     else {
       $escape = static fn(?string $value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:7px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}</style><h1>'.$escape($department).' - '.$escape($parsed->format('Y.m.d')).'</h1>';
+      $html = '<meta charset="utf-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:11px}h1{margin:0}.room{font-size:24px;color:#777;margin-top:7px}.patient{padding:6px}.patient:nth-child(even){background:#dce8fa}.diag{float:right;width:38%;font-weight:bold}.daily-summary{margin-top:18px;padding-top:8px;border-top:1px solid #777;page-break-inside:avoid}.daily-summary div{margin:2px 0}.daily-summary-start{margin-top:5px!important}.created{margin-top:2px;text-align:right;white-space:nowrap}.created strong{font-size:12px}</style><h1>'.$escape($department).' - '.$escape($parsed->format('Y.m.d')).'</h1>';
       $current = NULL;
       foreach ($rows as $appointment) {
         if ($current !== $appointment->operating_room) {
@@ -195,7 +195,8 @@ final class ProgramPdfController extends ControllerBase {
       foreach ($summary as $label => $value) {
         $html .= '<div><strong>'.$escape($label).':</strong> '.($value !== '' ? $escape($value) : '&ndash;').'</div>';
       }
-      $html .= '<div class="daily-summary-start"><strong>Műtétek kezdete:</strong> '.$escape($start_time).'</div></div>';
+      $html .= '<div class="daily-summary-start"><strong>Műtétek kezdete:</strong> '.$escape($start_time).'</div>';
+      $html .= '<div class="created">Készült: &nbsp;<strong>'.$escape(date('Y.m.d H:i')).'</strong></div></div>';
     }
 
     $pdf = new Dompdf(['isRemoteEnabled' => FALSE]);
