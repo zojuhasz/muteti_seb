@@ -68,7 +68,19 @@ $valid_color = static function (?string $color): ?string {
 
 // Department nodes are absent from the partial node dump, so use the original
 // field relation identifiers: 23 Urológia, 24 Sebészet, 120 Onkoradiológia.
-$department_nids = array_keys($legacy_department_map);
+$sync_modes = array_filter(explode(',', getenv('MUTETI_SYNC_MODES') ?: 'seb,urol,onkorad'));
+$mode_by_department_nid = [24 => 'seb', 23 => 'urol', 120 => 'onkorad'];
+$department_nids = array_keys(array_filter(
+  $mode_by_department_nid,
+  static fn (string $mode): bool => in_array($mode, $sync_modes, TRUE),
+));
+$selected_departments = array_values(array_intersect_key(
+  $legacy_department_map,
+  array_flip($department_nids),
+));
+if (!$selected_departments) {
+  throw new RuntimeException('A szinkronhoz nincs kiválasztott osztály.');
+}
 
 // Users referenced by any appointment or linked to a doctor on any department.
 $usernames = $source->select('_elojegyzes', 'e')
@@ -221,7 +233,16 @@ foreach ($legacy_users as $legacy_user) {
   $imported_users++;
 }
 
-// Import doctors from every known department with user links and colors.
+// Full replacement: remove appointments and doctors only in the selected
+// departments. Other departments remain untouched.
+$removed_selected_appointments = $target->delete('muteti_appointment')
+  ->condition('department', $selected_departments, 'IN')
+  ->execute();
+$target->delete('muteti_doctor')
+  ->condition('department', $selected_departments, 'IN')
+  ->execute();
+
+// Import doctors from the selected departments with user links and colors.
 $doctor_query = $source->select('node', 'n');
 $doctor_query->leftJoin('field_data_field_oszt_ly', 'o', 'o.entity_id = n.nid AND o.deleted = 0');
 $doctor_query->leftJoin('field_data_field_usern_v', 'u', 'u.entity_id = n.nid AND u.deleted = 0');
@@ -261,10 +282,12 @@ foreach ($legacy_doctors as $doctor) {
 
 // Add doctors/assistants referenced by appointments but absent in the node list.
 $name_query = $source->select('_elojegyzes', 'e');
+$name_query->condition('osztaly', $selected_departments, 'IN');
 $name_query->addExpression('DISTINCT orvos', 'name');
 $referenced_names = $name_query->execute()->fetchCol();
 foreach (['assz1', 'assz2', 'assz3'] as $assistant_field) {
   $query = $source->select('_elojegyzes', 'e');
+  $query->condition('osztaly', $selected_departments, 'IN');
   $query->addExpression("DISTINCT {$assistant_field}", 'name');
   $referenced_names = array_merge($referenced_names, $query->execute()->fetchCol());
 }
@@ -289,28 +312,16 @@ foreach (array_unique($referenced_names) as $name) {
 // past, current and future appointments are all relevant migration data.
 $appointments = $source->select('_elojegyzes', 'e')
   ->fields('e')
+  ->condition('osztaly', $selected_departments, 'IN')
   ->orderBy('edatum')
   ->orderBy('fajta')
   ->execute();
 $today = date('Y-m-d');
 $imported_appointments = 0;
 $skipped_appointments = 0;
-$removed_appointments = 0;
+$removed_appointments = (int) $removed_selected_appointments;
 $earliest_admission = NULL;
 $latest_admission = NULL;
-$stale_imported_ids = [];
-$target_legacy_by_slot = [];
-if ($source_key === 'd7_live') {
-  $imported_rows = $target->select('muteti_appointment', 'a')
-    ->fields('a', ['id', 'legacy_id', 'department', 'admission_date', 'slot_type'])
-    ->condition('legacy_id', 'elojegyzes:%', 'LIKE')
-    ->execute();
-  while ($imported_row = $imported_rows->fetchObject()) {
-    $stale_imported_ids[(string) $imported_row->legacy_id] = (int) $imported_row->id;
-    $target_legacy_by_slot[$imported_row->department."\0".$imported_row->admission_date."\0".$imported_row->slot_type] = (string) $imported_row->legacy_id;
-  }
-}
-
 while ($appointment = $appointments->fetchObject()) {
   $admission_date = $valid_date($appointment->edatum);
   if (!$admission_date || trim($appointment->fajta) === '') {
@@ -321,11 +332,6 @@ while ($appointment = $appointments->fetchObject()) {
   $department = trim((string) $appointment->osztaly) ?: 'Ismeretlen';
   $slot_type = trim((string) $appointment->fajta);
   $slot_key = $department."\0".$admission_date."\0".$slot_type;
-  unset($stale_imported_ids[$legacy_id]);
-  if (isset($target_legacy_by_slot[$slot_key])) {
-    // The same slot may have been reused in D7 for another patient.
-    unset($stale_imported_ids[$target_legacy_by_slot[$slot_key]]);
-  }
   $earliest_admission = $earliest_admission === NULL || $admission_date < $earliest_admission ? $admission_date : $earliest_admission;
   $latest_admission = $latest_admission === NULL || $admission_date > $latest_admission ? $admission_date : $latest_admission;
   $surgery_date = $valid_date($appointment->mut_dat);
@@ -391,17 +397,6 @@ while ($appointment = $appointments->fetchObject()) {
   $imported_appointments++;
 }
 
-// A live synchronization is authoritative. Remove only rows that originally
-// came from D7 and no longer exist there. Native Drupal 11 rows have no such
-// legacy_id and are therefore never deleted here.
-if ($source_key === 'd7_live' && $stale_imported_ids) {
-  foreach (array_chunk(array_values($stale_imported_ids), 500) as $ids) {
-    $removed_appointments += $target->delete('muteti_appointment')
-      ->condition('id', $ids, 'IN')
-      ->execute();
-  }
-}
-
 print "Import kész.\n";
 print "Forráskapcsolat: {$source_key}\n";
 print "Forrásadatbázis: {$source_database}\n";
@@ -409,6 +404,6 @@ print "Felhasználók: {$imported_users}\n";
 print "D7 jelszó-hash frissítve: {$synchronized_passwords}\n";
 print "Orvosok és asszisztensek: {$imported_doctors}\n";
 print "Összes előjegyzés: {$imported_appointments}\n";
-print "Az éles D7-ben már nem létező importált előjegyzések törölve: {$removed_appointments}\n";
+print "A kiválasztott osztályok korábbi D11 előjegyzései törölve: {$removed_appointments}\n";
 print "Átvett dátumtartomány: ".($earliest_admission ?? 'nincs')." – ".($latest_admission ?? 'nincs')."\n";
 print "Érvénytelen dátum vagy üres műtéttípus miatt kihagyva: {$skipped_appointments}\n";
