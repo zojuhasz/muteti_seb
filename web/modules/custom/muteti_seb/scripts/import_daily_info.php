@@ -22,10 +22,16 @@ $clean = static function (mixed $value): string {
   $value = trim((string) $value);
   return $value === '-' ? '' : $value;
 };
-$rows = $source->select('_muteti', 'm')->fields('m', [
+$selected_departments = $muteti_sync_departments ?? ['Sebészet', 'Urológia', 'Onkoradiológia'];
+$target->delete('muteti_daily_info')
+  ->condition('department', $selected_departments, 'IN')
+  ->execute();
+$query = $source->select('_muteti', 'm')->fields('m', [
   'mut_dat', 'aznm1', 'aznm2', 'akut1', 'akut2',
   'ambulancia', 'tavol', 'osztaly', 'kezdido',
-])->orderBy('mut_dat')->execute();
+]);
+$query->condition('osztaly', $selected_departments, 'IN');
+$rows = $query->orderBy('mut_dat')->execute();
 $imported = 0;
 $invalid = 0;
 foreach ($rows as $row) {
