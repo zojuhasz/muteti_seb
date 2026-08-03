@@ -57,19 +57,23 @@ $selected_legacy_on_call_departments = array_keys(array_filter(
   static fn (string $mode): bool => in_array($mode, $muteti_sync_modes, TRUE),
 ));
 if ($selected_legacy_on_call_departments) {
-  $on_call_query = $source->select('intra_main.ugyelet', 'u')
-    ->fields('u', ['osztaly', 'ugynap', 'u1', 'u2'])
-    ->condition('osztaly', $selected_legacy_on_call_departments, 'IN')
-    ->orderBy('ugynap');
-  $on_call_rows = $on_call_query->execute();
+  $on_call_rows = $source->query(
+    "SELECT osztaly, ugynap, u1, u2
+     FROM intra_main.ugyelet
+     WHERE osztaly IN ('sebeszet', 'urologia')
+     ORDER BY ugynap"
+  );
   $target->delete('muteti_on_call')
     ->condition('mode', array_values(array_intersect($mode_by_legacy_department, $muteti_sync_modes)), 'IN')
     ->execute();
   $imported_on_call = 0;
   foreach ($on_call_rows as $on_call) {
-    $mode = $mode_by_legacy_department[mb_strtolower(trim((string) $on_call->osztaly), 'UTF-8')] ?? NULL;
+    $legacy_department = mb_strtolower(trim((string) $on_call->osztaly), 'UTF-8');
+    $mode = $mode_by_legacy_department[$legacy_department] ?? NULL;
     $date = trim((string) $on_call->ugynap);
-    if (!$mode || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+    if (!$mode
+      || !in_array($legacy_department, $selected_legacy_on_call_departments, TRUE)
+      || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
       continue;
     }
     $target->merge('muteti_on_call')
