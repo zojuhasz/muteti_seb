@@ -147,7 +147,22 @@ $role_map = [
   'urolview' => ['muteti_department_urol', 'muteti_view'],
   'onkorad' => ['muteti_department_onkorad'],
 ];
-$managed_roles = array_values(array_unique(array_merge(...array_values($role_map))));
+$common_managed_roles = [
+  'muteti_view',
+  'muteti_orvos1',
+  'muteti_orvos2',
+  'muteti_orvos3',
+  'muteti_boss',
+];
+$department_role_by_mode = [
+  'seb' => 'muteti_department_seb',
+  'urol' => 'muteti_department_urol',
+  'onkorad' => 'muteti_department_onkorad',
+];
+$managed_roles = array_values(array_unique(array_merge(
+  $common_managed_roles,
+  array_values(array_intersect_key($department_role_by_mode, array_flip($sync_modes))),
+)));
 $available_roles = array_fill_keys(array_keys(Role::loadMultiple()), TRUE);
 $new_uid_by_legacy_uid = [];
 $new_uid_by_name = [];
