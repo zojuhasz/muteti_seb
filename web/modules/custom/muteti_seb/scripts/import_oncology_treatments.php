@@ -13,6 +13,13 @@ use Drupal\Core\Database\Database;
 
 $source = Database::getConnection('default', 'd7_live');
 $storage = \Drupal::entityTypeManager()->getStorage('node');
+$existing_ids = $storage->getQuery()
+  ->accessCheck(FALSE)
+  ->condition('type', 'muteti_oncology_treatment')
+  ->execute();
+if ($existing_ids) {
+  $storage->delete($storage->loadMultiple($existing_ids));
+}
 $query = $source->select('node', 'n');
 $query->leftJoin(
   'field_data_field_id_',
