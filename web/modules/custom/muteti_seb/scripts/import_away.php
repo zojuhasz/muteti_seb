@@ -36,14 +36,25 @@ foreach ($users as $user) {
   $user_id_by_name[mb_strtolower(trim((string) $user->name), 'UTF-8')] = (int) $user->uid;
 }
 
+$selected_departments = $muteti_sync_departments ?? ['Sebészet', 'Urológia', 'Onkoradiológia'];
 $legacy_rows = $source->select('_flor', 'f')
   ->fields('f', $required_columns)
+  ->condition('osztaly', $selected_departments, 'IN')
   ->orderBy('id')
   ->execute();
 
-$target->delete('muteti_doctor_availability')
-  ->condition('source', 'd7_flor')
-  ->execute();
+$selected_user_ids = $target->select('muteti_doctor', 'd')
+  ->fields('d', ['user_id'])
+  ->condition('department', $selected_departments, 'IN')
+  ->isNotNull('user_id')
+  ->execute()
+  ->fetchCol();
+if ($selected_user_ids) {
+  $target->delete('muteti_doctor_availability')
+    ->condition('source', 'd7_flor')
+    ->condition('user_id', array_unique(array_map('intval', $selected_user_ids)), 'IN')
+    ->execute();
+}
 
 $imported = 0;
 $missing_users = [];
