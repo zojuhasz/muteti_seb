@@ -19,6 +19,11 @@ $source_key = getenv('MUTETI_SOURCE') ?: 'd7_live';
 $source = Database::getConnection('default', $source_key);
 $target = \Drupal::database();
 $from = '2026-01-01 00:00:00';
+$selected_departments = $muteti_sync_departments ?? ['Sebészet', 'Urológia', 'Onkoradiológia'];
+$target->delete('muteti_audit_log')
+  ->condition('department', $selected_departments, 'IN')
+  ->condition('created', (new DateTimeImmutable($from, new DateTimeZone('Europe/Budapest')))->getTimestamp(), '>=')
+  ->execute();
 
 $users = [];
 $user_rows = $target->select('users_field_data', 'u')
@@ -41,6 +46,7 @@ $rows = $source->select('_naplo', 'n')
     'timestamp',
   ])
   ->condition('idopont', $from, '>=')
+  ->condition('osztaly', $selected_departments, 'IN')
   ->orderBy('idopont')
   ->execute();
 
