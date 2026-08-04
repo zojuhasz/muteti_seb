@@ -603,7 +603,7 @@
 .muteti-doctor-table th, .muteti-doctor-table td { padding: .65rem; border-bottom: 1px solid #d5dde5; vertical-align: middle; }
 .muteti-doctor-color-preview { min-width: 145px; padding: .45rem .65rem; border: 1px solid rgba(30, 54, 76, .2); border-radius: .4rem; font-weight: 700; }
 #muteti-seb-doctor-form { max-width: 720px; padding: 1.2rem; border: 1px solid #aebdcd; border-radius: .7rem; background: #fff; box-shadow: 0 3px 14px rgba(24, 54, 84, .12); }
-#muteti-seb-doctor-form .form-item { margin-bottom: 1rem; }
+#muteti-seb-doctor-form .form-item { margin-bottom: .25rem; }
 .muteti-audit-log { margin: 1rem 0; padding: 0; list-style: none; font: 13px/1.5 monospace; }
 .muteti-audit-log li { padding: .12rem .3rem; }
 .muteti-audit-log li:nth-child(odd) { background: #f2f5f8; }
