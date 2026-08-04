@@ -171,14 +171,52 @@ textarea {
   max-width: 100%;
 }
 
+.muteti-main form {
+  font-size: .72rem;
+  line-height: 1.1;
+}
+
+.muteti-main form label,
+.muteti-main form .form-item__label,
+.muteti-main form legend {
+  line-height: 1.1;
+}
+
+.muteti-main form input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+.muteti-main form select,
+.muteti-main form textarea {
+  padding: .22rem .35rem;
+  font-size: .72rem;
+  line-height: 1.1;
+}
+
+.muteti-main form textarea {
+  line-height: 1.15;
+}
+
+.muteti-main form button,
+.muteti-main form input[type="button"],
+.muteti-main form input[type="submit"] {
+  padding: .28rem .55rem;
+  font-size: .72rem;
+  line-height: 1;
+}
+
+.muteti-main form .description,
+.muteti-main form .form-item__description {
+  margin-top: .15rem;
+  font-size: .66rem;
+  line-height: 1.1;
+}
+
 .form-item {
-  margin-top: .45rem;
-  margin-bottom: .45rem;
+  margin-top: .25rem;
+  margin-bottom: .25rem;
 }
 
 .form-actions {
-  margin-top: .65rem;
-  margin-bottom: .65rem;
+  margin-top: .4rem;
+  margin-bottom: .4rem;
 }
 
 @media (max-width: 640px) {
