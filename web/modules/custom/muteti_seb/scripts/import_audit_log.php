@@ -6,11 +6,8 @@ declare(strict_types=1);
  * @file
  * Imports D7 `_naplo` entries created from 2026-01-01 onward.
  *
- * The script is rerunnable: a stable hash prevents duplicate imports.
- *
- * Run:
- *   vendor/bin/drush php:script \
- *     web/modules/custom/muteti_seb/scripts/import_audit_log.php
+ * Only legacy rows are replaced. Audit entries created natively in Drupal 11
+ * have no legacy_key and are deliberately preserved.
  */
 
 use Drupal\Core\Database\Database;
@@ -20,9 +17,40 @@ $source = Database::getConnection('default', $source_key);
 $target = \Drupal::database();
 $from = '2026-01-01 00:00:00';
 $selected_departments = $muteti_sync_departments ?? ['Sebészet', 'Urológia', 'Onkoradiológia'];
-$target->delete('muteti_audit_log')
+
+$normalize_department = static function (?string $department): ?string {
+  $normalized = mb_strtolower(trim((string) $department), 'UTF-8');
+  $normalized = strtr($normalized, [
+    'á' => 'a',
+    'é' => 'e',
+    'í' => 'i',
+    'ó' => 'o',
+    'ö' => 'o',
+    'ő' => 'o',
+    'ú' => 'u',
+    'ü' => 'u',
+    'ű' => 'u',
+  ]);
+  $normalized = preg_replace('/[^a-z0-9]+/', '', $normalized) ?? '';
+
+  return [
+    'seb' => 'Sebészet',
+    'sebeszet' => 'Sebészet',
+    'urol' => 'Urológia',
+    'urologia' => 'Urológia',
+    'onko' => 'Onkoradiológia',
+    'onkorad' => 'Onkoradiológia',
+    'onkologia' => 'Onkoradiológia',
+    'onkoradiologia' => 'Onkoradiológia',
+  ][$normalized] ?? NULL;
+};
+
+// Replace only rows previously imported from D7. Native D11 audit entries
+// have no legacy_key and must survive every live synchronization.
+$deleted = $target->delete('muteti_audit_log')
   ->condition('department', $selected_departments, 'IN')
-  ->condition('created', (new DateTimeImmutable($from, new DateTimeZone('Europe/Budapest')))->getTimestamp(), '>=')
+  ->isNotNull('legacy_key')
+  ->condition('legacy_key', '', '<>')
   ->execute();
 
 $users = [];
@@ -33,6 +61,8 @@ foreach ($user_rows as $user) {
   $users[mb_strtolower(trim((string) $user->name), 'UTF-8')] = (int) $user->uid;
 }
 
+// Do not filter by the raw D7 department text in SQL: historical rows use
+// multiple spellings. Normalize first, then apply the selected D11 scope.
 $rows = $source->select('_naplo', 'n')
   ->fields('n', [
     'user',
@@ -46,7 +76,6 @@ $rows = $source->select('_naplo', 'n')
     'timestamp',
   ])
   ->condition('idopont', $from, '>=')
-  ->condition('osztaly', $selected_departments, 'IN')
   ->orderBy('idopont')
   ->execute();
 
@@ -57,9 +86,21 @@ $seen = $target->select('muteti_audit_log', 'l')
   ->fetchCol();
 $seen = array_fill_keys(array_filter($seen), TRUE);
 
-$imported = 0;
+$imported_by_department = array_fill_keys($selected_departments, 0);
 $skipped = 0;
+$unknown_departments = [];
 foreach ($rows as $row) {
+  $department = $normalize_department((string) $row->osztaly);
+  if ($department === NULL) {
+    $raw_department = trim((string) $row->osztaly);
+    $unknown_departments[$raw_department !== '' ? $raw_department : '(üres)'] = TRUE;
+    $skipped++;
+    continue;
+  }
+  if (!in_array($department, $selected_departments, TRUE)) {
+    continue;
+  }
+
   $raw = [
     (string) $row->user,
     (string) $row->osztaly,
@@ -101,7 +142,7 @@ foreach ($rows as $row) {
     ->fields([
       'user_id' => $users[mb_strtolower($username, 'UTF-8')] ?? 0,
       'username' => mb_substr($username, 0, 60),
-      'department' => mb_substr(trim((string) $row->osztaly), 0, 100),
+      'department' => $department,
       'appointment_date' => mb_substr($appointment_date, 0, 10),
       'slot_type' => mb_substr(trim((string) $row->nf), 0, 30),
       'patient_name' => mb_substr(trim((string) $row->betegnev), 0, 100),
@@ -112,9 +153,15 @@ foreach ($rows as $row) {
     ])
     ->execute();
   $seen[$legacy_key] = TRUE;
-  $imported++;
+  $imported_by_department[$department]++;
 }
 
 print "D7 _naplo import kész (2026-01-01-től).\n";
-print "Új naplóbejegyzések: {$imported}\n";
-print "Már korábban importálva, kihagyva: {$skipped}\n";
+print "Törölt korábbi D7-naplóbejegyzések: {$deleted}\n";
+foreach ($imported_by_department as $department => $count) {
+  print "Importált naplóbejegyzések – {$department}: {$count}\n";
+}
+print "Kihagyott naplóbejegyzések: {$skipped}\n";
+if ($unknown_departments) {
+  print 'Ismeretlen D7 osztálynevek: '.implode(', ', array_keys($unknown_departments))."\n";
+}
