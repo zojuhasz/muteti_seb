@@ -5,33 +5,30 @@ declare(strict_types=1);
 /**
  * Fully replaces synchronized data from the read-only live Drupal 7 database.
  *
- * Run with:
- *   drush php:script web/modules/custom/muteti_seb/scripts/sync_live.php
- *   drush php:script web/modules/custom/muteti_seb/scripts/sync_live.php -- seb
- *   drush php:script web/modules/custom/muteti_seb/scripts/sync_live.php -- urol
- *   drush php:script web/modules/custom/muteti_seb/scripts/sync_live.php -- onkorad
+ * Run with an explicit, mandatory scope:
+ *   MUTETI_SYNC_SCOPE=all drush php:script web/modules/custom/muteti_seb/scripts/sync_live.php
+ *   MUTETI_SYNC_SCOPE=seb drush php:script web/modules/custom/muteti_seb/scripts/sync_live.php
+ *   MUTETI_SYNC_SCOPE=urol drush php:script web/modules/custom/muteti_seb/scripts/sync_live.php
+ *   MUTETI_SYNC_SCOPE=onkorad drush php:script web/modules/custom/muteti_seb/scripts/sync_live.php
  */
 
-$scope = mb_strtolower(trim((string) ($argv[1] ?? 'all')), 'UTF-8');
-$scope_aliases = [
+$scope_raw = getenv('MUTETI_SYNC_SCOPE');
+$scope = is_string($scope_raw)
+  ? mb_strtolower(trim($scope_raw), 'UTF-8')
+  : '';
+$scope_modes = [
   'all' => ['seb', 'urol', 'onkorad'],
   'seb' => ['seb'],
-  'sebeszet' => ['seb'],
-  'sebészet' => ['seb'],
   'urol' => ['urol'],
-  'uro' => ['urol'],
-  'urologia' => ['urol'],
-  'urológia' => ['urol'],
   'onkorad' => ['onkorad'],
-  'onkoradiologia' => ['onkorad'],
-  'onkoradiológia' => ['onkorad'],
 ];
-if (!isset($scope_aliases[$scope])) {
+if (!isset($scope_modes[$scope])) {
   throw new InvalidArgumentException(
-    "Ismeretlen osztály: {$scope}. Használható: all, seb, urol, onkorad."
+    'A MUTETI_SYNC_SCOPE környezeti változó kötelező. '
+    .'Engedélyezett értékek: all, seb, urol, onkorad.'
   );
 }
-$muteti_sync_modes = $scope_aliases[$scope];
+$muteti_sync_modes = $scope_modes[$scope];
 $muteti_sync_departments = array_values(array_intersect_key([
   'Sebészet' => TRUE,
   'Urológia' => TRUE,
