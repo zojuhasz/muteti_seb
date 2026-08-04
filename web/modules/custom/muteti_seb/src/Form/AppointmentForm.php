@@ -32,6 +32,7 @@ final class AppointmentForm extends FormBase {
     $a=$this->appointment; $form['date']=['#type'=>'hidden','#value'=>$date]; $form['slot']=['#type'=>'hidden','#value'=>$slot];
     $form['department']=['#type'=>'hidden','#value'=>$department];
     $doctors=['0'=>'-']+$this->database->select('muteti_doctor','d')->fields('d',['id','name'])->condition('department',$department)->condition('active',1)->orderBy('name')->execute()->fetchAllKeyed();
+    $default_doctor_id = $a?->doctor_id ?? $this->getCurrentDoctorId($department);
     $mode = DepartmentMode::get($department);
     if ($mode === 'onko') {
       $treatment_storage = $this->entityTypeManager->getStorage('node');
@@ -78,7 +79,7 @@ final class AppointmentForm extends FormBase {
       $form['taj']=['#type'=>'textfield','#title'=>$this->t('Kórlap'),'#default_value'=>$a->taj ?? ''];
       $form['contact']=['#type'=>'textfield','#title'=>$this->t('Elérhetőség'),'#default_value'=>$a->contact ?? ''];
       $form['notes']=['#type'=>'textarea','#title'=>$this->t('Egyéb info'),'#default_value'=>$a->notes ?? ''];
-      $form['doctor_id']=['#type'=>'select','#title'=>$this->t('Orvos'),'#options'=>$doctors,'#default_value'=>$a->doctor_id ?? 0];
+      $form['doctor_id']=['#type'=>'select','#title'=>$this->t('Orvos'),'#options'=>$doctors,'#default_value'=>$default_doctor_id];
       $form['actions']=['#type'=>'actions'];
       $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mehet'),'#button_type'=>'primary'];
       return $this->applyAccessMode($form);
@@ -108,7 +109,7 @@ final class AppointmentForm extends FormBase {
       $form['blood_type']=['#type'=>'select','#title'=>'Vércsoport','#options'=>$blood_options,'#default_value'=>$a->blood_type ?? '?'];
       $form['notes']=['#type'=>'textarea','#title'=>$this->t('Egyéb info'),'#default_value'=>$a->notes ?? ''];
       foreach (['doctor_id'=>'Orvos','assistant1_id'=>'Asszisztens 1','assistant2_id'=>'Asszisztens 2','assistant3_id'=>'Asszisztens 3'] as $key=>$label) {
-        $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>$doctors,'#default_value'=>$a->{$key} ?? 0];
+        $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>$doctors,'#default_value'=>$key === 'doctor_id' ? $default_doctor_id : ($a->{$key} ?? 0)];
       }
       $form['actions']=['#type'=>'actions'];
       $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mehet'),'#button_type'=>'primary'];
@@ -160,7 +161,7 @@ final class AppointmentForm extends FormBase {
       '#default_value' => $a->anaesth ?? '',
     ];
     $form['notes']=['#type'=>'textarea','#title'=>$this->t('Egyéb info'),'#default_value'=>$a->notes ?? ''];
-    foreach (['doctor_id'=>'Orvos','assistant1_id'=>'Asszisztens 1','assistant2_id'=>'Asszisztens 2','assistant3_id'=>'Asszisztens 3'] as $key=>$label) $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>$doctors,'#default_value'=>$a->{$key} ?? 0];
+    foreach (['doctor_id'=>'Orvos','assistant1_id'=>'Asszisztens 1','assistant2_id'=>'Asszisztens 2','assistant3_id'=>'Asszisztens 3'] as $key=>$label) $form[$key]=['#type'=>'select','#title'=>$this->t($label),'#options'=>$doctors,'#default_value'=>$key === 'doctor_id' ? $default_doctor_id : ($a->{$key} ?? 0)];
     $form['actions']=['#type'=>'actions']; $form['actions']['submit']=['#type'=>'submit','#value'=>$this->t('Mentés'),'#button_type'=>'primary']; return $this->applyAccessMode($form);
   }
 
@@ -237,6 +238,23 @@ final class AppointmentForm extends FormBase {
       '#markup' => '<p><strong>Csak megtekintés.</strong></p>',
     ];
     return $form;
+  }
+
+  private function getCurrentDoctorId(string $department): int {
+    $doctor_roles = ['muteti_orvos1', 'muteti_orvos2', 'muteti_orvos3', 'muteti_boss'];
+    if (!array_intersect($doctor_roles, $this->currentUser()->getRoles())) {
+      return 0;
+    }
+
+    return (int) ($this->database->select('muteti_doctor', 'd')
+      ->fields('d', ['id'])
+      ->condition('user_id', (int) $this->currentUser()->id())
+      ->condition('department', $department)
+      ->condition('active', 1)
+      ->orderBy('id')
+      ->range(0, 1)
+      ->execute()
+      ->fetchField() ?: 0);
   }
 
   private function hasAppointmentPermission(string $permission, string $department): bool {
